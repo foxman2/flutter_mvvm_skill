@@ -1,0 +1,33 @@
+{
+  "name": "flutter-mvvm-template",
+  "version": "0.1.0",
+  "description": "Create Flutter MVVM apps with reusable base views, sealed page navigation, and common dialog UI.",
+  "author": {
+    "name": "xiaominliu"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "flutter",
+    "mvvm",
+    "template"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Flutter MVVM Template",
+    "shortDescription": "Create Flutter MVVM apps with sealed page navigation.",
+    "longDescription": "Provides a Codex skill and generator assets for creating Flutter apps with MVVM base classes, reusable page navigation, common alert/action sheet UI, and strongly typed sealed page routes.",
+    "developerName": "xiaominliu",
+    "category": "Productivity",
+    "capabilities": [
+      "Write",
+      "Code Generation"
+    ],
+    "defaultPrompt": [
+      "Use $flutter-mvvm-template to create a Flutter MVVM app.",
+      "Generate a Flutter MVVM project with sealed page navigation.",
+      "Migrate this Flutter app toward the MVVM template."
+    ],
+    "brandColor": "#0468D7"
+  }
+}

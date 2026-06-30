@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM Template"
+  short_description: "Create Flutter MVVM apps with sealed pages"
+  default_prompt: "Use $flutter-mvvm-template to create a Flutter MVVM app with sealed page navigation."

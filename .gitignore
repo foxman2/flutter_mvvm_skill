@@ -1,0 +1,21 @@
+.DS_Store
+
+# Codex/local build output
+dist/
+
+# Flutter example generated files
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/build/
+**/.idea/
+
+# Flutter platform local files
+**/android/local.properties
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+
+# Editor noise
+*.swp
+*.swo
