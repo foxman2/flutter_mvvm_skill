@@ -1,48 +1,48 @@
 ---
 name: flutter-mvvm-template
-description: Create or migrate Flutter apps that use MVVM, reusable base view models/views, common alert/action sheet/bottom sheet UI, and sealed-class page navigation where page cases can carry strongly typed parameters. Use when Codex needs to create a new Flutter MVVM project, run a one-command project generator, extract project-independent MVVM base classes, replace enum page routing with sealed page classes, or plan/perform an existing Flutter project migration to this template.
+description: Create new Flutter apps that use MVVM, reusable base view models/views, common alert/action sheet/bottom sheet UI, and sealed-class page navigation. 用于创建新的 Flutter MVVM 项目、运行一键项目生成器、生成通用 MVVM 基类、sealed page 路由和示例页面。
 ---
 
 # Flutter MVVM Template
 
-Use this skill to create a Flutter MVVM project or migrate an existing Flutter app toward the bundled architecture.
+使用这个 skill 创建新的 Flutter MVVM 项目。
 
-## Quick Start
+## 快速开始
 
-For a new project, prefer the CLI:
+创建新项目时，优先使用 CLI：
 
 ```bash
 python3 <skill-dir>/scripts/flutter_mvvm.py create my_app --org com.example
 ```
 
-If the CLI has been installed, use:
+如果已经安装了 CLI，也可以使用：
 
 ```bash
 flutter-mvvm create my_app --org com.example
 ```
 
-The command runs `flutter create`, then overlays the MVVM template from `assets/flutter_mvvm_overlay/`.
+该命令会先运行 `flutter create`，再把 `assets/flutter_mvvm_overlay/` 中的 MVVM 模板覆盖到新项目中。
 
-## Workflow
+## 工作流程
 
-1. For new projects, run `scripts/flutter_mvvm.py create <project_name>` unless the user asks for a manual copy.
-2. For existing projects, inspect `pubspec.yaml`, `lib/mvvm`, `lib/pages`, and the current navigator/page enum before editing.
-3. Read `references/architecture.md` when extracting or migrating base classes.
-4. Read `references/sealed-page.md` when changing route/page APIs.
-5. Do not migrate the current app unless the user explicitly asks; default to creating a reusable template or a new generated project.
+1. 创建新项目时，除非用户明确要求手动复制，否则运行 `scripts/flutter_mvvm.py create <project_name>`。
+2. 只生成新项目或模板文件，不修改已有 Flutter 应用。
+3. 用户要求改造已有 app 时，说明这个 skill 只覆盖新模板项目生成，并建议先生成一个参考项目。
+4. 需要理解生成项目边界时，阅读 `references/architecture.md`。
+5. 需要说明生成项目的 sealed page 路由模式时，阅读 `references/sealed-page.md`。
 
-## Defaults
+## 默认约定
 
-- Create projects by calling official `flutter create` first, then overlay only Dart/template files.
-- Use `sealed class AppPage` as a page enum with associated values.
-- Keep page parameters inside concrete `AppPage` subclasses, not as a global `dynamic param`.
-- Keep reusable MVVM infrastructure independent of business assets, Firebase, push, generated localization, and app-specific network APIs.
-- Include `rxdart` and `flutter_easyloading` in generated projects.
+- 创建项目时先调用官方 `flutter create`，然后只覆盖 Dart/template 文件。
+- 使用 `sealed class AppPage` 表达带参数的页面枚举。
+- 页面参数放在具体的 `AppPage` 子类中，不使用全局 `dynamic param`。
+- 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或应用专属网络 API。
+- 生成项目默认包含 `rxdart` 和 `flutter_easyloading`。
 
-## Resources
+## 资源
 
-- `scripts/flutter_mvvm.py`: project generator CLI.
-- `scripts/install_cli.sh`: installs a `flutter-mvvm` command symlink.
-- `assets/flutter_mvvm_overlay/`: files copied over a fresh Flutter app.
-- `references/architecture.md`: extraction and migration rules.
-- `references/sealed-page.md`: sealed page routing pattern and examples.
+- `scripts/flutter_mvvm.py`：项目生成 CLI。
+- `scripts/install_cli.sh`：安装 `flutter-mvvm` 命令软链接。
+- `assets/flutter_mvvm_overlay/`：复制到新 Flutter 应用中的模板文件。
+- `references/architecture.md`：模板边界和生成项目结构。
+- `references/sealed-page.md`：sealed page 路由模式和示例。

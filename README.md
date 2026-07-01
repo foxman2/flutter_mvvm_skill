@@ -1,21 +1,22 @@
 # Flutter MVVM Template
 
-This repository is the source for the `flutter-mvvm-template` Codex skill and plugin.
+这个仓库是 `flutter-mvvm-template` Codex skill 和插件的源码。
 
-## Layout
+## 目录结构
 
-- `.codex-plugin/plugin.json`: Codex plugin manifest.
-- `skills/flutter-mvvm-template/`: the skill source loaded by the plugin.
-- `skills/flutter-mvvm-template/scripts/flutter_mvvm.py`: project generator CLI.
-- `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/`: files copied over a fresh Flutter project.
-- `examples/mvvm_skill_test/`: generated sample project for manual testing.
-- `scripts/package_plugin.py`: creates a distributable plugin zip under `dist/`.
+- `.codex-plugin/plugin.json`：Codex 插件 manifest。
+- `skills/flutter-mvvm-template/`：创建新 Flutter MVVM 项目的 skill 源码。
+- `skills/flutter-mvvm-feature-dev/`：在已有 Flutter MVVM 项目中创建页面、修改 UI、接导航的 skill 源码。
+- `skills/flutter-mvvm-template/scripts/flutter_mvvm.py`：项目生成 CLI。
+- `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/`：覆盖到新 Flutter 项目中的模板文件。
+- `examples/mvvm_skill_test/`：用于手动验证的生成示例项目。
+- `scripts/package_plugin.py`：在 `dist/` 下生成可分发的插件 zip。
 
-## Develop
+## 开发
 
-Edit the skill in `skills/flutter-mvvm-template/`. The local test project in `examples/mvvm_skill_test/` is useful for checking generated Flutter code after template changes.
+主要修改 `skills/flutter-mvvm-template/` 和 `skills/flutter-mvvm-feature-dev/`。模板改动后，可以用 `examples/mvvm_skill_test/` 这个本地测试项目检查生成后的 Flutter 代码。
 
-Useful checks:
+常用检查：
 
 ```bash
 python3 /Users/xiaominliu/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
@@ -23,17 +24,17 @@ flutter analyze examples/mvvm_skill_test
 flutter test examples/mvvm_skill_test
 ```
 
-## Package
+## 打包
 
-Build a plugin archive:
+生成插件压缩包：
 
 ```bash
 python3 scripts/package_plugin.py
 ```
 
-The archive contains `.codex-plugin/`, `skills/`, and `README.md`, and excludes git metadata, examples, generated Flutter caches, and previous archives.
+压缩包包含 `.codex-plugin/`、`skills/` 和 `README.md`，并排除 git 元数据、示例项目、Flutter 生成缓存和历史打包产物。
 
-## Use The Generator Directly
+## 直接使用生成器
 
 ```bash
 python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create my_app --org com.example

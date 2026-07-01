@@ -1,8 +1,8 @@
-# Sealed Page Pattern
+# Sealed Page 模式
 
-Use Dart `sealed class` as a page enum with associated values. This replaces `enum Page + dynamic param`.
+使用 Dart `sealed class` 表达带关联值的页面枚举，用它替代 `enum Page + dynamic param`。
 
-## Base Contract
+## 基础契约
 
 ```dart
 sealed class AppPage {
@@ -15,7 +15,7 @@ sealed class AppPage {
 }
 ```
 
-## Parameterized Case
+## 带参数的页面
 
 ```dart
 final class ProfileAppPage extends AppPage {
@@ -39,25 +39,25 @@ final class ProfileAppPage extends AppPage {
 }
 ```
 
-## Call Sites
+## 调用方式
 
-Prefer:
+推荐：
 
 ```dart
 show(ProfileAppPage(userId: userId));
 show(AlertAppPage(alertViewModel));
 ```
 
-Avoid:
+避免：
 
 ```dart
 show(AppPage.profile, userId);
 show(AppPage.alert, dynamicViewModel);
 ```
 
-## Route Parsing
+## 路由解析
 
-Do not force parameterized pages into a `values` list. Use an explicit parser:
+不要把带参数页面强行塞进 `values` 列表。使用显式 parser：
 
 ```dart
 static AppPage? parse(String routeString) {
@@ -72,9 +72,9 @@ static AppPage? parse(String routeString) {
 }
 ```
 
-## Naming
+## 命名
 
-- Name cases as `<Feature>AppPage` to avoid colliding with widget classes.
-- Keep `routeName` stable during migrations.
-- Keep constructor parameters strongly typed.
-- Keep transition policy close to the page case.
+- 页面 case 命名为 `<Feature>AppPage`，避免和 widget 类名冲突。
+- 项目演进期间保持 `routeName` 稳定。
+- 构造参数保持强类型。
+- transition 策略放在对应 page case 附近。

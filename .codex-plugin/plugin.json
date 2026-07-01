@@ -26,7 +26,7 @@
     "defaultPrompt": [
       "Use $flutter-mvvm-template to create a Flutter MVVM app.",
       "Generate a Flutter MVVM project with sealed page navigation.",
-      "Migrate this Flutter app toward the MVVM template."
+      "Create a new Flutter MVVM sample project."
     ],
     "brandColor": "#0468D7"
   }
