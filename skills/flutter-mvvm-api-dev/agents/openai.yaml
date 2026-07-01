@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM API Dev"
+  short_description: "按 ApiService 模式新增接口、model 和调用"
+  default_prompt: "Use $flutter-mvvm-api-dev 在这个 Flutter MVVM 项目中新增一个业务 API 接口和对应 model。"

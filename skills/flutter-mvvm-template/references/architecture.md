@@ -2,7 +2,8 @@
 
 ## 模板边界
 
-- 模板代码要独立于产品专属服务：Firebase、推送处理、生成式本地化、资源、网络客户端和领域 manager 都留在应用层。
+- 模板代码要独立于产品专属服务：Firebase、推送处理、生成式本地化、资源、认证/session manager 和领域 manager 都留在应用层。
+- 网络层只预设基础 `ApiService` 规则：Dio setup、通用请求、错误转换和 `user` 示例模块，不预设真实业务接口或后端响应协议。
 - 跨项目可复用的生命周期代码放到 `mvvm/`：view model 绑定、dispose 管理、loading/error 跟踪和基础 page widget。
 - 导航基础能力放到 `navigation/`：page model、navigator、route parser、transition enum 和 observer。
 - 通用 UI 保持小而可替换：alert、input alert、action sheet、bottom sheet 是示例，不是完整设计系统。
@@ -14,14 +15,16 @@
 ```text
 lib/
 ├── app.dart
+├── data/
 ├── main.dart
 ├── mvvm/
 ├── navigation/
 ├── pages/
+├── services/
 └── widgets/
 ```
 
-`main.dart` 只负责启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。
+`main.dart` 负责初始化 `AppServices` 并启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。
 
 ## 生成后检查清单
 
@@ -29,12 +32,13 @@ lib/
 2. 运行 `dart format lib test`。
 3. 运行 `flutter analyze`。
 4. 运行 `flutter test`。
-5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/` 和 `test/` 都已覆盖到位。
+5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/data/` 和 `test/` 都已覆盖到位。
 
 ## 不要放入模板的内容
 
 - 业务页面和领域 view model。
-- 后端 API client、DTO、认证/session manager。
+- 真实业务 API、认证/session manager 和领域 manager。
+- Retrofit、Chopper、freezed、json_serializable 或其他代码生成依赖。
 - Firebase、推送通知、app link 和 analytics 配置。
 - 产品资源、生成式本地化、应用专属主题。
 - 平台目录，除非用户明确想复制完整项目。

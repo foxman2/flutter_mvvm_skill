@@ -36,8 +36,9 @@ flutter-mvvm create my_app --org com.example
 - 创建项目时先调用官方 `flutter create`，然后只覆盖 Dart/template 文件。
 - 使用 `sealed class AppPage` 表达带参数的页面枚举。
 - 页面参数放在具体的 `AppPage` 子类中，不使用全局 `dynamic param`。
-- 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或应用专属网络 API。
-- 生成项目默认包含 `rxdart` 和 `flutter_easyloading`。
+- 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或真实业务 API。
+- 生成项目默认包含 `rxdart`、`flutter_easyloading` 和 `dio`。
+- 生成项目预设 `ApiService.shared` 作为网络请求服务单例，只保留 `user` 模块作为示例占位。
 
 ## 资源
 

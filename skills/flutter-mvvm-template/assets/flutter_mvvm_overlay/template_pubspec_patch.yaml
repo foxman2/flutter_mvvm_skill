@@ -1,3 +1,4 @@
 dependencies:
+  dio: ^5.10.0
   rxdart: ^0.27.7
   flutter_easyloading: ^3.0.5
