@@ -7,6 +7,7 @@ lib/services/api/
 ├── api_service.dart
 ├── api_service_config.dart
 ├── api_service_exception.dart
+├── api_service_future.dart
 ├── user_api_service.dart
 └── order_api_service.dart
 ```
@@ -49,22 +50,20 @@ class ApiService {
 业务模块持有配置好的 Dio，不持有 `ApiService`：
 
 ```dart
+import 'api_service_future.dart';
+
 class OrderApiService {
   OrderApiService(this._dio);
 
   final Dio _dio;
 
-  Future<List<OrderSummary>> fetchOrders() async {
-    try {
-      final response = await _dio.get<List<dynamic>>('/orders');
-      final data = response.data ?? const [];
+  Future<List<OrderSummary>> fetchOrders() {
+    return _dio.get<List<dynamic>>('/orders').parseData((data) {
       return data
           .whereType<Map<String, dynamic>>()
           .map(OrderSummary.fromJson)
           .toList();
-    } on DioException catch (error) {
-      throw ApiServiceException.fromDioException(error);
-    }
+    });
   }
 }
 ```
@@ -73,8 +72,8 @@ class OrderApiService {
 
 - GET 查询参数使用 Dio 的 `queryParameters`，不要手拼 query string。
 - POST/PUT body 使用 model 的 `toJson()` 或简单 `Map<String, dynamic>`。
-- response data 为 null 时，按业务语义返回空集合、null，或抛 `ApiServiceException`。
-- 每个 API service 方法捕获 `DioException` 并转换为 `ApiServiceException.fromDioException(error)`。
+- 使用 `.parseData(...)` 统一解析 `response.data` 并把 `DioException` 转换为 `ApiServiceException`。
+- response data 的空值或字段缺失由 parser/model 按业务语义处理。
 - 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
 
 ## ViewModel 调用

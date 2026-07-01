@@ -20,7 +20,7 @@ description: 在已有 Flutter MVVM 项目中新增或修改网络 API、ApiServ
 1. 先读当前项目结构：`pubspec.yaml`、`lib/services/api/`、`lib/data/models/`、相关 `lib/pages/<feature>/` 和测试。
 2. 找到最接近的 API service 模块；已有模块就追加方法，没有模块才新增 `<domain>_api_service.dart`。
 3. 请求/响应数据结构放在 `lib/data/models/<domain>/`，先用普通 Dart model 和手写 `fromJson/toJson`。
-4. API service 方法直接使用构造函数传入的 Dio 发请求，检查空数据，转换 `DioException`，并调用 model 的 `fromJson`。
+4. API service 方法直接使用构造函数传入的 Dio 发请求，并通过 `.parseData(...)` 统一转换 `DioException` 和调用 model 的 `fromJson`。
 5. ViewModel 不直接解析 JSON；简单场景可直接调 `ApiService.shared.<domain>`，复杂场景优先经 repository。
 6. 完成后运行项目已有检查；通常是 `dart format lib test`、`flutter analyze`，相关逻辑补 `flutter test`。
 

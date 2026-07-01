@@ -7,6 +7,7 @@ import 'package:{{project_name}}/data/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
 import 'package:{{project_name}}/services/api/api_service_config.dart';
 import 'package:{{project_name}}/services/api/api_service_exception.dart';
+import 'package:{{project_name}}/services/api/api_service_future.dart';
 import 'package:{{project_name}}/services/app_services.dart';
 
 void main() {
@@ -84,6 +85,54 @@ void main() {
       );
     },
   );
+
+  test('parseData calls parser', () async {
+    final profile = await Future.value(
+      Response<Map<String, dynamic>>(
+        data: {'id': '42', 'name': 'Ada'},
+        requestOptions: RequestOptions(path: '/user/profile'),
+      ),
+    ).parseData(UserProfile.fromJson);
+
+    expect(profile.id, '42');
+    expect(profile.name, 'Ada');
+  });
+
+  test('parseData converts DioException to ApiServiceException', () async {
+    final requestOptions = RequestOptions(path: '/user/profile');
+    final dioError = DioException.badResponse(
+      statusCode: 500,
+      requestOptions: requestOptions,
+      response: Response<Map<String, dynamic>>(
+        data: {'message': 'Server error'},
+        statusCode: 500,
+        requestOptions: requestOptions,
+      ),
+    );
+
+    await expectLater(
+      Future<Response<Map<String, dynamic>>>.error(
+        dioError,
+      ).parseData(UserProfile.fromJson),
+      throwsA(
+        isA<ApiServiceException>()
+            .having((error) => error.statusCode, 'statusCode', 500)
+            .having((error) => error.path, 'path', '/user/profile')
+            .having((error) => error.message, 'message', 'Server error'),
+      ),
+    );
+  });
+
+  test('parseData preserves non-Dio errors', () async {
+    final error = StateError('Parser failed');
+
+    await expectLater(
+      Future<Response<Map<String, dynamic>>>.error(
+        error,
+      ).parseData(UserProfile.fromJson),
+      throwsA(same(error)),
+    );
+  });
 
   test('UserProfile parses json', () {
     final profile = UserProfile.fromJson({'id': '42', 'name': 'Ada'});
