@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM Feature Dev"
-  short_description: "按现有 MVVM 约定创建页面、接导航并修改 Flutter UI"
+  short_description: "按现有 MVVM 约定创建页面、接导航、规划组件并修改 UI"
   default_prompt: "Use $flutter-mvvm-feature-dev 在这个 Flutter MVVM 项目中按现有 AppPage 和 ViewModel 模式创建一个新页面。"
