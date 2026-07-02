@@ -1,9 +1,12 @@
-import 'dart:async';
-
 import 'package:dio/dio.dart';
 
-import 'api_service_config.dart';
+import '../mock_api/mock_user_api_service.dart';
 import 'user_api_service.dart';
+
+enum ApiEnvironment { production, test, mock }
+
+// Edit this value in the generated project to switch API environments.
+const ApiEnvironment _apiEnvironment = ApiEnvironment.production;
 
 class ApiService {
   ApiService._();
@@ -20,53 +23,51 @@ class ApiService {
     return service;
   }
 
-  void setup(ApiServiceConfig config, {Dio? dio}) {
-    final client = dio ?? Dio();
-    client.options = BaseOptions(
-      baseUrl: config.baseUrl,
-      connectTimeout: config.connectTimeout,
-      receiveTimeout: config.receiveTimeout,
-      sendTimeout: config.sendTimeout,
-      headers: Map<String, dynamic>.from(config.headers),
+  void setup() {
+    if (_apiEnvironment == ApiEnvironment.mock) {
+      _user = const MockUserApiService();
+      return;
+    }
+
+    final client = Dio(
+      BaseOptions(
+        baseUrl: _apiBaseUrlFor(_apiEnvironment),
+        connectTimeout: _connectTimeout,
+        receiveTimeout: _receiveTimeout,
+        sendTimeout: _sendTimeout,
+        headers: Map<String, dynamic>.from(_staticHeaders),
+      ),
     );
-    client.interceptors.clear();
+    client.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          options.headers.addAll(_dynamicHeaders);
+          handler.next(options);
+        },
+      ),
+    );
 
-    final headerProvider = config.headerProvider;
-    if (headerProvider != null) {
-      client.interceptors.add(_DynamicHeaderInterceptor(headerProvider));
-    }
-
-    if (config.enableLog) {
-      client.interceptors.add(
-        LogInterceptor(requestBody: true, responseBody: true),
-      );
-    }
-
-    _user = UserApiService(client);
+    _user = DioUserApiService(client);
   }
+
+  Duration get _connectTimeout => const Duration(seconds: 15);
+
+  Duration get _receiveTimeout => const Duration(seconds: 15);
+
+  Duration get _sendTimeout => const Duration(seconds: 15);
+
+  Map<String, String> get _staticHeaders => const {};
+
+  Map<String, String> get _dynamicHeaders => const {};
 }
 
-class _DynamicHeaderInterceptor extends Interceptor {
-  _DynamicHeaderInterceptor(this._headerProvider);
-
-  final ApiHeaderProvider _headerProvider;
-
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    Future.sync(_headerProvider)
-        .then((headers) {
-          options.headers.addAll(headers);
-          handler.next(options);
-        })
-        .catchError((Object error, StackTrace stackTrace) {
-          handler.reject(
-            DioException(
-              requestOptions: options,
-              error: error,
-              stackTrace: stackTrace,
-              type: DioExceptionType.unknown,
-            ),
-          );
-        });
+String _apiBaseUrlFor(ApiEnvironment environment) {
+  switch (environment) {
+    case ApiEnvironment.production:
+      return const String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    case ApiEnvironment.test:
+      return const String.fromEnvironment('API_TEST_BASE_URL', defaultValue: '');
+    case ApiEnvironment.mock:
+      return '';
   }
 }

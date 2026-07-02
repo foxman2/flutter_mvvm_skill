@@ -67,3 +67,7 @@ class UserListResponse {
 - 必填字段能解析。
 - 可空字段、缺失字段或空列表按约定处理。
 - 有请求 model 时，`toJson()` 输出符合接口字段名。
+
+## Mock-only model
+
+后台未确认的临时结构不要放在 `lib/data/models/`。先放到 `lib/services/mock_api/models/`，并使用 `$flutter-mvvm-mock-api-dev` 的迁移约定；后台确认后再合并到正式 model。

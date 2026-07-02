@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM Mock API Dev"
+  short_description: "新增临时 mock API 和 mock-only model"
+  default_prompt: "Use $flutter-mvvm-mock-api-dev 在这个 Flutter MVVM 项目中新增一个后台未确认的 mock API。"

@@ -5,63 +5,46 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/data/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
-import 'package:{{project_name}}/services/api/api_service_config.dart';
 import 'package:{{project_name}}/services/api/api_service_exception.dart';
 import 'package:{{project_name}}/services/api/api_service_future.dart';
+import 'package:{{project_name}}/services/api/user_api_service.dart';
 import 'package:{{project_name}}/services/app_services.dart';
+import 'package:{{project_name}}/services/mock_api/mock_user_api_service.dart';
 
 void main() {
   test('ApiService user module requires setup', () {
     expect(() => ApiService.shared.user, throwsStateError);
   });
 
-  test('ApiService setup applies base options and static headers', () {
-    final dio = Dio();
+  test('ApiService setup creates Dio user module', () {
+    ApiService.shared.setup();
 
-    ApiService.shared.setup(
-      const ApiServiceConfig(
-        baseUrl: 'https://api.example.com',
-        connectTimeout: Duration(seconds: 1),
-        receiveTimeout: Duration(seconds: 2),
-        sendTimeout: Duration(seconds: 3),
-        headers: {'x-app': 'template'},
-      ),
-      dio: dio,
-    );
-
-    expect(dio.options.baseUrl, 'https://api.example.com');
-    expect(dio.options.connectTimeout, const Duration(seconds: 1));
-    expect(dio.options.receiveTimeout, const Duration(seconds: 2));
-    expect(dio.options.sendTimeout, const Duration(seconds: 3));
-    expect(dio.options.headers['x-app'], 'template');
-    expect(ApiService.shared.user, isNotNull);
+    expect(ApiService.shared.user, isA<DioUserApiService>());
   });
 
-  test('UserApiService uses shared request configuration', () async {
+  test('DioUserApiService sends profile request', () async {
     RequestOptions? capturedOptions;
     final dio = Dio()
       ..httpClientAdapter = _FakeHttpClientAdapter((options) async {
         capturedOptions = options;
         return _jsonResponse({'id': '42', 'name': 'Ada'});
       });
+    final service = DioUserApiService(dio);
 
-    ApiService.shared.setup(
-      ApiServiceConfig(
-        baseUrl: 'https://api.example.com',
-        headerProvider: () async => {'Authorization': 'Bearer token'},
-      ),
-      dio: dio,
-    );
-
-    final profile = await ApiService.shared.user.fetchProfile();
+    final profile = await service.fetchProfile();
 
     expect(profile.id, '42');
     expect(profile.name, 'Ada');
-    expect(
-      capturedOptions?.uri.toString(),
-      'https://api.example.com/user/profile',
-    );
-    expect(capturedOptions?.headers['Authorization'], 'Bearer token');
+    expect(capturedOptions?.uri.toString(), '/user/profile');
+  });
+
+  test('MockUserApiService returns profile without network', () async {
+    const service = MockUserApiService();
+
+    final profile = await service.fetchProfile();
+
+    expect(profile.id, 'mock-user');
+    expect(profile.name, 'Mock User');
   });
 
   test(
@@ -71,11 +54,10 @@ void main() {
         ..httpClientAdapter = _FakeHttpClientAdapter((_) async {
           return _jsonResponse({'message': 'Not found'}, statusCode: 404);
         });
-
-      ApiService.shared.setup(const ApiServiceConfig(), dio: dio);
+      final service = DioUserApiService(dio);
 
       await expectLater(
-        ApiService.shared.user.fetchProfile(),
+        service.fetchProfile(),
         throwsA(
           isA<ApiServiceException>()
               .having((error) => error.statusCode, 'statusCode', 404)

@@ -1,6 +1,6 @@
 ---
 name: flutter-mvvm-template
-description: Create new Flutter apps that use MVVM, reusable base view models/views, common alert/action sheet/bottom sheet UI, and sealed-class page navigation. 用于创建新的 Flutter MVVM 项目、运行一键项目生成器、生成通用 MVVM 基类、sealed page 路由和示例页面。
+description: Create new Flutter apps that use MVVM, reusable base view models/views, common alert/action sheet/bottom sheet UI, sealed-class page navigation, and switchable real/mock API scaffolding. 用于创建新的 Flutter MVVM 项目、运行一键项目生成器、生成通用 MVVM 基类、sealed page 路由、示例页面和可切换 mock API 基础层。
 ---
 
 # Flutter MVVM Template
@@ -39,6 +39,8 @@ flutter-mvvm create my_app --org com.example
 - 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或真实业务 API。
 - 生成项目默认包含 `rxdart`、`flutter_easyloading` 和 `dio`。
 - 生成项目预设 `ApiService.shared` 作为网络请求服务单例，只保留 `user` 模块作为示例占位。
+- 生成项目在 `api_service.dart` 内预设 `ApiEnvironment`、baseUrl、timeout、headers 和 mock 开关，生成后直接改这个文件切换 production/test/mock。
+- mock service 直接放在 `lib/services/mock_api/` 下，后台未确认的 mock-only model 放在 `lib/services/mock_api/models/`。
 
 ## 资源
 
