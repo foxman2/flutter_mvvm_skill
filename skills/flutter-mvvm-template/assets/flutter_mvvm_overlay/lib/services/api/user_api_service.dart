@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../../data/models/user/user_profile.dart';
+import '../../models/user/user_profile.dart';
 import 'api_service_future.dart';
 
 abstract class UserApiService {

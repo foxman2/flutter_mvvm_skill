@@ -15,8 +15,8 @@
 ```text
 lib/
 ├── app.dart
-├── data/
 ├── main.dart
+├── models/
 ├── mvvm/
 ├── navigation/
 ├── pages/
@@ -35,7 +35,7 @@ lib/
 2. 运行 `dart format lib test`。
 3. 运行 `flutter analyze`。
 4. 运行 `flutter test`。
-5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/data/` 和 `test/` 都已覆盖到位。
+5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 和 `test/` 都已覆盖到位。
 
 ## 不要放入模板的内容
 

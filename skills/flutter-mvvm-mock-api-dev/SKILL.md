@@ -16,13 +16,13 @@ description: >-
 
 ## 工作流程
 
-1. 先读当前项目结构：`lib/services/api/`、`lib/services/mock_api/`、`lib/data/models/`、相关页面/ViewModel 和测试。
+1. 先读当前项目结构：`lib/services/api/`、`lib/services/mock_api/`、`lib/models/`、相关页面/ViewModel 和测试。
 2. 正式接口定义放在 `lib/services/api/<domain>_api_service.dart`；如果还没有对应 domain，新增 abstract service 和 Dio 实现。
 3. mock 实现放在 `lib/services/mock_api/mock_<domain>_api_service.dart`，并实现正式 service 接口。
-4. 能使用正式 model 时优先使用 `lib/data/models/<domain>/`；后台未确认的新结构放在 `lib/services/mock_api/models/`。
+4. 能使用正式 model 时优先使用 `lib/models/<domain>/`；后台未确认的新结构放在 `lib/services/mock_api/models/`。
 5. 在 `ApiService.setup()` 里通过当前环境是否为 `ApiEnvironment.mock` 选择 mock service 或 Dio service，不在 ViewModel/Widget 里写 mock 分支。
 6. 补测试：mock service happy path、必要的 mock-only model 解析；如果项目当前环境常量已经切到 mock，再覆盖 `ApiService.shared.setup()` 的 wiring。
-7. 后台确认后，把临时 model 合并到 `lib/data/models/<domain>/`，再用 `$flutter-mvvm-api-dev` 补真实 Dio 请求。
+7. 后台确认后，把临时 model 合并到 `lib/models/<domain>/`，再用 `$flutter-mvvm-api-dev` 补真实 Dio 请求。
 
 ## 读取参考
 

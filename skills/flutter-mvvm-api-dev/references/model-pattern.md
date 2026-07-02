@@ -3,7 +3,7 @@
 ## 目录和命名
 
 ```text
-lib/data/models/user/
+lib/models/user/
 ├── user_profile.dart
 └── update_profile_request.dart
 ```
@@ -70,4 +70,4 @@ class UserListResponse {
 
 ## Mock-only model
 
-后台未确认的临时结构不要放在 `lib/data/models/`。先放到 `lib/services/mock_api/models/`，并使用 `$flutter-mvvm-mock-api-dev` 的迁移约定；后台确认后再合并到正式 model。
+后台未确认的临时结构不要放在 `lib/models/`。先放到 `lib/services/mock_api/models/`，并使用 `$flutter-mvvm-mock-api-dev` 的迁移约定；后台确认后再合并到正式 model。

@@ -16,9 +16,9 @@ description: >-
 
 ## 工作流程
 
-1. 先读当前项目结构：`pubspec.yaml`、`lib/services/api/`、`lib/data/models/`、相关 `lib/pages/<feature>/` 和测试。
+1. 先读当前项目结构：`pubspec.yaml`、`lib/services/api/`、`lib/models/`、相关 `lib/pages/<feature>/` 和测试。
 2. 找到最接近的 API service 模块；已有模块就追加 contract 方法和 Dio 实现，没有模块才新增 `<domain>_api_service.dart`。
-3. 请求/响应数据结构放在 `lib/data/models/<domain>/`，先用普通 Dart model 和手写 `fromJson/toJson`。
+3. 请求/响应数据结构放在 `lib/models/<domain>/`，先用普通 Dart model 和手写 `fromJson/toJson`。
 4. Dio service 方法直接使用构造函数传入的 Dio 发请求，并通过 `.parseData(...)` 统一转换 `DioException` 和调用 model 的 `fromJson`。
 5. ViewModel 不直接解析 JSON；简单场景可直接调 `ApiService.shared.<domain>`，复杂场景优先经 repository。
 6. 完成后运行项目已有检查；通常是 `dart format lib test`、`flutter analyze`，相关逻辑补 `flutter test`。
@@ -36,7 +36,7 @@ description: >-
 - 接口路径和方法名语义清楚，例如 `fetchProfile()`、`updateProfile()`、`fetchOrders()`。
 - 不默认引入 Retrofit、Chopper、freezed、json_serializable、build_runner；用户明确要求时再单独规划。
 - 不预设统一响应 envelope，例如 `{code, message, data}`；如果项目已有协议，跟随现有封装。
-- 不把后台未确认的 mock-only model 放进 `lib/data/models/`；这类需求交给 `$flutter-mvvm-mock-api-dev`。
+- 不把后台未确认的 mock-only model 放进 `lib/models/`；这类需求交给 `$flutter-mvvm-mock-api-dev`。
 
 ## 输出标准
 

@@ -25,7 +25,7 @@ lib/services/api/
 ```dart
 import 'package:dio/dio.dart';
 
-import '../../data/models/order/order_summary.dart';
+import '../../models/order/order_summary.dart';
 import 'api_service_future.dart';
 
 abstract class OrderApiService {
@@ -120,7 +120,7 @@ class ApiService {
 - 使用 `.parseData(...)` 统一解析 `response.data` 并把 `DioException` 转换为 `ApiServiceException`。
 - response data 的空值或字段缺失由 parser/model 按业务语义处理。
 - 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
-- 未确认的 mock-only model 不进入 `lib/data/models/`；改用 `$flutter-mvvm-mock-api-dev`。
+- 未确认的 mock-only model 不进入 `lib/models/`；改用 `$flutter-mvvm-mock-api-dev`。
 
 ## ViewModel 调用
 

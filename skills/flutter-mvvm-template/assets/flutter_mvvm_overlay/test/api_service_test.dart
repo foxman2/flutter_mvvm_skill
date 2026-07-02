@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:{{project_name}}/data/models/user/user_profile.dart';
+import 'package:{{project_name}}/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
 import 'package:{{project_name}}/services/api/api_service_exception.dart';
 import 'package:{{project_name}}/services/api/api_service_future.dart';

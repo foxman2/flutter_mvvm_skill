@@ -4,10 +4,9 @@
 
 ```text
 lib/
-├── data/
-│   └── models/
-│       └── user/
-│           └── user_profile.dart
+├── models/
+│   └── user/
+│       └── user_profile.dart
 └── services/
     ├── api/
     │   ├── api_service.dart
@@ -21,7 +20,7 @@ lib/
 - `lib/services/api/`：正式 API contract 和真实 Dio 实现。
 - `lib/services/mock_api/`：临时 mock service。
 - `lib/services/mock_api/models/`：后台未确认、只服务 mock 的临时 model。
-- `lib/data/models/`：已确认 model。
+- `lib/models/`：已确认 model。
 
 ## Service 写法
 
