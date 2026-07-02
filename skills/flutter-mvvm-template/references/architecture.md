@@ -20,6 +20,8 @@ lib/
 ├── mvvm/
 ├── navigation/
 ├── pages/
+├── product_preview/
+│   └── pages/
 ├── services/
 │   ├── api/
 │   └── mock_api/
@@ -28,6 +30,8 @@ lib/
 ```
 
 `main.dart` 负责初始化 `AppServices` 并启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。
+
+`product_preview/` 是产品经理 UI 预览隔离区。首页通过悬浮按钮进入 `ProductPreviewAppPage`，新增 PM 页面放在 `product_preview/pages/` 并通过 `product_preview_registry.dart` 注册；审核通过后再由开发迁移到正式 `pages/`、ViewModel 和 AppPage 导航。
 
 ## 生成后检查清单
 
@@ -42,6 +46,7 @@ lib/
 - 业务页面和领域 view model。
 - 真实业务 API、认证/session manager 和领域 manager。
 - 后台未确认的 mock-only model；新增时先放在 `lib/services/mock_api/models/`，确认后再合并到正式 model。
+- 未经开发审核的 PM 预览页面；这类页面先留在 `lib/product_preview/`。
 - Retrofit、Chopper、freezed、json_serializable 或其他代码生成依赖。
 - Firebase、推送通知、app link 和 analytics 配置。
 - 产品资源、生成式本地化、应用专属主题。

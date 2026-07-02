@@ -5,8 +5,11 @@ import 'user_api_service.dart';
 
 enum ApiEnvironment { production, test, mock }
 
-// Edit this value in the generated project to switch API environments.
-const ApiEnvironment _apiEnvironment = ApiEnvironment.production;
+// Run with --dart-define=USE_MOCK_API=true to preview UI with mock services.
+const bool _useMockApi = bool.fromEnvironment('USE_MOCK_API');
+const ApiEnvironment _apiEnvironment = _useMockApi
+    ? ApiEnvironment.mock
+    : ApiEnvironment.production;
 
 class ApiService {
   ApiService._();
@@ -66,7 +69,10 @@ String _apiBaseUrlFor(ApiEnvironment environment) {
     case ApiEnvironment.production:
       return const String.fromEnvironment('API_BASE_URL', defaultValue: '');
     case ApiEnvironment.test:
-      return const String.fromEnvironment('API_TEST_BASE_URL', defaultValue: '');
+      return const String.fromEnvironment(
+        'API_TEST_BASE_URL',
+        defaultValue: '',
+      );
     case ApiEnvironment.mock:
       return '';
   }

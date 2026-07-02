@@ -6,6 +6,7 @@
 
 - `.codex-plugin/plugin.json`：Codex 插件 manifest。
 - `skills/flutter-mvvm-template/`：创建新 Flutter MVVM 项目的 skill 源码。
+- `skills/flutter-mvvm-pm-ui/`：产品经理专用 UI 预览、受限展示层修改和待审核 mock 数据工作流。
 - `skills/flutter-mvvm-feature-dev/`：在已有 Flutter MVVM 项目中创建页面、修改 UI、接导航的 skill 源码。
 - `skills/flutter-mvvm-api-dev/`：在已有 Flutter MVVM 项目中新增 API service、model 解析和接口调用的 skill 源码。
 - `skills/flutter-mvvm-mock-api-dev/`：在已有 Flutter MVVM 项目中新增临时 mock API、mock service 和 mock-only model 的 skill 源码。
@@ -16,7 +17,7 @@
 
 ## 开发
 
-主要修改 `skills/flutter-mvvm-template/`、`skills/flutter-mvvm-feature-dev/`、`skills/flutter-mvvm-api-dev/` 和 `skills/flutter-mvvm-mock-api-dev/`。模板改动后，可以用 `examples/mvvm_skill_test/` 这个本地测试项目检查生成后的 Flutter 代码。
+主要修改 `skills/flutter-mvvm-template/`、`skills/flutter-mvvm-pm-ui/`、`skills/flutter-mvvm-feature-dev/`、`skills/flutter-mvvm-api-dev/` 和 `skills/flutter-mvvm-mock-api-dev/`。模板改动后，可以用 `examples/mvvm_skill_test/` 这个本地测试项目检查生成后的 Flutter 代码。
 
 常用检查：
 
@@ -44,3 +45,5 @@ python3 scripts/package_plugin.py
 ```bash
 python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "My App" --package-name com.example.myapp
 ```
+
+生成项目包含首页 `PM Preview` 悬浮入口和 `lib/product_preview/` 隔离目录。产品经理新增 UI 原型时使用 `$flutter-mvvm-pm-ui`，开发审核和正式迁移时再使用 `$flutter-mvvm-feature-dev`。

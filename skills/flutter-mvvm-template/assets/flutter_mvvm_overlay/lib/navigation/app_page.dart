@@ -7,6 +7,7 @@ import '../pages/alert/alert_view_model.dart';
 import '../pages/home/home_page.dart';
 import '../pages/input_alert/input_alert_page.dart';
 import '../pages/input_alert/input_alert_view_model.dart';
+import '../product_preview/product_preview_page.dart';
 import '../widgets/common_bottom_sheet_container.dart';
 import 'app_page_transition.dart';
 
@@ -41,6 +42,21 @@ final class HomeAppPage extends AppPage {
   @override
   WidgetBuilder generateWidgetBuilder() {
     return (_) => const HomePage();
+  }
+}
+
+final class ProductPreviewAppPage extends AppPage {
+  const ProductPreviewAppPage();
+
+  @override
+  String get routeName => '/product-preview';
+
+  @override
+  AppPageTransition get defaultTransition => AppPageTransition.push;
+
+  @override
+  WidgetBuilder generateWidgetBuilder() {
+    return (_) => const ProductPreviewPage();
   }
 }
 

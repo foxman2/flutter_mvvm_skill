@@ -15,4 +15,11 @@ void main() {
   test('route parser resolves home route', () {
     expect(AppRouteParser.parse('/'), isA<HomeAppPage>());
   });
+
+  test('product preview route is isolated from business routes', () {
+    const page = ProductPreviewAppPage();
+
+    expect(page.routeName, '/product-preview');
+    expect(page.defaultTransition, AppPageTransition.push);
+  });
 }

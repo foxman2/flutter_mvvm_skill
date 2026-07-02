@@ -5,6 +5,10 @@ import '../alert/alert_view_model.dart';
 import '../input_alert/input_alert_view_model.dart';
 
 class HomeViewModel extends AppBaseViewModel {
+  void showProductPreview() {
+    show(const ProductPreviewAppPage());
+  }
+
   void showAlertDemo() {
     final alert = AlertViewModel(
       title: 'Hello from MVVM',

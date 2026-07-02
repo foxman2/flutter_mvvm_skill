@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../mvvm/base_view.dart';
+import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
 
 class HomePage extends AppBaseStatelessPage<HomeViewModel> {
@@ -15,6 +16,9 @@ class HomePage extends AppBaseStatelessPage<HomeViewModel> {
   Widget createWidget(BuildContext context, HomeViewModel viewModel) {
     return Scaffold(
       appBar: AppBar(title: const Text('{{app_name}}')),
+      floatingActionButton: ProductPreviewEntryButton(
+        onPressed: viewModel.showProductPreview,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
