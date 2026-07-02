@@ -11,7 +11,7 @@ class ProductPreviewEntryButton extends StatelessWidget {
       heroTag: 'product-preview-entry-button',
       onPressed: onPressed,
       icon: const Icon(Icons.visibility_outlined),
-      label: const Text('PM Preview'),
+      label: const Text('Product Preview'),
     );
   }
 }

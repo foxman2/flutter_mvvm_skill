@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'pages/sample_product_preview_page.dart';
+import 'pages/sample_product_preview/sample_product_preview_page.dart';
 
 class ProductPreviewItem {
   const ProductPreviewItem({
@@ -20,7 +20,7 @@ final List<ProductPreviewItem> productPreviewItems = [
   ProductPreviewItem(
     id: 'sample-ui',
     title: 'Sample UI',
-    description: 'A safe place for PM-owned UI previews before dev review.',
+    description: 'A safe place for isolated UI previews before dev review.',
     builder: (_) => const SampleProductPreviewPage(),
   ),
 ];

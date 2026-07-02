@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(const App());
 
     expect(find.text('Flutter MVVM Template'), findsOneWidget);
-    expect(find.text('PM Preview'), findsOneWidget);
+    expect(find.text('Product Preview'), findsOneWidget);
 
     await tester.tap(find.text('Show alert'));
     await tester.pumpAndSettle();
@@ -21,7 +21,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const App());
 
-    await tester.tap(find.text('PM Preview'));
+    await tester.tap(find.text('Product Preview'));
     await tester.pumpAndSettle();
 
     expect(find.text('Product Preview'), findsOneWidget);

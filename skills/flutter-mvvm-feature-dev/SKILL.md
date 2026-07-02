@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-feature-dev
 description: >-
-  在已有 Flutter MVVM 项目中开发正式功能页面、修改 UI、规划和抽取共用组件、创建或修改 ViewModel、接入 sealed AppPage 导航、弹窗、ActionSheet 和 BottomSheet。Use when an existing app follows the flutter-mvvm-template architecture and the task is formal page/UI/navigation/component/ViewModel work, including reviewing and migrating approved PM preview pages from lib/product_preview/ into production pages. Do not use for product-manager-only prototype or UI preview work; use flutter-mvvm-pm-ui. Do not use to create a new project; use flutter-mvvm-template. Do not use for data-layer-only API/model work; use flutter-mvvm-api-dev for confirmed backend APIs and flutter-mvvm-mock-api-dev for backend-unconfirmed mock APIs.
+  用于已有 flutter-mvvm-template 架构项目中的正式功能开发：创建或修改正式页面、UI、共用组件、ViewModel、sealed AppPage 导航、弹窗、ActionSheet、BottomSheet，以及将 lib/product_preview/ 中已审核的隔离预览迁移为正式页面。不用于隔离预览原型创建；使用 flutter-mvvm-pm-ui。不用于创建新项目；使用 flutter-mvvm-template。不用于纯数据层 API/model 开发；已确认后端 API 使用 flutter-mvvm-api-dev，后端未确认或 mock API 使用 flutter-mvvm-mock-api-dev。
 ---
 
 # Flutter MVVM Feature Dev
@@ -11,7 +11,7 @@ description: >-
 ## 职责边界
 
 - 只处理已有项目里的页面、UI、组件、导航和 ViewModel 侧工作。
-- 负责把审核通过的 `lib/product_preview/` PM 原型迁移为正式 `lib/pages/<feature>/`、ViewModel 和 `AppPage`。
+- 负责把审核通过的 `lib/product_preview/` 隔离原型迁移为正式 `lib/pages/<feature>/`、ViewModel 和 `AppPage`。
 - 可以把 ViewModel 接到已有 API 方法，但不负责新增正式 API service 或 mock service。
 - 当前项目应包含 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`，并使用 `sealed class AppPage` 表达页面路由。
 
@@ -19,7 +19,7 @@ description: >-
 
 1. 先读当前项目结构：`pubspec.yaml`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
 2. 找一个最相似的已有页面和 ViewModel，优先复制它的组织方式、命名、状态管理和 UI 风格。
-3. 如果任务来自 PM 预览，先读 `lib/product_preview/` 的原型，再重新按正式 MVVM 边界实现，不直接把原型当最终业务代码搬过去。
+3. 如果任务来自隔离预览，先读 `lib/product_preview/` 的原型，再重新按正式 MVVM 边界实现，不直接把原型当最终业务代码搬过去。
 4. 创建或修改页面时保持职责分离：Widget 负责展示和事件绑定，ViewModel 负责状态、异步、导航、弹窗和业务动作。
 5. 新增可跳转页面时，在 `AppPage` 中新增具体 page case，不使用 `dynamic param` 或全局 enum 参数。
 6. 修改 UI 或抽取组件时优先使用项目已有组件、主题、间距、按钮样式和弹层容器。
@@ -40,7 +40,7 @@ description: >-
 - 页面 case 命名为 `<Feature>AppPage`，参数放在构造器中并保持强类型。
 - 普通页面默认 `AppPageTransition.push`；弹窗使用 `alert`；操作面板使用 `actionSheet`；底部弹层使用 `bottomSheet` 或 `bottomSheetWithNavigator`。
 - 不把业务服务、API client、Firebase、推送、本地化生成逻辑塞进通用 MVVM 基类。
-- 不把 PM 预览页面留在正式导航里；迁移后保持 `lib/product_preview/` 和正式页面职责分开。
+- 不把隔离预览页面留在正式导航里；迁移后保持 `lib/product_preview/` 和正式页面职责分开。
 - 不绕过现有 `show()`、`pushReplacement()`、`pop()`、`loadingTracker`、`errorTracker` 等封装。
 - 共用组件保持展示型，通过 callback 暴露事件，不直接依赖业务服务、具体 ViewModel 或页面路由。
 

@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 
-class SampleProductPreviewPage extends StatelessWidget {
-  const SampleProductPreviewPage({super.key});
+import '../../../mvvm/base_view.dart';
+import 'sample_product_preview_view_model.dart';
+
+class SampleProductPreviewPage
+    extends AppBaseStatelessPage<SampleProductPreviewViewModel> {
+  const SampleProductPreviewPage({super.key})
+    : super(viewModelProvider: _defaultProvider);
+
+  static SampleProductPreviewViewModel? _defaultProvider() => null;
 
   @override
-  Widget build(BuildContext context) {
+  SampleProductPreviewViewModel? defaultViewModel() {
+    return SampleProductPreviewViewModel();
+  }
+
+  @override
+  Widget createWidget(
+    BuildContext context,
+    SampleProductPreviewViewModel viewModel,
+  ) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Sample UI')),
@@ -12,10 +27,10 @@ class SampleProductPreviewPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Text('PM Preview Area', style: textTheme.headlineSmall),
+            Text('Product Preview Area', style: textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Create product-owned preview pages here, then ask development '
+              'Create isolated preview pages here, then ask development '
               'to review and migrate approved UI into formal MVVM pages.',
               style: textTheme.bodyMedium,
             ),
@@ -28,10 +43,7 @@ class SampleProductPreviewPage extends StatelessWidget {
                   children: [
                     Text('Mock content', style: textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Use mock API services for data-driven previews, and '
-                      'mark those data-layer changes as pending dev review.',
-                    ),
+                    Text(viewModel.mockContentDescription),
                   ],
                 ),
               ),

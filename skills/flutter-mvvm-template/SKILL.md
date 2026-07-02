@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-template
 description: >-
-  Create new Flutter apps from the bundled MVVM template and CLI. 用于从零创建新的 Flutter MVVM 项目，生成可复用 View/ViewModel 基类、sealed AppPage 导航、alert/action sheet/bottom sheet 示例、Dio ApiService、real/mock API 基础层以及产品经理 UI 预览入口。Do not use for modifying an existing app after generation: use flutter-mvvm-pm-ui for product-manager UI preview/prototype work, flutter-mvvm-feature-dev for formal page/UI/navigation/ViewModel work, flutter-mvvm-api-dev for confirmed backend API/model work, and flutter-mvvm-mock-api-dev for backend-unconfirmed mock API work.
+  用于从零创建新的 Flutter MVVM 项目，并套用 flutter-mvvm-template 模板，生成 View/ViewModel 基类、sealed AppPage 导航、弹窗、ActionSheet、BottomSheet 示例、Dio ApiService、real/mock API 基础层和隔离预览入口。不用于修改已生成或已有应用；隔离预览 UI 原型使用 flutter-mvvm-pm-ui，正式页面/UI/导航/ViewModel 开发使用 flutter-mvvm-feature-dev，已确认后端 API/model 使用 flutter-mvvm-api-dev，后端未确认或 mock API 使用 flutter-mvvm-mock-api-dev。
 ---
 
 # Flutter MVVM Template
@@ -46,7 +46,7 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - 生成项目预设 `ApiService.shared` 作为网络请求服务单例，只保留 `user` 模块作为示例占位。
 - 生成项目在 `api_service.dart` 内预设 `ApiEnvironment`、baseUrl、timeout、headers 和 mock 开关；本地预览 mock 数据时优先使用 `--dart-define=USE_MOCK_API=true`。
 - mock service 直接放在 `lib/services/mock_api/` 下，后台未确认的 mock-only model 放在 `lib/services/mock_api/models/`。
-- 生成项目包含 `lib/product_preview/` 和首页悬浮 PM Preview 入口，供产品经理隔离新增 UI 原型，正式迁移前需要开发审核。
+- 生成项目包含 `lib/product_preview/` 和首页悬浮 Product Preview 入口，供隔离新增 UI 原型，正式迁移前需要开发审核。
 
 ## 资源
 

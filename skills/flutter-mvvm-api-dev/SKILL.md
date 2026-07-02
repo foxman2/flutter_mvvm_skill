@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-api-dev
 description: >-
-  在已有 Flutter MVVM 项目中新增或修改已确认的正式网络 API、ApiService 业务模块、Dio service 实现、普通 Dart request/response model 的 fromJson/toJson、repository/ViewModel 调用和接口测试。Use when backend method/path/request/response fields are confirmed and the app follows flutter-mvvm-template's ApiService.shared pattern, including upgrading previously reviewed PM/mock preview data into formal API/model code after backend confirmation. Do not use for backend-unconfirmed frontend-first mocks; use flutter-mvvm-mock-api-dev. Do not use for product-manager-only UI preview work; use flutter-mvvm-pm-ui. Do not use for page/UI/navigation/component-only work; use flutter-mvvm-feature-dev, while this skill handles the data/API side of mixed UI + confirmed API tasks.
+  用于已有 flutter-mvvm-template 架构项目中的已确认正式后端 API 开发：新增或修改 ApiService 业务模块、Dio 实现、request/response model 的 fromJson/toJson、repository/ViewModel 调用和接口测试，并在后端协议确认后把已审核的 mock/preview 数据迁移为正式 API/model。不用于后端未确认、前端先行 mock 或临时预览数据；使用 flutter-mvvm-mock-api-dev。不用于纯页面/UI/导航/组件工作；使用 flutter-mvvm-feature-dev 或 flutter-mvvm-pm-ui。
 ---
 
 # Flutter MVVM API Dev
@@ -11,7 +11,7 @@ description: >-
 ## 职责边界
 
 - 只处理已确认的正式 API、正式 model、service contract、Dio 实现和调用接入。
-- 只有后端字段、路径和响应确认后，才把 PM 预览或 mock-only 数据迁移成正式 API/model。
+- 只有后端字段、路径和响应确认后，才把预览或 mock-only 数据迁移成正式 API/model。
 - 当前项目应包含 `lib/services/api/api_service.dart`，并通过 `ApiService.shared` 统一发起请求。
 - 不为未确认接口猜 URL、字段或响应 envelope；这类需求先做 mock。
 
@@ -38,7 +38,7 @@ description: >-
 - 不默认引入 Retrofit、Chopper、freezed、json_serializable、build_runner；用户明确要求时再单独规划。
 - 不预设统一响应 envelope，例如 `{code, message, data}`；如果项目已有协议，跟随现有封装。
 - 不把后台未确认的 mock-only model 放进 `lib/models/`；这类需求交给 `$flutter-mvvm-mock-api-dev`。
-- 不把 PM 预览数据直接提升为正式 API；先确认后端协议，再迁移。
+- 不把临时预览数据直接提升为正式 API；先确认后端协议，再迁移。
 
 ## 输出标准
 
