@@ -1,19 +1,18 @@
 ---
 name: flutter-mvvm-mock-api-dev
-description: 在已有 Flutter MVVM 项目中新增或修改 mock API、临时 mock service、mock-only model、ApiService mock 切换和 mock 测试。Use when working inside a Flutter MVVM app generated from flutter-mvvm-template and adding temporary backend-unconfirmed mock endpoints without polluting formal models.
+description: >-
+  在已有 Flutter MVVM 项目中新增或修改后台未确认的 mock API、临时 mock service、mock-only model、ApiService mock 切换和 mock 测试。Use when the user says the backend is not ready/confirmed, asks to mock data first, or needs frontend-first API behavior without polluting formal models. Keep external calls on ApiService.shared. Do not use for confirmed real backend APIs; use flutter-mvvm-api-dev. Do not use for page/UI/navigation/component-only work; use flutter-mvvm-feature-dev, while this skill handles the mock data/API side of mixed UI + mock tasks.
 ---
 
 # Flutter MVVM Mock API Dev
 
 使用这个 skill 在已有 Flutter MVVM 项目里开发 mock API。mock API 用来支持前端先行开发，正式 API 入口保持稳定，未被后台确认的实现和 model 先放在临时目录。
 
-## 适用场景
+## 职责边界
 
-- 用户要求“先写 mock 接口”“后台还没好，先模拟数据”“新增 mock API”“临时 model 先别进正式目录”。
-- 当前项目包含 `lib/services/api/api_service.dart`，并通过 `ApiService.shared` 统一访问 API。
-- 项目使用模板里的 `ApiEnvironment.mock` 或类似代码级环境开关切换 mock/real。
-
-如果用户要接已确认的真实后端接口，使用 `$flutter-mvvm-api-dev`。
+- 只处理后台未确认时的 mock service、mock-only model、ApiService mock 切换和 mock 测试。
+- 当前项目应包含 `lib/services/api/api_service.dart`，并通过 `ApiService.shared` 统一访问 API。
+- 项目应使用模板里的 `ApiEnvironment.mock` 或类似代码级环境开关切换 mock/real。
 
 ## 工作流程
 

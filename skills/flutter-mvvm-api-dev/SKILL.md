@@ -1,20 +1,18 @@
 ---
 name: flutter-mvvm-api-dev
-description: 在已有 Flutter MVVM 项目中新增或修改已确认的正式网络 API、ApiService 业务模块、Dio service 实现、普通 Dart model 的 fromJson/toJson、repository/ViewModel 调用和接口测试。Use when working inside a Flutter MVVM app generated from flutter-mvvm-template and adding confirmed API endpoints, request/response models, service modules, or wiring API calls into ViewModels.
+description: >-
+  在已有 Flutter MVVM 项目中新增或修改已确认的正式网络 API、ApiService 业务模块、Dio service 实现、普通 Dart request/response model 的 fromJson/toJson、repository/ViewModel 调用和接口测试。Use when backend method/path/request/response fields are confirmed and the app follows flutter-mvvm-template's ApiService.shared pattern. Do not use for backend-unconfirmed frontend-first mocks; use flutter-mvvm-mock-api-dev. Do not use for page/UI/navigation/component-only work; use flutter-mvvm-feature-dev, while this skill handles the data/API side of mixed UI + confirmed API tasks.
 ---
 
 # Flutter MVVM API Dev
 
 使用这个 skill 在已有 Flutter MVVM 项目里开发已确认的正式网络接口：新增 API service contract 和 Dio 实现、补 model 解析、接入 repository 或 ViewModel，并保持和模板里的 `ApiService.shared` 写法一致。
 
-## 适用场景
+## 职责边界
 
-- 用户要求“新增接口”“接一个 API”“写 user/order/product service”“补请求/响应 model”“把接口接到 ViewModel”，且后端路径/字段已确认。
-- 当前项目包含 `lib/services/api/api_service.dart`，并通过 `ApiService.shared` 统一发起请求。
-- 用户希望继续使用模板内置 Dio 基础层，而不是引入 Retrofit、Chopper、freezed 或其他 codegen。
-
-如果接口或 model 还没有被后台确认，只需要前端先行 mock，使用 `$flutter-mvvm-mock-api-dev`。
-如果任务主要是创建页面、接导航、改 UI 或抽组件，使用 `$flutter-mvvm-feature-dev`。
+- 只处理已确认的正式 API、正式 model、service contract、Dio 实现和调用接入。
+- 当前项目应包含 `lib/services/api/api_service.dart`，并通过 `ApiService.shared` 统一发起请求。
+- 不为未确认接口猜 URL、字段或响应 envelope；这类需求先做 mock。
 
 ## 工作流程
 

@@ -22,7 +22,9 @@
 
 ```bash
 python3 /Users/xiaominliu/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
-python3 /Users/xiaominliu/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/flutter-mvvm-mock-api-dev
+for skill in skills/flutter-mvvm-*; do
+  python3 /Users/xiaominliu/.codex/skills/.system/skill-creator/scripts/quick_validate.py "$skill"
+done
 flutter analyze examples/mvvm_skill_test
 flutter test examples/mvvm_skill_test
 ```

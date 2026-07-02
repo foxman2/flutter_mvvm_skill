@@ -1,6 +1,7 @@
 ---
 name: flutter-mvvm-template
-description: Create new Flutter apps that use MVVM, reusable base view models/views, common alert/action sheet/bottom sheet UI, sealed-class page navigation, and switchable real/mock API scaffolding. 用于创建新的 Flutter MVVM 项目、运行一键项目生成器、生成通用 MVVM 基类、sealed page 路由、示例页面和可切换 mock API 基础层。
+description: >-
+  Create new Flutter apps from the bundled MVVM template and CLI. 用于从零创建新的 Flutter MVVM 项目，生成可复用 View/ViewModel 基类、sealed AppPage 导航、alert/action sheet/bottom sheet 示例、Dio ApiService 以及 real/mock API 基础层。Do not use for modifying an existing app after generation: use flutter-mvvm-feature-dev for page/UI/navigation/ViewModel work, flutter-mvvm-api-dev for confirmed backend API/model work, and flutter-mvvm-mock-api-dev for backend-unconfirmed mock API work.
 ---
 
 # Flutter MVVM Template

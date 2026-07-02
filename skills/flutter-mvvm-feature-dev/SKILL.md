@@ -1,19 +1,18 @@
 ---
 name: flutter-mvvm-feature-dev
-description: 在已有 Flutter MVVM 项目中开发功能页面、修改 UI、规划和抽取共用组件、创建 ViewModel、接入 sealed AppPage 导航、弹窗、ActionSheet 和 BottomSheet。Use when working inside an existing Flutter app that follows the flutter-mvvm-template architecture and needs page creation, UI changes, shared widget extraction, route wiring, or ViewModel updates.
+description: >-
+  在已有 Flutter MVVM 项目中开发功能页面、修改 UI、规划和抽取共用组件、创建或修改 ViewModel、接入 sealed AppPage 导航、弹窗、ActionSheet 和 BottomSheet。Use when an existing app follows the flutter-mvvm-template architecture and the task is page/UI/navigation/component/ViewModel work, including wiring a ViewModel to an already available ApiService method. Do not use to create a new project; use flutter-mvvm-template. Do not use for data-layer-only API/model work; use flutter-mvvm-api-dev for confirmed backend APIs and flutter-mvvm-mock-api-dev for backend-unconfirmed mock APIs.
 ---
 
 # Flutter MVVM Feature Dev
 
 使用这个 skill 在已有 Flutter MVVM 项目里做日常开发：创建页面、修改 UI、补 ViewModel、接导航、处理弹窗和底部弹层。
 
-## 适用场景
+## 职责边界
 
-- 用户要求“创建一个页面”“新增功能页”“改一下这个页面 UI”“抽一个共用组件”“规划 widgets 目录”“接一个跳转”“加弹窗/ActionSheet/BottomSheet”。
-- 当前项目包含 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`，并使用 `sealed class AppPage` 表达页面路由。
-- 用户希望 AI 按当前项目 MVVM 写法继续开发，而不是重新生成项目模板。
-
-如果用户要从零创建新 Flutter MVVM 项目，使用 `$flutter-mvvm-template`，不要使用这个 skill。
+- 只处理已有项目里的页面、UI、组件、导航和 ViewModel 侧工作。
+- 可以把 ViewModel 接到已有 API 方法，但不负责新增正式 API service 或 mock service。
+- 当前项目应包含 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`，并使用 `sealed class AppPage` 表达页面路由。
 
 ## 工作流程
 
