@@ -19,3 +19,4 @@ dist/
 # Editor noise
 *.swp
 *.swo
+/examples/

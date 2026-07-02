@@ -42,5 +42,5 @@ python3 scripts/package_plugin.py
 ## 直接使用生成器
 
 ```bash
-python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create my_app --org com.example
+python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "My App" --package-name com.example.myapp
 ```
