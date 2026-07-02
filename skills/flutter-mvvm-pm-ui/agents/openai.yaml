@@ -1,4 +1,4 @@
 interface:
-  display_name: "Flutter MVVM PM UI"
-  short_description: "产品经理专用的 Flutter MVVM UI 预览和受限改动工作流"
-  default_prompt: "Use $flutter-mvvm-pm-ui 在这个 Flutter MVVM 项目中做产品 UI 预览或展示层调整，保持逻辑改动隔离并标记待开发审核。"
+  display_name: "Flutter MVVM 产品界面"
+  short_description: "产品经理专用的 Flutter MVVM 界面预览和受限改动工作流"
+  default_prompt: "使用 $flutter-mvvm-pm-ui 在这个 Flutter MVVM 项目中做产品界面预览或展示层调整，保持逻辑改动隔离并标记待开发审核。"

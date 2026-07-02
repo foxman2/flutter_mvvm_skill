@@ -1,4 +1,4 @@
 interface:
-  display_name: "Flutter MVVM Template"
-  short_description: "Create Flutter MVVM apps with sealed pages and PM preview"
-  default_prompt: "Use $flutter-mvvm-template to create a Flutter MVVM app with sealed page navigation, mock API basics, and a PM UI preview entry; ask for the app name and package name before generation."
+  display_name: "Flutter MVVM 模板"
+  short_description: "创建带封闭页面导航和产品预览入口的 Flutter MVVM 应用"
+  default_prompt: "使用 $flutter-mvvm-template 创建一个 Flutter MVVM 应用，包含封闭页面导航、模拟接口基础能力和产品 UI 预览入口；生成前先询问应用名称和包名。"
