@@ -16,6 +16,9 @@ dist/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/Flutter/ephemeral/
 
+# python cache
+**/__pycache__/
+
 # Editor noise
 *.swp
 *.swo

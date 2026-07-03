@@ -38,10 +38,8 @@ def read_manifest(root: Path) -> dict:
         return json.load(handle)
 
 
-def iter_files(root: Path, include_examples: bool) -> list[Path]:
+def iter_files(root: Path) -> list[Path]:
     include_paths = list(DEFAULT_INCLUDE_PATHS)
-    if include_examples:
-        include_paths.append("examples")
 
     files: list[Path] = []
     for relative in include_paths:
@@ -67,7 +65,7 @@ def should_include_file(path: Path) -> bool:
     return not any(part in EXCLUDED_DIR_NAMES for part in path.parts)
 
 
-def build_archive(output_dir: Path, include_examples: bool) -> Path:
+def build_archive(output_dir: Path) -> Path:
     root = repo_root()
     manifest = read_manifest(root)
     plugin_name = manifest["name"]
@@ -78,7 +76,7 @@ def build_archive(output_dir: Path, include_examples: bool) -> Path:
         archive_path.unlink()
 
     with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in iter_files(root, include_examples):
+        for path in iter_files(root):
             archive.write(path, path.relative_to(root).as_posix())
 
     return archive_path
@@ -90,11 +88,6 @@ def parse_args() -> argparse.Namespace:
         "--output-dir",
         default="dist",
         help="Directory for generated plugin archives.",
-    )
-    parser.add_argument(
-        "--include-examples",
-        action="store_true",
-        help="Include examples/ in the generated archive.",
     )
     parser.add_argument(
         "--clean",
@@ -113,7 +106,7 @@ def main() -> None:
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    archive_path = build_archive(output_dir, args.include_examples)
+    archive_path = build_archive(output_dir)
     print(f"Created plugin archive: {archive_path}")
 
 
