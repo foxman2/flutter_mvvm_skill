@@ -20,26 +20,41 @@ lib/product_preview/
 在 `lib/product_preview/pages/<feature>/` 下新增 page 和 preview-only ViewModel。命名规则和正式页面保持一致：
 
 ```dart
-class CheckoutViewModel extends AppBaseViewModel {
-  final List<String> demoItems = const ['Address', 'Payment', 'Summary'];
+abstract class CheckoutViewModelInput {
+  void onClickDemoItem(String item);
+}
 
-  void selectDemoItem(String item) {
+abstract class CheckoutViewModelOutput {
+  List<String> get demoItems;
+}
+
+abstract class CheckoutViewModelType extends AppBaseViewModel
+    implements CheckoutViewModelInput, CheckoutViewModelOutput {}
+
+class CheckoutViewModel extends CheckoutViewModelType {
+  final _demoItems = const ['Address', 'Payment', 'Summary'];
+
+  @override
+  void onClickDemoItem(String item) {
     makeRebuild();
   }
+
+  @override
+  List<String> get demoItems => _demoItems;
 }
 ```
 
 ```dart
-class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModel> {
+class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModelType> {
   const CheckoutPage({super.key}) : super(viewModelProvider: _defaultProvider);
 
-  static CheckoutViewModel? _defaultProvider() => null;
+  static CheckoutViewModelType? _defaultProvider() => null;
 
   @override
-  CheckoutViewModel? defaultViewModel() => CheckoutViewModel();
+  CheckoutViewModelType? defaultViewModel() => CheckoutViewModel();
 
   @override
-  Widget createWidget(BuildContext context, CheckoutViewModel viewModel) {
+  Widget createWidget(BuildContext context, CheckoutViewModelType viewModel) {
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout Preview')),
       body: const SafeArea(child: SizedBox.shrink()),
@@ -48,7 +63,7 @@ class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModel> {
 }
 ```
 
-页面可以使用同目录 preview-only ViewModel、本文件假数据或 mock API 返回的数据。不要创建正式 AppPage case、route parser 分支、正式 ViewModel 或真实 API 接入。
+页面可以使用同目录 preview-only ViewModel、本文件假数据或 mock API 返回的数据。preview-only ViewModel 也遵守 input/output/type；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要创建正式 AppPage case、route parser 分支、正式 ViewModel 或真实 API 接入。
 
 ## 注册预览入口
 

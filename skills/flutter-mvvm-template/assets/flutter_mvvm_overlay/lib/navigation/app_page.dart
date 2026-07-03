@@ -63,7 +63,7 @@ final class ProductPreviewAppPage extends AppPage {
 final class AlertAppPage extends AppPage {
   const AlertAppPage(this.viewModel);
 
-  final AlertViewModel viewModel;
+  final AlertViewModelType viewModel;
 
   @override
   String get routeName => '/alert';
@@ -80,7 +80,7 @@ final class AlertAppPage extends AppPage {
 final class InputAlertAppPage extends AppPage {
   const InputAlertAppPage(this.viewModel);
 
-  final InputAlertViewModel viewModel;
+  final InputAlertViewModelType viewModel;
 
   @override
   String get routeName => '/input-alert';
@@ -97,7 +97,7 @@ final class InputAlertAppPage extends AppPage {
 final class ActionSheetAppPage extends AppPage {
   const ActionSheetAppPage(this.viewModel);
 
-  final ActionSheetViewModel viewModel;
+  final ActionSheetViewModelType viewModel;
 
   @override
   String get routeName => '/action-sheet';

@@ -41,6 +41,10 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - 原生包名会同步到 Android namespace/applicationId/MainActivity package，以及 iOS bundle identifier。
 - 使用 `sealed class AppPage` 表达带参数的页面枚举。
 - 页面参数放在具体的 `AppPage` 子类中，不使用全局 `dynamic param`。
+- 页面 ViewModel 使用严格 input/output/type 契约：Page 依赖 `<Feature>ViewModelType`，用户事件走 input 方法，展示状态走 output getter 或 stream。
+- input 方法命名只描述用户在 View 上做了什么：点击用简短 `onClickXxx`，输入用 `onInputXxx`；不要用裸的 `show/open/load/save/delete/submit/close/select/fetch` 这类目的性方法名。
+- output 默认使用 getter + `makeRebuild()`；只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等高频或局部刷新场景使用 `ValueStream<T>`/`Stream<T>`。
+- 不把 `ValueNotifier` 作为页面 ViewModel output；需要局部刷新时使用模板提供的 `ValueStreamBuilder<T>`。
 - 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或真实业务 API。
 - 生成项目默认包含 `rxdart`、`flutter_easyloading` 和 `dio`。
 - 生成项目预设 `ApiService.shared` 作为网络请求服务单例，只保留 `user` 模块作为示例占位。

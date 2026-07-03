@@ -34,7 +34,10 @@ final class ProfileAppPage extends AppPage {
 
   @override
   WidgetBuilder generateWidgetBuilder() {
-    return (_) => ProfilePage(viewModel: ProfileViewModel(userId));
+    return (_) => ProfilePage(
+      userId: userId,
+      viewModel: ProfileViewModel(userId: userId),
+    );
   }
 }
 ```

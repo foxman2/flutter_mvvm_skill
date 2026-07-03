@@ -127,11 +127,33 @@ class ApiService {
 ViewModel 继续使用现有 loading/error 追踪：
 
 ```dart
-Future<void> loadProfile() async {
-  profile = await ApiService.shared.user
-      .fetchProfile()
-      .trackLoadingAndConsumeError(this);
-  makeRebuild();
+abstract class ProfileViewModelInput {}
+
+abstract class ProfileViewModelOutput {
+  UserProfile? get profile;
+}
+
+abstract class ProfileViewModelType extends AppBaseViewModel
+    implements ProfileViewModelInput, ProfileViewModelOutput {}
+
+class ProfileViewModel extends ProfileViewModelType {
+  UserProfile? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    _profile = await ApiService.shared.user
+        .fetchProfile()
+        .trackLoadingAndConsumeError(this);
+    makeRebuild();
+  }
+
+  @override
+  UserProfile? get profile => _profile;
 }
 ```
 

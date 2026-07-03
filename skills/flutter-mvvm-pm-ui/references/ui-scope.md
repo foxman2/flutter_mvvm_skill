@@ -3,8 +3,8 @@
 ## 可以改
 
 - 页面展示结构、文案、颜色、字体、间距、图标、空态、loading/empty/error 的呈现。
-- `lib/pages/**/<feature>_page.dart` 中已有 ViewModel 状态的展示方式。
-- `onPressed: viewModel.someAction` 这类已有事件绑定的按钮位置和样式。
+- `lib/pages/**/<feature>_page.dart` 中已有 ViewModel output 的展示方式。
+- `onPressed: viewModel.onClickXxx` 这类已有 input 绑定的按钮位置和样式。
 - 纯展示组件：`lib/widgets/`、`lib/theme/`、页面局部 `widgets/`。
 - 产品预览入口按钮：`lib/product_preview/product_preview_entry_button.dart`。
 - 隔离预览页面的同目录 preview-only ViewModel：`lib/product_preview/pages/<feature>/<feature>_view_model.dart`。
@@ -18,16 +18,20 @@
 
 ## 绑定规则
 
-Widget 可以绑定已有 ViewModel 方法：
+Widget 可以绑定已有 ViewModel input 方法：
 
 ```dart
 FilledButton(
-  onPressed: viewModel.submit,
+  onPressed: viewModel.onClickSubmit,
   child: const Text('Submit'),
 )
 ```
 
-隔离预览页可以绑定同目录 preview-only ViewModel 方法，但这些方法只表达展示状态和临时交互，不接正式业务流程。
+隔离预览页可以绑定同目录 preview-only ViewModel input 方法，但这些方法只表达展示状态和临时交互，不接正式业务流程。
+
+input 方法命名保持简短：点击用 `onClickXxx`，输入用 `onInputXxx`，不要默认追加 `Button`、`Field`、`Tile` 等控件类型后缀。
+
+展示状态优先读取 output getter；只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等局部高频状态才用 `ValueStream<T>`/`Stream<T>`。
 
 Widget 不要把业务流程写进回调：
 

@@ -4,12 +4,66 @@ import '../action_sheet/action_sheet_view_model.dart';
 import '../alert/alert_view_model.dart';
 import '../input_alert/input_alert_view_model.dart';
 
-class HomeViewModel extends AppBaseViewModel {
-  void showProductPreview() {
+abstract class HomeViewModelInput {
+  void onClickProductPreview();
+
+  void onClickAlertDemo();
+
+  void onClickInputAlertDemo();
+
+  void onClickActionSheetDemo();
+
+  void onClickBottomSheetDemo();
+}
+
+abstract class HomeViewModelOutput {
+  String get templateTitle;
+
+  String get templateDescription;
+}
+
+abstract class HomeViewModelType extends AppBaseViewModel
+    implements HomeViewModelInput, HomeViewModelOutput {}
+
+class HomeViewModel extends HomeViewModelType {
+  @override
+  String get templateTitle => 'Flutter MVVM Template';
+
+  @override
+  String get templateDescription {
+    return 'Use sealed AppPage classes as page cases with typed parameters.';
+  }
+
+  @override
+  void onClickProductPreview() {
+    _showProductPreview();
+  }
+
+  @override
+  void onClickAlertDemo() {
+    _showAlertDemo();
+  }
+
+  @override
+  void onClickInputAlertDemo() {
+    _showInputAlertDemo();
+  }
+
+  @override
+  void onClickActionSheetDemo() {
+    _showActionSheetDemo();
+  }
+
+  @override
+  void onClickBottomSheetDemo() {
+    _showBottomSheetDemo();
+  }
+
+  void _showProductPreview() {
     show(const ProductPreviewAppPage());
   }
 
-  void showAlertDemo() {
+  void _showAlertDemo() {
     final alert = AlertViewModel(
       title: 'Hello from MVVM',
       content:
@@ -18,7 +72,7 @@ class HomeViewModel extends AppBaseViewModel {
     show(AlertAppPage(alert));
   }
 
-  void showInputAlertDemo() {
+  void _showInputAlertDemo() {
     final input = InputAlertViewModel(
       title: 'Project name',
       hint: 'my_app',
@@ -29,7 +83,7 @@ class HomeViewModel extends AppBaseViewModel {
     show(InputAlertAppPage(input));
   }
 
-  void showActionSheetDemo() {
+  void _showActionSheetDemo() {
     final sheet =
         ActionSheetViewModel(
             title: 'Choose an action',
@@ -41,7 +95,7 @@ class HomeViewModel extends AppBaseViewModel {
     show(ActionSheetAppPage(sheet));
   }
 
-  void showBottomSheetDemo() {
+  void _showBottomSheetDemo() {
     show(const BottomSheetDemoAppPage());
   }
 }

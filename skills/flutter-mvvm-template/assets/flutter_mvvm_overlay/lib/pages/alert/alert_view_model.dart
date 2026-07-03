@@ -16,21 +16,63 @@ class AlertViewAction {
   final VoidCallback? handler;
 }
 
-class AlertViewModel extends BaseViewModel {
-  AlertViewModel({this.title, this.content, this.richTitle, this.richContent});
+abstract class AlertViewModelInput {
+  void onPop(Object? result);
 
-  String? title;
-  String? content;
-  TextSpan? richTitle;
-  TextSpan? richContent;
-  bool cancelable = true;
-  VoidCallback? cancelHandler;
-  final actions = <AlertViewAction>[];
+  void onClickAction(AlertViewAction action);
+}
 
+abstract class AlertViewModelOutput {
+  String? get title;
+
+  String? get content;
+
+  TextSpan? get richTitle;
+
+  TextSpan? get richContent;
+
+  bool get cancelable;
+
+  List<AlertViewAction> get actions;
+}
+
+abstract class AlertViewModelType extends BaseViewModel
+    implements AlertViewModelInput, AlertViewModelOutput {}
+
+class AlertViewModel extends AlertViewModelType {
+  AlertViewModel({
+    String? title,
+    String? content,
+    TextSpan? richTitle,
+    TextSpan? richContent,
+    bool cancelable = true,
+    VoidCallback? cancelHandler,
+  }) : _title = title,
+       _content = content,
+       _richTitle = richTitle,
+       _richContent = richContent,
+       _cancelable = cancelable,
+       _cancelHandler = cancelHandler;
+
+  final String? _title;
+  final String? _content;
+  final TextSpan? _richTitle;
+  final TextSpan? _richContent;
+  final bool _cancelable;
+  final VoidCallback? _cancelHandler;
+  final _actions = <AlertViewAction>[];
+
+  @override
   void onPop(Object? result) {
     if (result == null) {
-      cancelHandler?.call();
+      _cancelHandler?.call();
     }
+  }
+
+  @override
+  void onClickAction(AlertViewAction action) {
+    action.handler?.call();
+    popUseRoot(action.title);
   }
 
   void addAction(
@@ -39,7 +81,7 @@ class AlertViewModel extends BaseViewModel {
     bool isDestructive = false,
     VoidCallback? handler,
   }) {
-    actions.add(
+    _actions.add(
       AlertViewAction(
         title,
         isDefault: isDefault,
@@ -60,4 +102,22 @@ class AlertViewModel extends BaseViewModel {
   void addDeleteAction([VoidCallback? handler]) {
     addAction('Delete', isDestructive: true, handler: handler);
   }
+
+  @override
+  String? get title => _title;
+
+  @override
+  String? get content => _content;
+
+  @override
+  TextSpan? get richTitle => _richTitle;
+
+  @override
+  TextSpan? get richContent => _richContent;
+
+  @override
+  bool get cancelable => _cancelable;
+
+  @override
+  List<AlertViewAction> get actions => List.unmodifiable(_actions);
 }

@@ -52,7 +52,7 @@ lib/
 AppEmptyView(
   title: '暂无数据',
   actionTitle: '刷新',
-  onActionPressed: viewModel.reload,
+  onActionPressed: viewModel.onClickReload,
 )
 ```
 

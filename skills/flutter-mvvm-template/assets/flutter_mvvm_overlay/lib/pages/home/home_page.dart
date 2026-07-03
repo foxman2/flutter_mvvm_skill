@@ -4,51 +4,51 @@ import '../../mvvm/base_view.dart';
 import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
 
-class HomePage extends AppBaseStatelessPage<HomeViewModel> {
+class HomePage extends AppBaseStatelessPage<HomeViewModelType> {
   const HomePage({super.key}) : super(viewModelProvider: _defaultProvider);
 
-  static HomeViewModel? _defaultProvider() => null;
+  static HomeViewModelType? _defaultProvider() => null;
 
   @override
-  HomeViewModel? defaultViewModel() => HomeViewModel();
+  HomeViewModelType? defaultViewModel() => HomeViewModel();
 
   @override
-  Widget createWidget(BuildContext context, HomeViewModel viewModel) {
+  Widget createWidget(BuildContext context, HomeViewModelType viewModel) {
     return Scaffold(
       appBar: AppBar(title: const Text('{{app_name}}')),
       floatingActionButton: ProductPreviewEntryButton(
-        onPressed: viewModel.showProductPreview,
+        onPressed: viewModel.onClickProductPreview,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'Flutter MVVM Template',
+            viewModel.templateTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Use sealed AppPage classes as page cases with typed parameters.',
+            viewModel.templateDescription,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: viewModel.showAlertDemo,
+            onPressed: viewModel.onClickAlertDemo,
             child: const Text('Show alert'),
           ),
           const SizedBox(height: 12),
           FilledButton(
-            onPressed: viewModel.showInputAlertDemo,
+            onPressed: viewModel.onClickInputAlertDemo,
             child: const Text('Show input alert'),
           ),
           const SizedBox(height: 12),
           FilledButton(
-            onPressed: viewModel.showActionSheetDemo,
+            onPressed: viewModel.onClickActionSheetDemo,
             child: const Text('Show action sheet'),
           ),
           const SizedBox(height: 12),
           FilledButton(
-            onPressed: viewModel.showBottomSheetDemo,
+            onPressed: viewModel.onClickBottomSheetDemo,
             child: const Text('Show bottom sheet'),
           ),
         ],

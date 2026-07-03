@@ -5,6 +5,9 @@
 - 模板代码要独立于产品专属服务：Firebase、推送处理、生成式本地化、资源、认证/session manager 和领域 manager 都留在应用层。
 - 网络层只预设基础 `ApiService` 规则：Dio setup、通用请求、错误转换、代码级 API 环境切换和 `user` real/mock 示例模块，不预设真实业务接口或后端响应协议。
 - 跨项目可复用的生命周期代码放到 `mvvm/`：view model 绑定、dispose 管理、loading/error 跟踪和基础 page widget。
+- 页面级 ViewModel 必须按 input/output/type 拆分：Page 泛型只依赖 `<Feature>ViewModelType`，实现类只在 `defaultViewModel()` 或注入点中出现。
+- input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放在实现类私有方法里。
+- output 默认用 getter + `makeRebuild()`。只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等高频或局部刷新场景使用 `ValueStream<T>`/`Stream<T>` 与 `ValueStreamBuilder<T>`。
 - 导航基础能力放到 `navigation/`：page model、navigator、route parser、transition enum 和 observer。
 - 通用 UI 保持小而可替换：alert、input alert、action sheet、bottom sheet 是示例，不是完整设计系统。
 - 优先使用回调或 view model 方法，不要从通用模板里直接导入业务模块。
@@ -27,6 +30,20 @@ lib/
 │   └── mock_api/
 │       └── models/
 └── widgets/
+```
+
+页面 ViewModel 推荐结构：
+
+```dart
+abstract class ProfileViewModelInput {
+  void onClickClose();
+}
+
+abstract class ProfileViewModelOutput {}
+abstract class ProfileViewModelType extends AppBaseViewModel
+    implements ProfileViewModelInput, ProfileViewModelOutput {}
+
+class ProfileViewModel extends ProfileViewModelType {}
 ```
 
 `main.dart` 负责初始化 `AppServices` 并启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。

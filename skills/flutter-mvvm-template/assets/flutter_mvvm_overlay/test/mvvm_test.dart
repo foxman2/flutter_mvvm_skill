@@ -1,6 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:{{project_name}}/mvvm/base_view.dart';
+import 'package:{{project_name}}/mvvm/base_view_model.dart';
 import 'package:{{project_name}}/mvvm/dispose_bag.dart';
 import 'package:{{project_name}}/mvvm/loading_tracker.dart';
+import 'package:{{project_name}}/pages/input_alert/input_alert_view_model.dart';
+import 'package:{{project_name}}/widgets/value_stream_builder.dart';
 
 void main() {
   test('DisposeBag runs registered actions once', () {
@@ -26,4 +32,93 @@ void main() {
     await sub.cancel();
     tracker.dispose();
   });
+
+  testWidgets('ValueStreamBuilder renders seeded value and updates', (
+    tester,
+  ) async {
+    final subject = BehaviorSubject<int>.seeded(1);
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: ValueStreamBuilder<int>(
+          stream: subject,
+          builder: (context, snapshot) {
+            return Text('${snapshot.data}');
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('1'), findsOneWidget);
+
+    subject.add(2);
+    await tester.pump();
+
+    expect(find.text('2'), findsOneWidget);
+    await subject.close();
+  });
+
+  test('InputAlertViewModel exposes done state as ValueStream output', () {
+    final viewModel = InputAlertViewModel();
+
+    viewModel.initState();
+
+    expect(viewModel.isDoneEnabled.value, isFalse);
+    viewModel.onInputText('Project');
+    expect(viewModel.isDoneEnabled.value, isTrue);
+    viewModel.onInputText('   ');
+    expect(viewModel.isDoneEnabled.value, isFalse);
+
+    viewModel.dispose();
+  });
+
+  test(
+    'page can depend on ViewModelType instead of concrete implementation',
+    () {
+      const page = _StrictPage();
+      final viewModel = page.createViewModel();
+
+      expect(viewModel, isA<_StrictViewModelType>());
+      expect(viewModel.title, 'Strict MVVM');
+    },
+  );
+}
+
+abstract class _StrictViewModelInput {
+  void rename(String title);
+}
+
+abstract class _StrictViewModelOutput {
+  String get title;
+}
+
+abstract class _StrictViewModelType extends AppBaseViewModel
+    implements _StrictViewModelInput, _StrictViewModelOutput {}
+
+class _StrictViewModel extends _StrictViewModelType {
+  String _title = 'Strict MVVM';
+
+  @override
+  void rename(String title) {
+    _title = title;
+    makeRebuild();
+  }
+
+  @override
+  String get title => _title;
+}
+
+class _StrictPage extends AppBaseStatelessPage<_StrictViewModelType> {
+  const _StrictPage() : super(viewModelProvider: _defaultProvider);
+
+  static _StrictViewModelType? _defaultProvider() => null;
+
+  @override
+  _StrictViewModelType? defaultViewModel() => _StrictViewModel();
+
+  @override
+  Widget createWidget(BuildContext context, _StrictViewModelType viewModel) {
+    return Text(viewModel.title);
+  }
 }

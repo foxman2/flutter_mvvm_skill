@@ -4,21 +4,21 @@ import '../../../mvvm/base_view.dart';
 import 'sample_product_preview_view_model.dart';
 
 class SampleProductPreviewPage
-    extends AppBaseStatelessPage<SampleProductPreviewViewModel> {
+    extends AppBaseStatelessPage<SampleProductPreviewViewModelType> {
   const SampleProductPreviewPage({super.key})
     : super(viewModelProvider: _defaultProvider);
 
-  static SampleProductPreviewViewModel? _defaultProvider() => null;
+  static SampleProductPreviewViewModelType? _defaultProvider() => null;
 
   @override
-  SampleProductPreviewViewModel? defaultViewModel() {
+  SampleProductPreviewViewModelType? defaultViewModel() {
     return SampleProductPreviewViewModel();
   }
 
   @override
   Widget createWidget(
     BuildContext context,
-    SampleProductPreviewViewModel viewModel,
+    SampleProductPreviewViewModelType viewModel,
   ) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(

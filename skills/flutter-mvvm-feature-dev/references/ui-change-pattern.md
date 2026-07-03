@@ -7,7 +7,7 @@
 - 是否使用 `Scaffold`、`AppBar`、`ListView`、`CustomScrollView`、`SafeArea`。
 - 按钮使用 `FilledButton`、`OutlinedButton`、`TextButton` 还是项目自定义组件。
 - 间距、圆角、颜色、字体是否来自 `Theme.of(context)`。
-- 页面动作是否已经通过 ViewModel 方法暴露。
+- 页面动作是否已经通过 ViewModel input 方法暴露。
 
 ## 职责边界
 
@@ -15,7 +15,7 @@ Widget 中保留：
 
 - 布局结构
 - 文案展示
-- 绑定 `onPressed: viewModel.someAction`
+- 绑定 `onPressed: viewModel.onClickXxx`
 - 根据 ViewModel 状态显示不同 UI
 
 ViewModel 中保留：
@@ -38,7 +38,7 @@ onPressed: () async {
 优先写成：
 
 ```dart
-onPressed: viewModel.saveAndOpenDetail
+onPressed: viewModel.onClickSave
 ```
 
 ## 弹窗
@@ -48,13 +48,17 @@ onPressed: viewModel.saveAndOpenDetail
 业务确认弹窗可以创建独立 ViewModel 和 `AlertAppPage`，由当前 ViewModel 发起：
 
 ```dart
-void confirmDelete() {
+void onClickDelete() {
+  _confirmDelete();
+}
+
+void _confirmDelete() {
   final alert = AlertViewModel(
     title: '确认删除',
     content: '删除后不可恢复。',
   )
     ..addCancelAction()
-    ..addDestructiveAction(title: '删除', handler: delete);
+    ..addDeleteAction(delete);
   show(AlertAppPage(alert));
 }
 ```
@@ -66,11 +70,15 @@ void confirmDelete() {
 多个互斥操作优先使用 `ActionSheetAppPage` 或项目已有 action sheet：
 
 ```dart
-void showMoreActions() {
+void onClickMore() {
+  _showMoreActions();
+}
+
+void _showMoreActions() {
   final sheet = ActionSheetViewModel(title: '更多操作')
-    ..addAction(title: '编辑', handler: edit)
-    ..addAction(title: '分享', handler: share)
-    ..addCancelAction();
+    ..addAction('编辑', handler: edit)
+    ..addAction('分享', handler: share)
+    ..setCancelAction();
   show(ActionSheetAppPage(sheet));
 }
 ```

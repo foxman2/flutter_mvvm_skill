@@ -20,7 +20,7 @@ description: >-
 1. 先读当前项目结构：`pubspec.yaml`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
 2. 找一个最相似的已有页面和 ViewModel，优先复制它的组织方式、命名、状态管理和 UI 风格。
 3. 如果任务来自隔离预览，先读 `lib/product_preview/` 的原型，再重新按正式 MVVM 边界实现，不直接把原型当最终业务代码搬过去。
-4. 创建或修改页面时保持职责分离：Widget 负责展示和事件绑定，ViewModel 负责状态、异步、导航、弹窗和业务动作。
+4. 创建或修改页面时保持职责分离：Widget 负责展示和事件绑定，ViewModel 负责状态、异步、导航、弹窗和业务动作；新增页面 ViewModel 必须拆成 input/output/type/实现类。
 5. 新增可跳转页面时，在 `AppPage` 中新增具体 page case，不使用 `dynamic param` 或全局 enum 参数。
 6. 修改 UI 或抽取组件时优先使用项目已有组件、主题、间距、按钮样式和弹层容器。
 7. 完成后运行项目已有检查；通常是 `dart format lib test`、`flutter analyze`，有相关测试时运行或补充测试。
@@ -37,11 +37,17 @@ description: >-
 - 页面目录使用 snake_case：`lib/pages/profile/`。
 - 页面文件命名为 `<feature>_page.dart`，ViewModel 文件命名为 `<feature>_view_model.dart`。
 - 页面类命名为 `<Feature>Page`，ViewModel 类命名为 `<Feature>ViewModel`。
+- ViewModel 契约命名为 `<Feature>ViewModelInput`、`<Feature>ViewModelOutput`、`<Feature>ViewModelType`。
+- Page 泛型使用 `<Feature>ViewModelType`，`defaultViewModel()` 返回 `<Feature>ViewModel()`。
+- input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放到实现类私有方法里。
+- output 默认使用 getter + `makeRebuild()`；高频或局部刷新状态才使用 `ValueStream<T>`/`Stream<T>`。
 - 页面 case 命名为 `<Feature>AppPage`，参数放在构造器中并保持强类型。
 - 普通页面默认 `AppPageTransition.push`；弹窗使用 `alert`；操作面板使用 `actionSheet`；底部弹层使用 `bottomSheet` 或 `bottomSheetWithNavigator`。
 - 不把业务服务、API client、Firebase、推送、本地化生成逻辑塞进通用 MVVM 基类。
 - 不把隔离预览页面留在正式导航里；迁移后保持 `lib/product_preview/` 和正式页面职责分开。
 - 不绕过现有 `show()`、`pushReplacement()`、`pop()`、`loadingTracker`、`errorTracker` 等封装。
+- 不在 input 接口里使用裸的 `show/open/load/save/delete/submit/close/select/fetch` 这类目的性方法名；点击 Delete 或 Submit 这类 UI 文案时写 `onClickDelete()`、`onClickSubmit()`。
+- 不把 `ValueNotifier` 作为页面 ViewModel output；输入联动、进度、倒计时、刷新状态和一次性 UI 事件使用 `ValueStream<T>` 或 `Stream<T>`。
 - 共用组件保持展示型，通过 callback 暴露事件，不直接依赖业务服务、具体 ViewModel 或页面路由。
 
 ## 输出标准

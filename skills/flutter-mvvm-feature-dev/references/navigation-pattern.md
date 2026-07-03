@@ -50,7 +50,7 @@ Alert：
 final class ConfirmDeleteAppPage extends AppPage {
   const ConfirmDeleteAppPage(this.viewModel);
 
-  final ConfirmDeleteViewModel viewModel;
+  final ConfirmDeleteViewModelType viewModel;
 
   @override
   String get routeName => '/confirm-delete';

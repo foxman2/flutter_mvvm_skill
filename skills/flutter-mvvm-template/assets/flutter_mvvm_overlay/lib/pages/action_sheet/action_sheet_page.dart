@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../mvvm/base_view.dart';
 import 'action_sheet_view_model.dart';
 
-class ActionSheetPage extends BaseStatefulView<ActionSheetViewModel> {
+class ActionSheetPage extends BaseStatefulView<ActionSheetViewModelType> {
   const ActionSheetPage({super.key, required super.viewModelProvider});
 
   @override
@@ -11,7 +11,7 @@ class ActionSheetPage extends BaseStatefulView<ActionSheetViewModel> {
 }
 
 class _ActionSheetPageState
-    extends BaseStatefulViewState<ActionSheetViewModel, ActionSheetPage> {
+    extends BaseStatefulViewState<ActionSheetViewModelType, ActionSheetPage> {
   @override
   Widget createWidget(BuildContext context) {
     return CupertinoActionSheet(
@@ -21,18 +21,12 @@ class _ActionSheetPageState
         for (final action in viewModel.actions)
           CupertinoActionSheetAction(
             isDestructiveAction: action.isDestructive,
-            onPressed: () {
-              action.handler?.call();
-              Navigator.of(context, rootNavigator: true).pop(action.title);
-            },
+            onPressed: () => viewModel.onClickAction(action),
             child: Text(action.title),
           ),
       ],
       cancelButton: CupertinoActionSheetAction(
-        onPressed: () {
-          viewModel.cancelAction?.handler?.call();
-          Navigator.of(context, rootNavigator: true).pop();
-        },
+        onPressed: viewModel.onClickCancel,
         child: Text(viewModel.cancelAction?.title ?? 'Cancel'),
       ),
     );

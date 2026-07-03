@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../mvvm/base_view.dart';
+import '../../widgets/value_stream_builder.dart';
 import 'input_alert_view_model.dart';
 
-class InputAlertPage extends AppBaseStatefulPage<InputAlertViewModel> {
+class InputAlertPage extends AppBaseStatefulPage<InputAlertViewModelType> {
   const InputAlertPage({super.key, required super.viewModelProvider});
 
   @override
@@ -11,7 +12,7 @@ class InputAlertPage extends AppBaseStatefulPage<InputAlertViewModel> {
 }
 
 class _InputAlertPageState
-    extends AppBaseStatefulPageState<InputAlertViewModel, InputAlertPage> {
+    extends AppBaseStatefulPageState<InputAlertViewModelType, InputAlertPage> {
   late final TextEditingController _controller;
 
   @override
@@ -45,10 +46,10 @@ class _InputAlertPageState
               hintText: viewModel.hint,
               errorText: viewModel.errorMessage,
             ),
-            onChanged: viewModel.onInputChange,
+            onChanged: viewModel.onInputText,
             onSubmitted: (_) {
               if (viewModel.isDoneEnabled.value) {
-                viewModel.onOkClick();
+                viewModel.onClickOk();
               }
             },
           ),
@@ -56,18 +57,18 @@ class _InputAlertPageState
       ),
       actions: [
         TextButton(
-          onPressed: viewModel.onCancelClick,
+          onPressed: viewModel.onClickCancel,
           child: Text(viewModel.cancelText),
         ),
-        ValueListenableBuilder<bool>(
-          valueListenable: viewModel.isDoneEnabled,
-          builder: (context, enabled, child) {
+        ValueStreamBuilder<bool>(
+          stream: viewModel.isDoneEnabled,
+          builder: (context, snapshot) {
+            final enabled = snapshot.data ?? false;
             return FilledButton(
-              onPressed: enabled ? viewModel.onOkClick : null,
-              child: child,
+              onPressed: enabled ? viewModel.onClickOk : null,
+              child: Text(viewModel.okText),
             );
           },
-          child: Text(viewModel.okText),
         ),
       ],
     );

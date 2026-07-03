@@ -24,34 +24,66 @@ lib/pages/profile/
 
 ## ViewModel 写法
 
-ViewModel 继承 `AppBaseViewModel`，把页面动作放成方法：
+新增页面 ViewModel 必须拆成 input/output/type/实现类。Page 只依赖
+`<Feature>ViewModelType`；事件方法放 input，展示状态放 output。
 
 ```dart
-class ProfileViewModel extends AppBaseViewModel {
+abstract class ProfileViewModelInput {
+  void onClickClose();
+
+  void onClickReload();
+}
+
+abstract class ProfileViewModelOutput {
+  String get title;
+}
+
+abstract class ProfileViewModelType extends AppBaseViewModel
+    implements ProfileViewModelInput, ProfileViewModelOutput {}
+
+class ProfileViewModel extends ProfileViewModelType {
   ProfileViewModel({required this.userId});
 
   final String userId;
+  String _title = 'Profile';
 
   @override
   void initState() {
     super.initState();
-    loadProfile();
+    _loadProfile();
   }
 
-  Future<void> loadProfile() async {
+  @override
+  void onClickClose() {
+    pop();
+  }
+
+  @override
+  void onClickReload() {
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
     await Future<void>.delayed(Duration.zero)
         .trackLoadingAndConsumeError(this);
+    _title = 'Profile loaded';
     makeRebuild();
   }
 
-  void close() {
-    pop();
-  }
+  @override
+  String get title => _title;
 }
 ```
 
 约定：
 
+- input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`，不要默认加 `Button`、`Field`、`Tile` 等控件后缀。
+- input 不使用裸的目的性方法名，例如 `show/open/load/save/delete/submit/close/select/fetch`；如果 UI 文案就是 Delete 或 Submit，写成 `onClickDelete()`、`onClickSubmit()`，业务目的放到实现类私有方法。
+- `onPop` 这类系统生命周期事件可以保留，不属于 click/input 命名范围。
+- 默认 output 使用 getter + `makeRebuild()`，普通展示状态不要为了形式主义做成 stream。
+- 高频或局部刷新状态使用 `ValueStream<T>`/`Stream<T>`，例如输入框按钮 enabled、上传进度、倒计时、下拉刷新状态和一次性 UI 事件；页面用 `ValueStreamBuilder<T>`。
+- 不把 `ValueNotifier` 作为页面 ViewModel output。
+- ViewModel 内部状态保持私有，Page 不直接读写实现类字段。
 - 异步 loading 和错误处理优先走 `trackLoadingAndConsumeError(this)`。
 - ViewModel 状态变化后调用 `makeRebuild()`，不要从外部直接拿 `State`。
 - 页面跳转用 `show(...)`、`pushReplacement(...)`、`pushAndRemoveUntil(...)`。
@@ -60,28 +92,28 @@ class ProfileViewModel extends AppBaseViewModel {
 ## Page 写法
 
 ```dart
-class ProfilePage extends AppBaseStatelessPage<ProfileViewModel> {
+class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
   const ProfilePage({
     super.key,
     required this.userId,
-    ProfileViewModel? viewModel,
+    ProfileViewModelType? viewModel,
   }) : _viewModel = viewModel,
        super(viewModelProvider: _defaultProvider);
 
   final String userId;
-  final ProfileViewModel? _viewModel;
+  final ProfileViewModelType? _viewModel;
 
-  static ProfileViewModel? _defaultProvider() => null;
+  static ProfileViewModelType? _defaultProvider() => null;
 
   @override
-  ProfileViewModel? defaultViewModel() {
+  ProfileViewModelType? defaultViewModel() {
     return _viewModel ?? ProfileViewModel(userId: userId);
   }
 
   @override
-  Widget createWidget(BuildContext context, ProfileViewModel viewModel) {
+  Widget createWidget(BuildContext context, ProfileViewModelType viewModel) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(viewModel.title)),
       body: const SizedBox.shrink(),
     );
   }
@@ -95,5 +127,7 @@ class ProfilePage extends AppBaseStatelessPage<ProfileViewModel> {
 有测试目录时，优先补充轻量测试：
 
 - ViewModel 方法是否触发预期状态。
+- Page 是否只依赖 `<Feature>ViewModelType`。
+- getter + `makeRebuild()` 或 `ValueStream<T>` output 是否按场景选择。
 - `AppPage` 的 `routeName`、`defaultTransition` 是否正确。
 - 关键页面是否能 `pumpWidget`。

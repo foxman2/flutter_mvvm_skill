@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import '../../mvvm/base_view.dart';
 import 'alert_view_model.dart';
 
-class AlertPage extends BaseStatefulView<AlertViewModel> {
+class AlertPage extends BaseStatefulView<AlertViewModelType> {
   const AlertPage({super.key, required super.viewModelProvider});
 
   @override
   State<AlertPage> createState() => _AlertPageState();
 }
 
-class _AlertPageState extends BaseStatefulViewState<AlertViewModel, AlertPage> {
+class _AlertPageState
+    extends BaseStatefulViewState<AlertViewModelType, AlertPage> {
   @override
   Widget createWidget(BuildContext context) {
     final actions = viewModel.actions.isEmpty
@@ -34,10 +35,7 @@ class _AlertPageState extends BaseStatefulViewState<AlertViewModel, AlertPage> {
         actions: [
           for (final action in actions)
             TextButton(
-              onPressed: () {
-                action.handler?.call();
-                Navigator.of(context, rootNavigator: true).pop(action.title);
-              },
+              onPressed: () => viewModel.onClickAction(action),
               child: Text(
                 action.title,
                 style: TextStyle(
