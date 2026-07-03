@@ -13,8 +13,6 @@ abstract class SampleProductPreviewViewModelType extends AppBaseViewModel
 
 class SampleProductPreviewViewModel extends SampleProductPreviewViewModelType {
   @override
-  String get mockContentDescription {
-    return 'Use mock API services for data-driven previews, and mark those '
-        'data-layer changes as pending dev review.';
-  }
+  String get mockContentDescription =>
+      localStrings.productPreviewMockContentDescription;
 }

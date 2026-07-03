@@ -1,3 +1,4 @@
+import '../l10n/app_localizations.dart';
 import '../navigation/app_page.dart';
 import '../navigation/app_page_transition.dart';
 import 'dispose_bag.dart';
@@ -17,8 +18,19 @@ abstract class BaseViewModel {
   void Function()? popToRootPage;
   void Function([Object? result])? popPageUseRoot;
   void Function()? rebuild;
+  AppLocalizations Function()? getLocalStrings;
 
   Map<String, String> get queryParameters => {};
+
+  AppLocalizations get localStrings {
+    final callback = getLocalStrings;
+    if (callback == null) {
+      throw StateError(
+        'AppLocalizations is only available after the view model is bound to a page.',
+      );
+    }
+    return callback();
+  }
 
   void initState() {}
 

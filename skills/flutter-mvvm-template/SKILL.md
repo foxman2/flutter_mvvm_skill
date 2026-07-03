@@ -45,8 +45,12 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - input 方法命名只描述用户在 View 上做了什么：点击用简短 `onClickXxx`，输入用 `onInputXxx`；不要用裸的 `show/open/load/save/delete/submit/close/select/fetch` 这类目的性方法名。
 - output 默认使用 getter + `makeRebuild()`；只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等高频或局部刷新场景使用 `ValueStream<T>`/`Stream<T>`。
 - 不把 `ValueNotifier` 作为页面 ViewModel output；需要局部刷新时使用模板提供的 `ValueStreamBuilder<T>`。
-- 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、生成式本地化或真实业务 API。
+- 可复用 MVVM 基础设施不要依赖业务资源、Firebase、推送、产品专属本地化策略或真实业务 API。
 - 生成项目默认包含 `rxdart`、`flutter_easyloading` 和 `dio`。
+- 生成项目默认启用 Flutter 官方 l10n：`flutter_localizations`、`intl:any`、`flutter.generate: true`、`l10n.yaml` 和 `lib/l10n/app_en.arb`。
+- 模板当前只提供英语 `en`；新增语言时复制 ARB 文件并按 Flutter gen-l10n 规则扩展，不在模板里加入运行时切换语言 UI。
+- 用户可见文案放进 ARB。Page 或纯 Widget 用 `AppLocalizations.of(context)!`，ViewModel 用基类 `localStrings` 现用现取当前字符串。
+- ViewModel 不在构造函数或 `initState()` 中读取 `localStrings`，因为页面 callback 绑定发生在 ViewModel 创建之后。
 - 生成项目预设 `ApiService.shared` 作为网络请求服务单例，只保留 `user` 模块作为示例占位。
 - 生成项目在 `api_service.dart` 内预设 `ApiEnvironment`、baseUrl、timeout、headers 和 mock 开关；本地预览 mock 数据时优先使用 `--dart-define=USE_MOCK_API=true`。
 - mock service 直接放在 `lib/services/mock_api/` 下，后台未确认的 mock-only model 放在 `lib/services/mock_api/models/`。

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../l10n/app_localizations.dart';
 import 'pages/sample_product_preview/sample_product_preview_page.dart';
 
 class ProductPreviewItem {
@@ -11,16 +12,16 @@ class ProductPreviewItem {
   });
 
   final String id;
-  final String title;
-  final String? description;
+  final String Function(AppLocalizations strings) title;
+  final String Function(AppLocalizations strings)? description;
   final WidgetBuilder builder;
 }
 
 final List<ProductPreviewItem> productPreviewItems = [
   ProductPreviewItem(
     id: 'sample-ui',
-    title: 'Sample UI',
-    description: 'A safe place for isolated UI previews before dev review.',
+    title: (strings) => strings.productPreviewSampleTitle,
+    description: (strings) => strings.productPreviewSampleDescription,
     builder: (_) => const SampleProductPreviewPage(),
   ),
 ];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import '../l10n/app_localizations.dart';
 import '../navigation/app_navigator.dart';
 import '../navigation/app_page.dart';
 import '../navigation/app_page_transition.dart';
@@ -56,6 +57,9 @@ abstract class BaseStatefulViewState<
 
     viewModel.popPageUseRoot = _popUseRoot;
     disposeBag.add(() => viewModel.popPageUseRoot = null);
+
+    viewModel.getLocalStrings = () => AppLocalizations.of(context)!;
+    disposeBag.add(() => viewModel.getLocalStrings = null);
 
     viewModel.rebuild = () {
       if (mounted) {
@@ -196,10 +200,11 @@ abstract class AppBaseStatefulPageState<
   }
 
   void _handleError(AppError error) {
+    final strings = viewModel.localStrings;
     final alert = AlertViewModel(
-      title: error.title ?? 'Something went wrong',
+      title: error.title ?? strings.commonErrorTitle,
       content: error.message,
-    )..addOkAction();
+    )..addAction(strings.commonOk, isDefault: true);
     _show(AlertAppPage(alert));
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../mvvm/base_view.dart';
 import 'alert_view_model.dart';
 
@@ -14,8 +15,9 @@ class _AlertPageState
     extends BaseStatefulViewState<AlertViewModelType, AlertPage> {
   @override
   Widget createWidget(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     final actions = viewModel.actions.isEmpty
-        ? [AlertViewAction('OK', isDefault: true)]
+        ? [AlertViewAction(strings.commonOk, isDefault: true)]
         : viewModel.actions;
 
     return PopScope<Object?>(

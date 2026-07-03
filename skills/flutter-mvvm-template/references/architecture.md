@@ -2,9 +2,11 @@
 
 ## 模板边界
 
-- 模板代码要独立于产品专属服务：Firebase、推送处理、生成式本地化、资源、认证/session manager 和领域 manager 都留在应用层。
+- 模板代码要独立于产品专属服务：Firebase、推送处理、运行时语言切换、资源、认证/session manager 和领域 manager 都留在应用层。
 - 网络层只预设基础 `ApiService` 规则：Dio setup、通用请求、错误转换、代码级 API 环境切换和 `user` real/mock 示例模块，不预设真实业务接口或后端响应协议。
 - 跨项目可复用的生命周期代码放到 `mvvm/`：view model 绑定、dispose 管理、loading/error 跟踪和基础 page widget。
+- 模板默认启用 Flutter 官方 l10n，当前只提供 `en`。用户可见文案放在 `lib/l10n/app_en.arb`；Page/Widget 直接用 `AppLocalizations.of(context)!`，ViewModel 通过 `BaseViewModel.localStrings` callback 现用现取。
+- `localStrings` 只能在页面绑定后使用；不要在 ViewModel 构造函数或 `initState()` 里读取本地化文案。
 - 页面级 ViewModel 必须按 input/output/type 拆分：Page 泛型只依赖 `<Feature>ViewModelType`，实现类只在 `defaultViewModel()` 或注入点中出现。
 - input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放在实现类私有方法里。
 - output 默认用 getter + `makeRebuild()`。只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等高频或局部刷新场景使用 `ValueStream<T>`/`Stream<T>` 与 `ValueStreamBuilder<T>`。
@@ -18,6 +20,7 @@
 ```text
 lib/
 ├── app.dart
+├── l10n/
 ├── main.dart
 ├── models/
 ├── mvvm/
@@ -66,5 +69,5 @@ class ProfileViewModel extends ProfileViewModelType {}
 - 未经开发审核的隔离预览页面；这类页面先留在 `lib/product_preview/`。
 - Retrofit、Chopper、freezed、json_serializable 或其他代码生成依赖。
 - Firebase、推送通知、app link 和 analytics 配置。
-- 产品资源、生成式本地化、应用专属主题。
+- 产品资源、运行时语言切换、应用专属主题。
 - 平台目录，除非用户明确想复制完整项目。

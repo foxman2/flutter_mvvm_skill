@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'product_preview_registry.dart';
 
 class ProductPreviewPage extends StatelessWidget {
@@ -7,8 +8,9 @@ class ProductPreviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Preview')),
+      appBar: AppBar(title: Text(strings.productPreviewTitle)),
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: productPreviewItems.length,
@@ -17,10 +19,10 @@ class ProductPreviewPage extends StatelessWidget {
           final item = productPreviewItems[index];
           return Card(
             child: ListTile(
-              title: Text(item.title),
+              title: Text(item.title(strings)),
               subtitle: item.description == null
                   ? null
-                  : Text(item.description!),
+                  : Text(item.description!(strings)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _openPreview(context, item),
             ),

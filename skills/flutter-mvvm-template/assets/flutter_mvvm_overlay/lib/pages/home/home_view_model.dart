@@ -27,12 +27,10 @@ abstract class HomeViewModelType extends AppBaseViewModel
 
 class HomeViewModel extends HomeViewModelType {
   @override
-  String get templateTitle => 'Flutter MVVM Template';
+  String get templateTitle => localStrings.homeTemplateTitle;
 
   @override
-  String get templateDescription {
-    return 'Use sealed AppPage classes as page cases with typed parameters.';
-  }
+  String get templateDescription => localStrings.homeTemplateDescription;
 
   @override
   void onClickProductPreview() {
@@ -64,34 +62,38 @@ class HomeViewModel extends HomeViewModelType {
   }
 
   void _showAlertDemo() {
+    final strings = localStrings;
     final alert = AlertViewModel(
-      title: 'Hello from MVVM',
-      content:
-          'This alert is opened from a view model through a sealed AppPage.',
-    )..addOkAction();
+      title: strings.homeAlertTitle,
+      content: strings.homeAlertContent,
+    )..addAction(strings.commonOk, isDefault: true);
     show(AlertAppPage(alert));
   }
 
   void _showInputAlertDemo() {
+    final strings = localStrings;
     final input = InputAlertViewModel(
-      title: 'Project name',
-      hint: 'my_app',
+      title: strings.homeInputAlertTitle,
+      hint: strings.homeInputAlertHint,
+      cancelText: strings.commonCancel,
+      okText: strings.commonOk,
       onSubmitted: (value) async {
-        showSuccessMessage(message: 'Submitted: $value');
+        showSuccessMessage(message: localStrings.homeSubmittedMessage(value));
       },
     );
     show(InputAlertAppPage(input));
   }
 
   void _showActionSheetDemo() {
+    final strings = localStrings;
     final sheet =
         ActionSheetViewModel(
-            title: 'Choose an action',
-            message: 'Action sheets are just another AppPage case.',
+            title: strings.homeActionSheetTitle,
+            message: strings.homeActionSheetMessage,
           )
-          ..addAction('Normal action')
-          ..addAction('Destructive action', isDestructive: true)
-          ..setCancelAction();
+          ..addAction(strings.homeNormalAction)
+          ..addAction(strings.homeDestructiveAction, isDestructive: true)
+          ..setCancelAction(null, strings.commonCancel);
     show(ActionSheetAppPage(sheet));
   }
 

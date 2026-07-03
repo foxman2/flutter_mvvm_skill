@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/app.dart';
+import 'package:{{project_name}}/l10n/app_localizations.dart';
 
 void main() {
+  test('template currently supports English localization only', () {
+    expect(AppLocalizations.supportedLocales, [const Locale('en')]);
+  });
+
   testWidgets('home page opens alert through sealed AppPage', (tester) async {
     await tester.pumpWidget(const App());
 

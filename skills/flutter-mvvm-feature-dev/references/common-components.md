@@ -50,8 +50,8 @@ lib/
 
 ```dart
 AppEmptyView(
-  title: '暂无数据',
-  actionTitle: '刷新',
+  title: strings.emptyTitle,
+  actionTitle: strings.refreshAction,
   onActionPressed: viewModel.onClickReload,
 )
 ```
@@ -70,6 +70,8 @@ AppEmptyView(
 - Firebase、推送、分析埋点等产品服务。
 
 业务动作放在 ViewModel 中，组件只通过 callback 暴露事件。
+
+传给组件的用户可见文案也走 l10n：Page 中用 `AppLocalizations.of(context)!` 取纯展示文案，ViewModel 中用 `localStrings` 取状态和动作文案。
 
 ## 常见分类
 

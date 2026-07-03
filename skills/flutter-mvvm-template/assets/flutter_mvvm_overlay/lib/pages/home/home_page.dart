@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../mvvm/base_view.dart';
 import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
@@ -14,8 +15,9 @@ class HomePage extends AppBaseStatelessPage<HomeViewModelType> {
 
   @override
   Widget createWidget(BuildContext context, HomeViewModelType viewModel) {
+    final strings = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('{{app_name}}')),
+      appBar: AppBar(title: Text(strings.appTitle)),
       floatingActionButton: ProductPreviewEntryButton(
         onPressed: viewModel.onClickProductPreview,
       ),
@@ -34,22 +36,22 @@ class HomePage extends AppBaseStatelessPage<HomeViewModelType> {
           const SizedBox(height: 24),
           FilledButton(
             onPressed: viewModel.onClickAlertDemo,
-            child: const Text('Show alert'),
+            child: Text(strings.homeShowAlert),
           ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: viewModel.onClickInputAlertDemo,
-            child: const Text('Show input alert'),
+            child: Text(strings.homeShowInputAlert),
           ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: viewModel.onClickActionSheetDemo,
-            child: const Text('Show action sheet'),
+            child: Text(strings.homeShowActionSheet),
           ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: viewModel.onClickBottomSheetDemo,
-            child: const Text('Show bottom sheet'),
+            child: Text(strings.homeShowBottomSheet),
           ),
         ],
       ),
@@ -62,6 +64,7 @@ class BottomSheetDemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     return Material(
       child: SafeArea(
         top: false,
@@ -72,15 +75,15 @@ class BottomSheetDemoPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Bottom sheet',
+                strings.bottomSheetDemoTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              const Text('This page is presented by BottomSheetDemoAppPage.'),
+              Text(strings.bottomSheetDemoDescription),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Done'),
+                child: Text(strings.bottomSheetDemoDone),
               ),
             ],
           ),

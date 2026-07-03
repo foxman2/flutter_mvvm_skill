@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import 'l10n/app_localizations.dart';
 import 'navigation/app_navigator.dart';
 import 'navigation/app_page.dart';
 
@@ -10,7 +11,9 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '{{app_name}}',
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       navigatorKey: AppNavigator.navigatorKey,
       navigatorObservers: [AppNavigatorObserver()],
       theme: ThemeData(

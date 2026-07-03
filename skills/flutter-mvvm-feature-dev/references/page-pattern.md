@@ -8,6 +8,7 @@
 - `lib/pages/<feature>/<feature>_view_model.dart`
 - 页面对应的 `AppPage` case
 - 相关 widget 或测试
+- `lib/l10n/app_en.arb` 中已有的文案命名方式
 
 优先沿用已有页面的继承方式。如果项目同时有 stateless 和 stateful 基类，按需求选择：
 
@@ -45,7 +46,7 @@ class ProfileViewModel extends ProfileViewModelType {
   ProfileViewModel({required this.userId});
 
   final String userId;
-  String _title = 'Profile';
+  String? _profileName;
 
   @override
   void initState() {
@@ -66,12 +67,12 @@ class ProfileViewModel extends ProfileViewModelType {
   Future<void> _loadProfile() async {
     await Future<void>.delayed(Duration.zero)
         .trackLoadingAndConsumeError(this);
-    _title = 'Profile loaded';
+    _profileName = 'Ada';
     makeRebuild();
   }
 
   @override
-  String get title => _title;
+  String get title => _profileName ?? localStrings.profileTitle;
 }
 ```
 
@@ -84,6 +85,8 @@ class ProfileViewModel extends ProfileViewModelType {
 - 高频或局部刷新状态使用 `ValueStream<T>`/`Stream<T>`，例如输入框按钮 enabled、上传进度、倒计时、下拉刷新状态和一次性 UI 事件；页面用 `ValueStreamBuilder<T>`。
 - 不把 `ValueNotifier` 作为页面 ViewModel output。
 - ViewModel 内部状态保持私有，Page 不直接读写实现类字段。
+- ViewModel 中的用户可见文案通过 `localStrings` 获取，包括弹窗、toast、ActionSheet、导航结果文案和 output getter。
+- 不在 ViewModel 构造函数或 `initState()` 中读取 `localStrings`；如需初始文案，用 getter 在页面 build 时现取。
 - 异步 loading 和错误处理优先走 `trackLoadingAndConsumeError(this)`。
 - ViewModel 状态变化后调用 `makeRebuild()`，不要从外部直接拿 `State`。
 - 页面跳转用 `show(...)`、`pushReplacement(...)`、`pushAndRemoveUntil(...)`。
@@ -92,6 +95,8 @@ class ProfileViewModel extends ProfileViewModelType {
 ## Page 写法
 
 ```dart
+import '../../l10n/app_localizations.dart';
+
 class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
   const ProfilePage({
     super.key,
@@ -112,9 +117,10 @@ class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
 
   @override
   Widget createWidget(BuildContext context, ProfileViewModelType viewModel) {
+    final strings = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(viewModel.title)),
-      body: const SizedBox.shrink(),
+      body: Center(child: Text(strings.profileDescription)),
     );
   }
 }
@@ -122,10 +128,13 @@ class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
 
 如果现有项目页面不使用可注入 `viewModel` 参数，就跟随项目现有写法，不强行引入。
 
+页面或纯 Widget 中只负责展示的文案直接用 `AppLocalizations.of(context)!`。需要由 ViewModel 发起的弹窗、toast、ActionSheet 和状态文案不要从 Widget 传字符串对象缓存给 ViewModel，直接在 ViewModel 中用 `localStrings` 现取。
+
 ## 测试
 
 有测试目录时，优先补充轻量测试：
 
+- `lib/l10n/app_en.arb` 是否包含新增用户可见文案。
 - ViewModel 方法是否触发预期状态。
 - Page 是否只依赖 `<Feature>ViewModelType`。
 - getter + `makeRebuild()` 或 `ValueStream<T>` output 是否按场景选择。

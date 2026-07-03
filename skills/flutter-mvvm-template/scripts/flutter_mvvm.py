@@ -15,6 +15,7 @@ from pathlib import Path
 PROJECT_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 PACKAGE_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$")
 TEXT_SUFFIXES = {
+    ".arb",
     ".dart",
     ".yaml",
     ".yml",
@@ -147,51 +148,116 @@ def replace_placeholders(target_dir: Path, replacements: dict[str, str]) -> None
             path.write_text(text, encoding="utf-8")
 
 
-def read_dependency_patch(patch_file: Path) -> dict[str, str]:
-    dependencies: dict[str, str] = {}
-    in_dependencies = False
+def read_pubspec_patch(patch_file: Path) -> dict[str, list[str]]:
+    sections: dict[str, list[str]] = {}
+    current_section: str | None = None
     for raw_line in patch_file.read_text(encoding="utf-8").splitlines():
         line = raw_line.rstrip()
         if not line or line.lstrip().startswith("#"):
             continue
-        if line == "dependencies:":
-            in_dependencies = True
+        if not raw_line.startswith(" ") and line.endswith(":"):
+            current_section = line.removesuffix(":")
+            sections[current_section] = []
             continue
-        if in_dependencies and not raw_line.startswith(" "):
-            break
-        if in_dependencies:
-            stripped = line.strip()
-            if ":" not in stripped:
-                continue
-            name, version = stripped.split(":", 1)
-            dependencies[name.strip()] = version.strip()
-    return dependencies
+        if current_section is not None:
+            sections[current_section].append(line)
+    return sections
 
 
-def merge_pubspec_dependencies(pubspec_file: Path, patch_file: Path) -> None:
-    dependencies = read_dependency_patch(patch_file)
+def child_blocks(section_lines: list[str]) -> list[tuple[str, list[str]]]:
+    blocks: list[tuple[str, list[str]]] = []
+    current_name: str | None = None
+    current_block: list[str] = []
+
+    def flush() -> None:
+        nonlocal current_name, current_block
+        if current_name is not None:
+            blocks.append((current_name, current_block))
+        current_name = None
+        current_block = []
+
+    for line in section_lines:
+        match = re.match(r"^  ([a-zA-Z0-9_]+):", line)
+        if match:
+            flush()
+            current_name = match.group(1)
+            current_block = [line]
+        elif current_name is not None:
+            current_block.append(line)
+    flush()
+    return blocks
+
+
+def section_bounds(lines: list[str], section: str) -> tuple[int, int] | None:
+    header = f"{section}:"
+    for index, line in enumerate(lines):
+        if line == header:
+            start = index + 1
+            end = len(lines)
+            for next_index in range(start, len(lines)):
+                next_line = lines[next_index]
+                if (
+                    next_line.strip()
+                    and not next_line.startswith(" ")
+                    and not next_line.lstrip().startswith("#")
+                ):
+                    end = next_index
+                    break
+            return start, end
+    return None
+
+
+def direct_child_names(lines: list[str]) -> set[str]:
+    names = set()
+    for line in lines:
+        match = re.match(r"^  ([a-zA-Z0-9_]+):", line)
+        if match:
+            names.add(match.group(1))
+    return names
+
+
+def merge_pubspec_patch(pubspec_file: Path, patch_file: Path) -> None:
+    patch = read_pubspec_patch(patch_file)
     text = pubspec_file.read_text(encoding="utf-8")
     lines = text.splitlines()
-    existing = set()
-    for line in lines:
-        match = re.match(r"^\s{2}([a-zA-Z0-9_]+):", line)
-        if match:
-            existing.add(match.group(1))
 
-    additions = [
-        f"  {name}: {version}"
-        for name, version in dependencies.items()
-        if name not in existing
-    ]
-    if not additions:
-        return
+    for section, section_lines in patch.items():
+        blocks = child_blocks(section_lines)
+        bounds = section_bounds(lines, section)
+        if bounds is None:
+            if lines and lines[-1].strip():
+                lines.append("")
+            lines.append(f"{section}:")
+            for _, block in blocks:
+                lines.extend(block)
+            continue
 
-    for index, line in enumerate(lines):
-        if line == "dependencies:":
-            lines[index + 1:index + 1] = additions
-            pubspec_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            return
-    raise CliError("Could not find dependencies: in pubspec.yaml")
+        start, end = bounds
+        existing = direct_child_names(lines[start:end])
+        additions = [
+            line
+            for name, block in blocks
+            if name not in existing
+            for line in block
+        ]
+        if not additions:
+            continue
+
+        if section == "dependencies":
+            insert_at = end
+            while insert_at > start and not lines[insert_at - 1].strip():
+                insert_at -= 1
+            insert_lines = additions if insert_at < end else additions + [""]
+            lines[insert_at:insert_at] = insert_lines
+        else:
+            insert_lines = (
+                additions
+                if start < len(lines) and not lines[start].strip()
+                else additions + [""]
+            )
+            lines[start:start] = insert_lines
+
+    pubspec_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def resolve_create_inputs(args: argparse.Namespace) -> tuple[str, str, str | None]:
@@ -268,7 +334,7 @@ def create_project(args: argparse.Namespace) -> None:
     }
     copy_overlay(overlay_dir, target_dir, replacements)
     apply_native_identity(target_dir, app_name, package_name)
-    merge_pubspec_dependencies(
+    merge_pubspec_patch(
         target_dir / "pubspec.yaml",
         overlay_dir / "template_pubspec_patch.yaml",
     )

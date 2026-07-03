@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:{{project_name}}/l10n/app_localizations.dart';
 import 'package:{{project_name}}/mvvm/base_view.dart';
 import 'package:{{project_name}}/mvvm/base_view_model.dart';
 import 'package:{{project_name}}/mvvm/dispose_bag.dart';
@@ -83,6 +84,26 @@ void main() {
       expect(viewModel.title, 'Strict MVVM');
     },
   );
+
+  test('localStrings throws before a view model is bound to a page', () {
+    final viewModel = _LocalizedViewModel();
+
+    expect(() => viewModel.localStrings, throwsStateError);
+  });
+
+  testWidgets('localStrings reads current strings from the bound page', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const _LocalizedPage(),
+      ),
+    );
+
+    expect(find.text('Flutter MVVM Template'), findsOneWidget);
+  });
 }
 
 abstract class _StrictViewModelInput {
@@ -119,6 +140,32 @@ class _StrictPage extends AppBaseStatelessPage<_StrictViewModelType> {
 
   @override
   Widget createWidget(BuildContext context, _StrictViewModelType viewModel) {
+    return Text(viewModel.title);
+  }
+}
+
+abstract class _LocalizedViewModelOutput {
+  String get title;
+}
+
+abstract class _LocalizedViewModelType extends AppBaseViewModel
+    implements _LocalizedViewModelOutput {}
+
+class _LocalizedViewModel extends _LocalizedViewModelType {
+  @override
+  String get title => localStrings.homeTemplateTitle;
+}
+
+class _LocalizedPage extends AppBaseStatelessPage<_LocalizedViewModelType> {
+  const _LocalizedPage() : super(viewModelProvider: _defaultProvider);
+
+  static _LocalizedViewModelType? _defaultProvider() => null;
+
+  @override
+  _LocalizedViewModelType? defaultViewModel() => _LocalizedViewModel();
+
+  @override
+  Widget createWidget(BuildContext context, _LocalizedViewModelType viewModel) {
     return Text(viewModel.title);
   }
 }

@@ -61,8 +61,8 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
     );
   }
 
-  void setCancelAction([VoidCallback? handler]) {
-    _cancelAction = ActionSheetAction('Cancel', handler: handler);
+  void setCancelAction([VoidCallback? handler, String title = 'Cancel']) {
+    _cancelAction = ActionSheetAction(title, handler: handler);
   }
 
   @override

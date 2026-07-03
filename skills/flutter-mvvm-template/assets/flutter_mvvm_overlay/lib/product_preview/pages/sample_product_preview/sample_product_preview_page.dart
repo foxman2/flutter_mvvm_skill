@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../mvvm/base_view.dart';
 import 'sample_product_preview_view_model.dart';
 
@@ -20,18 +21,21 @@ class SampleProductPreviewPage
     BuildContext context,
     SampleProductPreviewViewModelType viewModel,
   ) {
+    final strings = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sample UI')),
+      appBar: AppBar(title: Text(strings.productPreviewSampleTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Text('Product Preview Area', style: textTheme.headlineSmall),
+            Text(
+              strings.productPreviewAreaTitle,
+              style: textTheme.headlineSmall,
+            ),
             const SizedBox(height: 8),
             Text(
-              'Create isolated preview pages here, then ask development '
-              'to review and migrate approved UI into formal MVVM pages.',
+              strings.productPreviewAreaDescription,
               style: textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
@@ -41,7 +45,10 @@ class SampleProductPreviewPage
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Mock content', style: textTheme.titleMedium),
+                    Text(
+                      strings.productPreviewMockContentTitle,
+                      style: textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     Text(viewModel.mockContentDescription),
                   ],

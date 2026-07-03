@@ -95,12 +95,24 @@ class AlertViewModel extends AlertViewModelType {
     addAction('Cancel', handler: handler);
   }
 
+  void addLocalizedCancelAction(String title, [VoidCallback? handler]) {
+    addAction(title, handler: handler);
+  }
+
   void addOkAction([VoidCallback? handler]) {
     addAction('OK', isDefault: true, handler: handler);
   }
 
+  void addLocalizedOkAction(String title, [VoidCallback? handler]) {
+    addAction(title, isDefault: true, handler: handler);
+  }
+
   void addDeleteAction([VoidCallback? handler]) {
     addAction('Delete', isDestructive: true, handler: handler);
+  }
+
+  void addLocalizedDeleteAction(String title, [VoidCallback? handler]) {
+    addAction(title, isDestructive: true, handler: handler);
   }
 
   @override

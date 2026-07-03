@@ -17,6 +17,7 @@ Widget 中保留：
 - 文案展示
 - 绑定 `onPressed: viewModel.onClickXxx`
 - 根据 ViewModel 状态显示不同 UI
+- 使用 `AppLocalizations.of(context)!` 读取纯展示文案
 
 ViewModel 中保留：
 
@@ -25,6 +26,7 @@ ViewModel 中保留：
 - loading/error 展示
 - 页面跳转
 - 弹窗、ActionSheet、BottomSheet 调用
+- 使用 `localStrings` 读取由 ViewModel 发起的弹窗、toast、ActionSheet 和状态文案
 
 避免在 Widget 里直接写复杂流程：
 
@@ -53,12 +55,13 @@ void onClickDelete() {
 }
 
 void _confirmDelete() {
+  final strings = localStrings;
   final alert = AlertViewModel(
-    title: '确认删除',
-    content: '删除后不可恢复。',
+    title: strings.confirmDeleteTitle,
+    content: strings.confirmDeleteContent,
   )
-    ..addCancelAction()
-    ..addDeleteAction(delete);
+    ..addLocalizedCancelAction(strings.commonCancel)
+    ..addLocalizedDeleteAction(strings.commonDelete, delete);
   show(AlertAppPage(alert));
 }
 ```
@@ -75,10 +78,11 @@ void onClickMore() {
 }
 
 void _showMoreActions() {
-  final sheet = ActionSheetViewModel(title: '更多操作')
-    ..addAction('编辑', handler: edit)
-    ..addAction('分享', handler: share)
-    ..setCancelAction();
+  final strings = localStrings;
+  final sheet = ActionSheetViewModel(title: strings.moreActionsTitle)
+    ..addAction(strings.editAction, handler: edit)
+    ..addAction(strings.shareAction, handler: share)
+    ..setCancelAction(null, strings.commonCancel);
   show(ActionSheetAppPage(sheet));
 }
 ```

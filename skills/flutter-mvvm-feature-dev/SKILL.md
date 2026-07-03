@@ -17,7 +17,7 @@ description: >-
 
 ## 工作流程
 
-1. 先读当前项目结构：`pubspec.yaml`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
+1. 先读当前项目结构：`pubspec.yaml`、`lib/l10n/`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
 2. 找一个最相似的已有页面和 ViewModel，优先复制它的组织方式、命名、状态管理和 UI 风格。
 3. 如果任务来自隔离预览，先读 `lib/product_preview/` 的原型，再重新按正式 MVVM 边界实现，不直接把原型当最终业务代码搬过去。
 4. 创建或修改页面时保持职责分离：Widget 负责展示和事件绑定，ViewModel 负责状态、异步、导航、弹窗和业务动作；新增页面 ViewModel 必须拆成 input/output/type/实现类。
@@ -41,6 +41,9 @@ description: >-
 - Page 泛型使用 `<Feature>ViewModelType`，`defaultViewModel()` 返回 `<Feature>ViewModel()`。
 - input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放到实现类私有方法里。
 - output 默认使用 getter + `makeRebuild()`；高频或局部刷新状态才使用 `ValueStream<T>`/`Stream<T>`。
+- 用户可见文案必须走 l10n。新增文案先写入 `lib/l10n/app_en.arb`；当前模板默认只支持英语。
+- Page 或纯 Widget 展示文案用 `AppLocalizations.of(context)!`；ViewModel 里的弹窗、toast、导航结果文案和 output getter 用 `localStrings`。
+- 不在 ViewModel 构造函数或 `initState()` 里读取 `localStrings`，因为本地化 callback 由页面绑定后提供。
 - 页面 case 命名为 `<Feature>AppPage`，参数放在构造器中并保持强类型。
 - 普通页面默认 `AppPageTransition.push`；弹窗使用 `alert`；操作面板使用 `actionSheet`；底部弹层使用 `bottomSheet` 或 `bottomSheetWithNavigator`。
 - 不把业务服务、API client、Firebase、推送、本地化生成逻辑塞进通用 MVVM 基类。

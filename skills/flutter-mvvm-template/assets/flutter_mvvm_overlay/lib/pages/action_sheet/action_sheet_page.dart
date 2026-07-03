@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../mvvm/base_view.dart';
 import 'action_sheet_view_model.dart';
 
@@ -14,6 +15,7 @@ class _ActionSheetPageState
     extends BaseStatefulViewState<ActionSheetViewModelType, ActionSheetPage> {
   @override
   Widget createWidget(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     return CupertinoActionSheet(
       title: viewModel.title == null ? null : Text(viewModel.title!),
       message: viewModel.message == null ? null : Text(viewModel.message!),
@@ -27,7 +29,7 @@ class _ActionSheetPageState
       ],
       cancelButton: CupertinoActionSheetAction(
         onPressed: viewModel.onClickCancel,
-        child: Text(viewModel.cancelAction?.title ?? 'Cancel'),
+        child: Text(viewModel.cancelAction?.title ?? strings.commonCancel),
       ),
     );
   }
