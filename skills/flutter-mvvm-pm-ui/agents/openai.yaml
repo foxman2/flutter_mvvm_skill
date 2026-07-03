@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM 产品界面"
-  short_description: "为产品经理隔离预览 UI 原型、文案、样式和展示层改动"
-  default_prompt: "使用 $flutter-mvvm-pm-ui 在已有 Flutter MVVM 项目中创建隔离的产品 UI 预览页或调整展示层，并标记待开发审核边界。"
+  short_description: "隔离预览 PM UI，并优先接 mock API 数据"
+  default_prompt: "使用 $flutter-mvvm-pm-ui 在已有 Flutter MVVM 项目中创建隔离的产品 UI 预览页，优先接 mock API 数据并标记待开发审核边界。"
