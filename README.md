@@ -5,7 +5,7 @@
 ## 目录结构
 
 - `.codex-plugin/plugin.json`：Codex 插件 manifest。
-- `marketplace.json`：团队内部 GitHub 插件市场入口。
+- `.agents/plugins/marketplace.json`：团队内部 GitHub 插件市场入口。
 - `plugins/flutter-mvvm-devkit/`：发布给团队安装的插件目录，由同步脚本生成。
 - `skills/flutter-mvvm-template/`：创建新 Flutter MVVM 项目的 skill 源码。
 - `skills/flutter-mvvm-pm-ui/`：产品经理专用 UI 预览、受限展示层修改和待审核 mock 数据工作流。
@@ -49,15 +49,8 @@ python3 scripts/package_plugin.py
 团队成员通过当前 GitHub 仓库安装内部插件：
 
 ```bash
-codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
-codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-如果团队使用 SSH，也可以改成：
-
-```bash
-codex plugin marketplace add git@github.com:foxman2/flutter_mvvm_skill.git --ref main
-codex plugin add flutter-mvvm-devkit@team-internal
+/Applications/Codex.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
+/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
 如果之前安装过旧插件名，先移除旧名字：
