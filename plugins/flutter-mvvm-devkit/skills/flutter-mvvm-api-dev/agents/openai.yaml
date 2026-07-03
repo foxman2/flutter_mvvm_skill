@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM 接口开发"
+  short_description: "接入后端已确认的正式 ApiService、模型和测试"
+  default_prompt: "使用 $flutter-mvvm-api-dev 在已有 Flutter MVVM 项目中接入后端已确认的正式接口、模型、调用和测试。"

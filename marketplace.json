@@ -1,0 +1,20 @@
+{
+  "name": "team-internal",
+  "interface": {
+    "displayName": "Team Internal"
+  },
+  "plugins": [
+    {
+      "name": "flutter-mvvm-devkit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/flutter-mvvm-devkit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

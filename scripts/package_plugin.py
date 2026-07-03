@@ -14,6 +14,19 @@ DEFAULT_INCLUDE_PATHS = (
     "README.md",
 )
 
+EXCLUDED_FILE_NAMES = {
+    ".DS_Store",
+}
+
+EXCLUDED_DIR_NAMES = {
+    "__pycache__",
+}
+
+EXCLUDED_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+}
+
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
@@ -34,11 +47,24 @@ def iter_files(root: Path, include_examples: bool) -> list[Path]:
     for relative in include_paths:
         path = root / relative
         if path.is_file():
-            files.append(path)
+            if should_include_file(path):
+                files.append(path)
             continue
         if path.is_dir():
-            files.extend(child for child in path.rglob("*") if child.is_file())
+            files.extend(
+                child
+                for child in path.rglob("*")
+                if child.is_file() and should_include_file(child)
+            )
     return sorted(files)
+
+
+def should_include_file(path: Path) -> bool:
+    if path.name in EXCLUDED_FILE_NAMES:
+        return False
+    if path.suffix in EXCLUDED_SUFFIXES:
+        return False
+    return not any(part in EXCLUDED_DIR_NAMES for part in path.parts)
 
 
 def build_archive(output_dir: Path, include_examples: bool) -> Path:

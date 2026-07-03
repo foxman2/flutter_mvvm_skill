@@ -1,0 +1,129 @@
+{
+  "@@locale": "en",
+  "appTitle": "{{app_name}}",
+  "@appTitle": {
+    "description": "Application title shown by MaterialApp and the home app bar."
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Generic cancel action label."
+  },
+  "commonOk": "OK",
+  "@commonOk": {
+    "description": "Generic confirmation action label."
+  },
+  "commonDelete": "Delete",
+  "@commonDelete": {
+    "description": "Generic destructive delete action label."
+  },
+  "commonErrorTitle": "Something went wrong",
+  "@commonErrorTitle": {
+    "description": "Fallback title for unexpected errors."
+  },
+  "homeTemplateTitle": "Flutter MVVM Template",
+  "@homeTemplateTitle": {
+    "description": "Title shown on the generated template home page."
+  },
+  "homeTemplateDescription": "Use sealed AppPage classes as page cases with typed parameters.",
+  "@homeTemplateDescription": {
+    "description": "Description shown on the generated template home page."
+  },
+  "homeShowAlert": "Show alert",
+  "@homeShowAlert": {
+    "description": "Button label for opening the alert demo."
+  },
+  "homeShowInputAlert": "Show input alert",
+  "@homeShowInputAlert": {
+    "description": "Button label for opening the input alert demo."
+  },
+  "homeShowActionSheet": "Show action sheet",
+  "@homeShowActionSheet": {
+    "description": "Button label for opening the action sheet demo."
+  },
+  "homeShowBottomSheet": "Show bottom sheet",
+  "@homeShowBottomSheet": {
+    "description": "Button label for opening the bottom sheet demo."
+  },
+  "homeAlertTitle": "Hello from MVVM",
+  "@homeAlertTitle": {
+    "description": "Demo alert title shown from the home page."
+  },
+  "homeAlertContent": "This alert is opened from a view model through a sealed AppPage.",
+  "@homeAlertContent": {
+    "description": "Demo alert body shown from the home page."
+  },
+  "homeInputAlertTitle": "Project name",
+  "@homeInputAlertTitle": {
+    "description": "Demo input alert title shown from the home page."
+  },
+  "homeInputAlertHint": "my_app",
+  "@homeInputAlertHint": {
+    "description": "Demo input alert hint shown from the home page."
+  },
+  "homeSubmittedMessage": "Submitted: {value}",
+  "@homeSubmittedMessage": {
+    "description": "Success message shown after submitting the input alert demo.",
+    "placeholders": {
+      "value": {
+        "type": "String",
+        "example": "my_app"
+      }
+    }
+  },
+  "homeActionSheetTitle": "Choose an action",
+  "@homeActionSheetTitle": {
+    "description": "Demo action sheet title shown from the home page."
+  },
+  "homeActionSheetMessage": "Action sheets are just another AppPage case.",
+  "@homeActionSheetMessage": {
+    "description": "Demo action sheet message shown from the home page."
+  },
+  "homeNormalAction": "Normal action",
+  "@homeNormalAction": {
+    "description": "Demo non-destructive action sheet action label."
+  },
+  "homeDestructiveAction": "Destructive action",
+  "@homeDestructiveAction": {
+    "description": "Demo destructive action sheet action label."
+  },
+  "bottomSheetDemoTitle": "Bottom sheet",
+  "@bottomSheetDemoTitle": {
+    "description": "Demo bottom sheet title."
+  },
+  "bottomSheetDemoDescription": "This page is presented by BottomSheetDemoAppPage.",
+  "@bottomSheetDemoDescription": {
+    "description": "Demo bottom sheet description."
+  },
+  "bottomSheetDemoDone": "Done",
+  "@bottomSheetDemoDone": {
+    "description": "Button label for closing the bottom sheet demo."
+  },
+  "productPreviewTitle": "Product Preview",
+  "@productPreviewTitle": {
+    "description": "Title and entry button label for the product preview area."
+  },
+  "productPreviewSampleTitle": "Sample UI",
+  "@productPreviewSampleTitle": {
+    "description": "Title for the sample product preview item and page."
+  },
+  "productPreviewSampleDescription": "A safe place for isolated UI previews before dev review.",
+  "@productPreviewSampleDescription": {
+    "description": "Description for the sample product preview item."
+  },
+  "productPreviewAreaTitle": "Product Preview Area",
+  "@productPreviewAreaTitle": {
+    "description": "Heading on the sample product preview page."
+  },
+  "productPreviewAreaDescription": "Create isolated preview pages here, then ask development to review and migrate approved UI into formal MVVM pages.",
+  "@productPreviewAreaDescription": {
+    "description": "Description on the sample product preview page."
+  },
+  "productPreviewMockContentTitle": "Mock content",
+  "@productPreviewMockContentTitle": {
+    "description": "Heading for mock content in the sample product preview page."
+  },
+  "productPreviewMockContentDescription": "Use mock API services for data-driven previews, and mark those data-layer changes as pending dev review.",
+  "@productPreviewMockContentDescription": {
+    "description": "Mock content description in the sample product preview page."
+  }
+}

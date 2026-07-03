@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM 功能开发"
+  short_description: "开发正式页面、组件、ViewModel、l10n 和 AppPage 导航"
+  default_prompt: "使用 $flutter-mvvm-feature-dev 在已有 Flutter MVVM 项目中开发正式页面、抽取共用组件、接入 AppPage 导航或迁移已审核隔离预览页。"
