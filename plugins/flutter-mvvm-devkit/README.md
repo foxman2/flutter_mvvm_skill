@@ -50,14 +50,7 @@ python3 scripts/package_plugin.py
 
 ```bash
 /Applications/Codex.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
-codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-如果团队使用 SSH，也可以改成：
-
-```bash
-codex plugin marketplace add git@github.com:foxman2/flutter_mvvm_skill.git --ref main
-codex plugin add flutter-mvvm-devkit@team-internal
+/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
 如果之前安装过旧插件名，先移除旧名字：

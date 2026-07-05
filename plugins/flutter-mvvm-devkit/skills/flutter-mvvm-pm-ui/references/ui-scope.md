@@ -7,7 +7,7 @@
 - `onPressed: viewModel.onClickXxx` 这类已有 input 绑定的按钮位置和样式。
 - 纯展示组件：`lib/widgets/`、`lib/theme/`、页面局部 `widgets/`。
 - 产品预览入口按钮：`lib/product_preview/product_preview_entry_button.dart`。
-- 隔离预览页面的同目录 preview-only ViewModel：`lib/product_preview/pages/<feature>/<feature>_view_model.dart`。
+- 隔离页面的同目录 ViewModel：`lib/product_preview/pages/<feature>/<feature>_view_model.dart`。
 
 ## 不可以改
 
@@ -27,7 +27,7 @@ FilledButton(
 )
 ```
 
-隔离预览页可以绑定同目录 preview-only ViewModel input 方法，但这些方法只表达展示状态和临时交互，不接正式业务流程。
+隔离页面可以绑定同目录 ViewModel input 方法，但这些方法只表达展示状态和临时交互，不接正式业务流程。
 
 input 方法命名保持简短：点击用 `onClickXxx`，输入用 `onInputXxx`，不要默认追加 `Button`、`Field`、`Tile` 等控件类型后缀。
 

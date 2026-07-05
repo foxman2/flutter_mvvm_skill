@@ -1,6 +1,6 @@
 # Product Preview 模式
 
-PM 新增页面只放在 `lib/product_preview/`，用于演示 UI 和交互草图，不直接成为正式业务页面。页面内部尽量遵循正式 `$flutter-mvvm-feature-dev` 的 page/ViewModel/组件拆分规则，隔离点只放在目录边界。
+PM 新增页面只放在 `lib/product_preview/`，用于演示 UI 和交互草图，不直接成为正式业务页面。页面内部按正式 `$flutter-mvvm-feature-dev` 的 page/ViewModel/组件拆分规则实现；隔离点只放在目录边界，不放在文件名或类名里。
 
 ## 目录
 
@@ -15,9 +15,13 @@ lib/product_preview/
 └── product_preview_registry.dart
 ```
 
-## 新增预览页面
+## 新增页面
 
-在 `lib/product_preview/pages/<feature>/` 下新增 page 和 preview-only ViewModel。命名规则和正式页面保持一致：
+在 `lib/product_preview/pages/<feature>/` 下新增 page 和 ViewModel。命名规则和正式页面完全一致：
+
+- 文件：`<feature>_page.dart`、`<feature>_view_model.dart`
+- 类型：`<Feature>Page`、`<Feature>ViewModelInput`、`<Feature>ViewModelOutput`、`<Feature>ViewModelType`、`<Feature>ViewModel`
+- 不要在 `<Feature>` 和 `Page` / `ViewModel` 之间追加 `Preview`，也不要在 `<feature>` 和 `_page.dart` / `_view_model.dart` 之间追加 `_preview`
 
 ```dart
 abstract class CheckoutViewModelInput {
@@ -63,7 +67,7 @@ class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModelType> {
 }
 ```
 
-页面可以使用同目录 preview-only ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，优先通过 `ApiService.shared.<domain>` 读取 mock API 返回的数据，并用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。本文件或 preview-only ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。preview-only ViewModel 也遵守 input/output/type；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要创建正式 AppPage case、route parser 分支、正式 ViewModel 或真实 API 接入。
+页面使用同目录 ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，优先通过 `ApiService.shared.<domain>` 读取 mock API 返回的数据，并用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。本文件或 ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。ViewModel 遵守正式 input/output/type 结构；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要创建正式 AppPage case、route parser 分支或真实 API 接入。
 
 ## 注册预览入口
 
@@ -82,4 +86,4 @@ ProductPreviewItem(
 
 ## 审核迁移
 
-开发审核通过后，用 `$flutter-mvvm-feature-dev` 把预览页面迁移到正式 `lib/pages/<feature>/`，补正式 AppPage、真实导航和测试，并把 preview-only 状态替换成正式业务状态。不要直接把临时 mock 或 demo 逻辑当成最终实现。
+开发审核通过后，用 `$flutter-mvvm-feature-dev` 把页面迁移到正式 `lib/pages/<feature>/`，补正式 AppPage、真实导航和测试，并把临时展示状态替换成正式业务状态。不要直接把临时 mock 或 demo 逻辑当成最终实现。

@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../mvvm/base_view.dart';
-import 'sample_product_preview_view_model.dart';
+import 'sample_product_view_model.dart';
 
-class SampleProductPreviewPage
-    extends AppBaseStatelessPage<SampleProductPreviewViewModelType> {
-  const SampleProductPreviewPage({super.key})
+class SampleProductPage
+    extends AppBaseStatelessPage<SampleProductViewModelType> {
+  const SampleProductPage({super.key})
     : super(viewModelProvider: _defaultProvider);
 
-  static SampleProductPreviewViewModelType? _defaultProvider() => null;
+  static SampleProductViewModelType? _defaultProvider() => null;
 
   @override
-  SampleProductPreviewViewModelType? defaultViewModel() {
-    return SampleProductPreviewViewModel();
+  SampleProductViewModelType? defaultViewModel() {
+    return SampleProductViewModel();
   }
 
   @override
   Widget createWidget(
     BuildContext context,
-    SampleProductPreviewViewModelType viewModel,
+    SampleProductViewModelType viewModel,
   ) {
     final strings = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
