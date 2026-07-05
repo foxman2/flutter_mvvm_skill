@@ -37,7 +37,7 @@ final class HomeAppPage extends AppPage {
   String get routeName => Navigator.defaultRouteName;
 
   @override
-  AppPageTransition get defaultTransition => AppPageTransition.replaceRoot;
+  AppPageTransition get defaultTransition => AppPageTransition.push;
 
   @override
   WidgetBuilder generateWidgetBuilder() {

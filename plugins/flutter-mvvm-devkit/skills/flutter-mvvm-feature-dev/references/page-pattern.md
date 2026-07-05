@@ -89,7 +89,7 @@ class ProfileViewModel extends ProfileViewModelType {
 - 不在 ViewModel 构造函数或 `initState()` 中读取 `localStrings`；如需初始文案，用 getter 在页面 build 时现取。
 - 异步 loading 和错误处理优先走 `trackLoadingAndConsumeError(this)`。
 - ViewModel 状态变化后调用 `makeRebuild()`，不要从外部直接拿 `State`。
-- 页面跳转用 `show(...)`、`pushReplacement(...)`、`pushAndRemoveUntil(...)`。
+- 页面跳转用 `show(...)`、`pushReplacement(...)`、`pushAndRemoveUntil(...)`、`replaceRoot(...)`。
 - 关闭页面用 `pop(...)`、`popUseRoot(...)` 或项目已有封装。
 
 ## Page 写法

@@ -43,6 +43,9 @@ abstract class BaseStatefulViewState<
     viewModel.pushReplacementPage = _pushReplacement;
     disposeBag.add(() => viewModel.pushReplacementPage = null);
 
+    viewModel.replaceRootPage = _replaceRoot;
+    disposeBag.add(() => viewModel.replaceRootPage = null);
+
     viewModel.pushAndRemoveUntilPage = _pushAndRemoveUntil;
     disposeBag.add(() => viewModel.pushAndRemoveUntilPage = null);
 
@@ -75,6 +78,10 @@ abstract class BaseStatefulViewState<
 
   Future<Object?> _pushReplacement(AppPage page) {
     return AppNavigator.shared.pushReplacement(context, page);
+  }
+
+  Future<Object?> _replaceRoot(AppPage page) {
+    return AppNavigator.shared.replaceRoot(context, page);
   }
 
   Future<Object?> _pushAndRemoveUntil(AppPage page, String untilRouteName) {

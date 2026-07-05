@@ -5,5 +5,4 @@ enum AppPageTransition {
   bottomSheet,
   bottomSheetWithNavigator,
   page,
-  replaceRoot,
 }

@@ -49,6 +49,7 @@ final class ProfileAppPage extends AppPage {
 ```dart
 show(ProfileAppPage(userId: userId));
 show(AlertAppPage(alertViewModel));
+replaceRoot(const HomeAppPage());
 ```
 
 避免：
@@ -80,4 +81,4 @@ static AppPage? parse(String routeString) {
 - 页面 case 命名为 `<Feature>AppPage`，避免和 widget 类名冲突。
 - 项目演进期间保持 `routeName` 稳定。
 - 构造参数保持强类型。
-- transition 策略放在对应 page case 附近。
+- transition 策略放在对应 page case 附近；清空导航栈用 `replaceRoot(...)`，不要把它放进 `AppPageTransition`。

@@ -29,8 +29,6 @@ class AppNavigator {
         return _showModalBottomSheetWithNavigator(context, page);
       case AppPageTransition.page:
         return _pushPage(context, page);
-      case AppPageTransition.replaceRoot:
-        return _pushReplaceRoot(context, page);
     }
   }
 
@@ -171,17 +169,6 @@ class AppNavigator {
     );
   }
 
-  Future<Object?> _pushReplaceRoot(BuildContext context, AppPage page) {
-    return Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: page.generateWidgetBuilder(),
-        settings: routeSettingsFor(page, isFullScreen: true),
-      ),
-      (_) => false,
-    );
-  }
-
   Future<Object?> pushReplacement(BuildContext context, AppPage page) {
     return Navigator.pushReplacement(
       context,
@@ -189,6 +176,17 @@ class AppNavigator {
         builder: page.generateWidgetBuilder(),
         settings: routeSettingsFor(page, isFullScreen: true),
       ),
+    );
+  }
+
+  Future<Object?> replaceRoot(BuildContext context, AppPage page) {
+    return Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: page.generateWidgetBuilder(),
+        settings: routeSettingsFor(page, isFullScreen: true),
+      ),
+      (_) => false,
     );
   }
 

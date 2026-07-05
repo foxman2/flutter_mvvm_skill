@@ -6,6 +6,7 @@ import 'package:{{project_name}}/mvvm/base_view.dart';
 import 'package:{{project_name}}/mvvm/base_view_model.dart';
 import 'package:{{project_name}}/mvvm/dispose_bag.dart';
 import 'package:{{project_name}}/mvvm/loading_tracker.dart';
+import 'package:{{project_name}}/navigation/app_page.dart';
 import 'package:{{project_name}}/pages/input_alert/input_alert_view_model.dart';
 import 'package:{{project_name}}/widgets/value_stream_builder.dart';
 
@@ -91,6 +92,20 @@ void main() {
     expect(() => viewModel.localStrings, throwsStateError);
   });
 
+  test('replaceRoot forwards to bound navigation callback', () async {
+    final viewModel = _NavigationViewModel();
+    AppPage? capturedPage;
+    viewModel.replaceRootPage = (page) {
+      capturedPage = page;
+      return Future<Object?>.value('done');
+    };
+
+    final result = await viewModel.replaceRoot(const HomeAppPage());
+
+    expect(result, 'done');
+    expect(capturedPage, isA<HomeAppPage>());
+  });
+
   testWidgets('localStrings reads current strings from the bound page', (
     tester,
   ) async {
@@ -105,6 +120,8 @@ void main() {
     expect(find.text('Flutter MVVM Template'), findsOneWidget);
   });
 }
+
+class _NavigationViewModel extends BaseViewModel {}
 
 abstract class _StrictViewModelInput {
   void rename(String title);

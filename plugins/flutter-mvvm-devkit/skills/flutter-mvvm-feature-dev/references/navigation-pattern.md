@@ -42,6 +42,8 @@ ViewModel 中调用：
 show(ProfileAppPage(userId: userId));
 ```
 
+需要清空导航栈时调用 `replaceRoot(...)`；不要把它作为 `AppPageTransition`。
+
 ## 新增弹窗或弹层
 
 Alert：

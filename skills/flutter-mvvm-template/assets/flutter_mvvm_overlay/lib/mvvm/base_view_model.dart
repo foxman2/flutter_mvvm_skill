@@ -11,6 +11,7 @@ abstract class BaseViewModel {
   Future<Object?> Function(AppPage page, [AppPageTransition? transition])?
   showPage;
   Future<Object?> Function(AppPage page)? pushReplacementPage;
+  Future<Object?> Function(AppPage page)? replaceRootPage;
   Future<Object?> Function(AppPage page, String untilRouteName)?
   pushAndRemoveUntilPage;
   void Function([Object? result])? popPage;
@@ -44,6 +45,10 @@ abstract class BaseViewModel {
 
   Future<Object?> pushReplacement(AppPage page) {
     return pushReplacementPage?.call(page) ?? Future.value(null);
+  }
+
+  Future<Object?> replaceRoot(AppPage page) {
+    return replaceRootPage?.call(page) ?? Future.value(null);
   }
 
   Future<Object?> pushAndRemoveUntil(AppPage page, String untilRouteName) {

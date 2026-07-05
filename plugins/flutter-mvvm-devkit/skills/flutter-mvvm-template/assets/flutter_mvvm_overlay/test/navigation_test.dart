@@ -16,6 +16,12 @@ void main() {
     expect(AppRouteParser.parse('/'), isA<HomeAppPage>());
   });
 
+  test('home route uses normal page transition by default', () {
+    const page = HomeAppPage();
+
+    expect(page.defaultTransition, AppPageTransition.push);
+  });
+
   test('product preview route is isolated from business routes', () {
     const page = ProductPreviewAppPage();
 
