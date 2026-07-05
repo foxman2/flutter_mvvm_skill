@@ -117,7 +117,7 @@ class AppNavigator {
       },
       child: Navigator(
         key: key,
-        onGenerateInitialRoutes: (_, __) => [initialRoute],
+        onGenerateInitialRoutes: (_, _) => [initialRoute],
       ),
     );
   }
@@ -165,7 +165,7 @@ class AppNavigator {
     return Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page.generateWidgetBuilder()(context),
+        pageBuilder: (_, _, _) => page.generateWidgetBuilder()(context),
         settings: routeSettingsFor(page, isFullScreen: true),
       ),
     );
