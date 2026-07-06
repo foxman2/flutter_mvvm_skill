@@ -1,0 +1,10 @@
+interface:
+  display_name: "Flutter MVVM Inspector"
+  short_description: "启动 Flutter 并用 Dart MCP 连接 App"
+  default_prompt: "使用 $flutter-mvvm-inspector 启动 Flutter 应用，连接 Dart MCP，然后开启 Widget 选择并定位源码。"
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "dart"
+      description: "Dart MCP server for connecting to Dart Tooling Daemon, selecting Flutter widgets, hot reload, and runtime error inspection."

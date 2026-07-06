@@ -1,6 +1,6 @@
 # Flutter MVVM DevKit
 
-这个仓库是 `flutter-mvvm-devkit` Codex 插件的源码。插件内包含多个 Flutter MVVM 开发 skill，覆盖新项目模板生成、正式功能开发、PM UI 预览、正式 API 开发和 mock API 开发。
+这个仓库是 `flutter-mvvm-devkit` Codex 插件的源码。插件内包含多个 Flutter MVVM 开发 skill，覆盖新项目模板生成、正式功能开发、PM UI 预览、运行中界面源码定位、正式 API 开发和 mock API 开发。
 
 ## 目录结构
 
@@ -9,6 +9,7 @@
 - `plugins/flutter-mvvm-devkit/`：发布给团队安装的插件目录，由同步脚本生成。
 - `skills/flutter-mvvm-template/`：创建新 Flutter MVVM 项目的 skill 源码。
 - `skills/flutter-mvvm-pm-ui/`：产品经理专用 UI 预览、受限展示层修改和待审核 mock 数据工作流。
+- `skills/flutter-mvvm-inspector/`：启动 Flutter app、捕获 DTD URI，并用 Dart MCP 连接 app 后选择 widget 和定位源码的工作流。
 - `skills/flutter-mvvm-feature-dev/`：在已有 Flutter MVVM 项目中创建页面、修改 UI、接导航的 skill 源码。
 - `skills/flutter-mvvm-api-dev/`：在已有 Flutter MVVM 项目中新增 API service、model 解析和接口调用的 skill 源码。
 - `skills/flutter-mvvm-mock-api-dev/`：在已有 Flutter MVVM 项目中新增临时 mock API、mock service 和 mock-only model 的 skill 源码。
@@ -20,7 +21,7 @@
 
 ## 开发
 
-主要修改 `skills/flutter-mvvm-template/`、`skills/flutter-mvvm-pm-ui/`、`skills/flutter-mvvm-feature-dev/`、`skills/flutter-mvvm-api-dev/` 和 `skills/flutter-mvvm-mock-api-dev/`。模板改动后，可以用 `examples/mvvm_skill_test/` 这个本地测试项目检查生成后的 Flutter 代码。
+主要修改 `skills/flutter-mvvm-template/`、`skills/flutter-mvvm-pm-ui/`、`skills/flutter-mvvm-inspector/`、`skills/flutter-mvvm-feature-dev/`、`skills/flutter-mvvm-api-dev/` 和 `skills/flutter-mvvm-mock-api-dev/`。模板改动后，可以用 `examples/mvvm_skill_test/` 这个本地测试项目检查生成后的 Flutter 代码。
 
 常用检查：
 
@@ -69,6 +70,20 @@ codex plugin add flutter-mvvm-devkit@team-internal
 
 安装或更新后请新开一个 Codex 线程，让新的 skill 配置生效。
 
+`$flutter-mvvm-inspector` 需要团队成员本机启用 Dart MCP。通常先确认 `dart mcp-server --help` 可用，然后运行：
+
+```bash
+codex mcp add dart -- dart mcp-server --force-roots-fallback
+```
+
+如果没有全局 `codex` 命令，可以使用 Codex.app 内置 CLI：
+
+```bash
+/Applications/Codex.app/Contents/Resources/codex mcp add dart -- dart mcp-server --force-roots-fallback
+```
+
+启用后重启 Codex 或新开线程。
+
 发布新版本前，维护者先同步团队安装目录：
 
 ```bash
@@ -82,3 +97,5 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ```
 
 生成项目包含首页 `Product Preview` 悬浮入口和 `lib/product_preview/` 隔离目录。产品经理新增 UI 原型时使用 `$flutter-mvvm-pm-ui`，开发审核和正式迁移时再使用 `$flutter-mvvm-feature-dev`。
+
+定位运行中界面源码时使用 `$flutter-mvvm-inspector`。它会启动 Flutter debug app，捕获启动输出里的 DTD URI，用 Dart MCP 连接该 app，然后开启 widget 选择模式并读取选中 widget 对应源码位置。

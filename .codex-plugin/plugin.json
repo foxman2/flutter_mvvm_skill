@@ -1,7 +1,7 @@
 {
   "name": "flutter-mvvm-devkit",
-  "version": "0.1.0",
-  "description": "Develop Flutter MVVM apps with template generation, sealed navigation, PM previews, feature workflows, APIs, and mock services.",
+  "version": "0.1.1",
+  "description": "Develop Flutter MVVM apps with template generation, sealed navigation, PM previews, inspector workflows, APIs, and mock services.",
   "author": {
     "name": "xiaominliu"
   },
@@ -12,6 +12,9 @@
     "mvvm",
     "devkit",
     "template",
+    "inspector",
+    "dart",
+    "mcp",
     "api",
     "mock",
     "ui"
@@ -19,8 +22,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Flutter MVVM DevKit",
-    "shortDescription": "Build Flutter MVVM apps with templates, features, APIs, mocks, and PM previews.",
-    "longDescription": "Provides Codex skills and generator assets for Flutter MVVM application work: new app templates, reusable base views, sealed page navigation, common alert/action sheet UI, formal feature development, API service/model workflows, mock API scaffolding, and product-manager UI preview workflows.",
+    "shortDescription": "Build Flutter MVVM apps with templates, inspector workflows, APIs, mocks, and PM previews.",
+    "longDescription": "Provides Codex skills and generator assets for Flutter MVVM application work: new app templates, reusable base views, sealed page navigation, common alert/action sheet UI, running-app widget inspection through Dart MCP, formal feature development, API service/model workflows, mock API scaffolding, and product-manager UI preview workflows.",
     "developerName": "xiaominliu",
     "category": "Productivity",
     "capabilities": [
@@ -30,7 +33,8 @@
     "defaultPrompt": [
       "Use $flutter-mvvm-template to create a Flutter MVVM app.",
       "Use $flutter-mvvm-feature-dev to add a formal Flutter MVVM feature.",
-      "Use $flutter-mvvm-pm-ui to add an isolated product-manager UI preview."
+      "Use $flutter-mvvm-pm-ui to add an isolated product-manager UI preview.",
+      "Use $flutter-mvvm-inspector to connect Dart MCP and locate the source for a selected Flutter widget."
     ],
     "brandColor": "#0468D7"
   }
