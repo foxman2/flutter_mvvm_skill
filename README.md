@@ -64,7 +64,7 @@ codex plugin add flutter-mvvm-devkit@team-internal
 插件更新后，团队成员运行：
 
 ```bash
-codex plugin marketplace upgrade
+/Applications/Codex.app/Contents/Resources/codex plugin marketplace upgrade
 codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
