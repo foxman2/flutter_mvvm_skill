@@ -1,6 +1,6 @@
 {
   "name": "flutter-mvvm-devkit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Develop Flutter MVVM apps with template generation, sealed navigation, PM previews, inspector workflows, APIs, and mock services.",
   "author": {
     "name": "xiaominliu"
@@ -14,7 +14,7 @@
     "template",
     "inspector",
     "dart",
-    "mcp",
+    "vm-service",
     "api",
     "mock",
     "ui"
@@ -23,7 +23,7 @@
   "interface": {
     "displayName": "Flutter MVVM DevKit",
     "shortDescription": "Build Flutter MVVM apps with templates, inspector workflows, APIs, mocks, and PM previews.",
-    "longDescription": "Provides Codex skills and generator assets for Flutter MVVM application work: new app templates, reusable base views, sealed page navigation, common alert/action sheet UI, running-app widget inspection through Dart MCP, formal feature development, API service/model workflows, mock API scaffolding, and product-manager UI preview workflows.",
+    "longDescription": "Provides Codex skills and generator assets for Flutter MVVM application work: new app templates, reusable base views, sealed page navigation, common alert/action sheet UI, running-app widget inspection through Flutter VM Service, formal feature development, API service/model workflows, mock API scaffolding, and product-manager UI preview workflows.",
     "developerName": "xiaominliu",
     "category": "Productivity",
     "capabilities": [
@@ -34,7 +34,7 @@
       "Use $flutter-mvvm-template to create a Flutter MVVM app.",
       "Use $flutter-mvvm-feature-dev to add a formal Flutter MVVM feature.",
       "Use $flutter-mvvm-pm-ui to add an isolated product-manager UI preview.",
-      "Use $flutter-mvvm-inspector to connect Dart MCP and locate the source for a selected Flutter widget."
+      "Use $flutter-mvvm-inspector to inspect a running Flutter app through VM Service and locate the source for a selected widget."
     ],
     "brandColor": "#0468D7"
   }
