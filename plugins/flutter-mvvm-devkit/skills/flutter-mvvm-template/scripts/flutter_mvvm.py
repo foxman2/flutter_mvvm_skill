@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 import plistlib
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -27,6 +29,18 @@ TEXT_SUFFIXES = {
     ".swift",
     ".plist",
 }
+EXCLUDED_FILE_NAMES = {
+    ".DS_Store",
+}
+EXCLUDED_DIR_NAMES = {
+    "__pycache__",
+}
+EXCLUDED_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+}
+PROJECT_SKILLS_REPO = "foxman2/flutter_mvvm_skill"
+PROJECT_SKILLS_ASSET = "flutter-mvvm-skills.tar.gz"
 
 
 class CliError(Exception):
@@ -35,6 +49,10 @@ class CliError(Exception):
 
 def skill_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
+
+def repo_root() -> Path:
+    return skill_root().parents[1]
 
 
 def run(cmd: list[str], cwd: Path | None = None, allow_failure: bool = False) -> int:
@@ -129,6 +147,89 @@ def copy_overlay(overlay_dir: Path, target_dir: Path, replacements: dict[str, st
             shutil.copy2(item, destination)
 
     replace_placeholders(target_dir, replacements)
+
+
+def copy_project_skills(target_dir: Path) -> list[str]:
+    source_dir = repo_root() / "project-skills"
+    if not source_dir.is_dir():
+        raise CliError(f"Project skills directory was not found: {source_dir}")
+
+    skills_dir = target_dir / ".codex" / "skills"
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    managed_skills: list[str] = []
+    for skill_dir in sorted(source_dir.iterdir()):
+        if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").is_file():
+            continue
+
+        managed_skills.append(skill_dir.name)
+        destination = skills_dir / skill_dir.name
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(skill_dir, destination, ignore=ignored_project_asset_names)
+
+    if not managed_skills:
+        raise CliError(f"No project skills were found in: {source_dir}")
+    return managed_skills
+
+
+def ignored_project_asset_names(directory: str, names: list[str]) -> set[str]:
+    ignored: set[str] = set()
+    for name in names:
+        path = Path(directory) / name
+        if name in EXCLUDED_FILE_NAMES:
+            ignored.add(name)
+        elif path.is_dir() and name in EXCLUDED_DIR_NAMES:
+            ignored.add(name)
+        elif path.is_file() and path.suffix in EXCLUDED_SUFFIXES:
+            ignored.add(name)
+    return ignored
+
+
+def install_update_script(target_dir: Path) -> None:
+    source = repo_root() / "scripts" / "update-codex-skills.sh"
+    if not source.is_file():
+        raise CliError(f"Codex skills updater was not found: {source}")
+
+    destination = target_dir / "scripts" / "update-codex-skills.sh"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    destination.chmod(destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+
+def write_project_skills_manifest(target_dir: Path, managed_skills: list[str]) -> None:
+    manifest_dir = target_dir / ".codex"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "source": f"github.com/{PROJECT_SKILLS_REPO}",
+        "repo": PROJECT_SKILLS_REPO,
+        "asset": PROJECT_SKILLS_ASSET,
+        "version": release_tag_from_plugin_version(),
+        "installedAt": utc_timestamp(),
+        "managedSkills": managed_skills,
+    }
+    (manifest_dir / "flutter-mvvm-skills.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def release_tag_from_plugin_version() -> str:
+    manifest_path = repo_root() / ".codex-plugin" / "plugin.json"
+    if not manifest_path.is_file():
+        return "unknown"
+
+    try:
+        version = json.loads(manifest_path.read_text(encoding="utf-8"))["version"]
+    except (KeyError, json.JSONDecodeError):
+        return "unknown"
+
+    base_version = str(version).split("+", 1)[0]
+    return base_version if base_version.startswith("v") else f"v{base_version}"
+
+
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def replace_placeholders(target_dir: Path, replacements: dict[str, str]) -> None:
@@ -338,6 +439,9 @@ def create_project(args: argparse.Namespace) -> None:
         target_dir / "pubspec.yaml",
         overlay_dir / "template_pubspec_patch.yaml",
     )
+    managed_skills = copy_project_skills(target_dir)
+    install_update_script(target_dir)
+    write_project_skills_manifest(target_dir, managed_skills)
 
     pub_get_code = run(["flutter", "pub", "get"], cwd=target_dir, allow_failure=True)
     if pub_get_code != 0:

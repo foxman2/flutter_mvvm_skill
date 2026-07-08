@@ -11,6 +11,8 @@ from pathlib import Path
 DEFAULT_INCLUDE_PATHS = (
     ".codex-plugin",
     "skills",
+    "project-skills",
+    "scripts/update-codex-skills.sh",
     "README.md",
 )
 
