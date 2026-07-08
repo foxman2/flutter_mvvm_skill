@@ -77,7 +77,7 @@ def update_script_path(root: Path) -> Path:
         / "assets"
         / "flutter_mvvm_overlay"
         / "scripts"
-        / "update-codex-skills.sh"
+        / "update-codex-skills.py"
     )
 
 
@@ -133,7 +133,7 @@ def build_archive(output_dir: Path, version: str, repo: str) -> Path:
     with tarfile.open(archive_path, "w:gz") as archive:
         for skill_dir in skills:
             add_tree(archive, skill_dir, f".codex/skills/{skill_dir.name}")
-        add_file(archive, updater, "scripts/update-codex-skills.sh")
+        add_file(archive, updater, "scripts/update-codex-skills.py")
         add_manifest(
             archive,
             repo=repo,

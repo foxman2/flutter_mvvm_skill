@@ -37,7 +37,7 @@ lib/
 │       └── models/
 └── widgets/
 scripts/
-└── update-codex-skills.sh
+└── update-codex-skills.py
 ```
 
 页面 ViewModel 推荐结构：
@@ -65,7 +65,7 @@ class ProfileViewModel extends ProfileViewModelType {}
 3. 运行 `flutter analyze`。
 4. 运行 `flutter test`。
 5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 和 `test/` 都已覆盖到位。
-6. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.sh` 已生成。
+6. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py` 已生成。
 
 ## 不要放入模板的内容
 

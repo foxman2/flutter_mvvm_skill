@@ -42,7 +42,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 
 - `.codex/skills/`（项目内技能）
 - `.codex/flutter-mvvm-skills.json`（受管清单）
-- `scripts/update-codex-skills.sh`（升级脚本）
+- `scripts/update-codex-skills.py`（升级脚本）
 
 常用项目内技能：`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
 
@@ -58,12 +58,12 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ### 已生成项目技能
 
 ```bash
-./scripts/update-codex-skills.sh
-./scripts/update-codex-skills.sh --version v0.1.3
-./scripts/update-codex-skills.sh --archive /path/to/flutter-mvvm-skills.tar.gz
+./scripts/update-codex-skills.py
+./scripts/update-codex-skills.py --version v0.1.3
+./scripts/update-codex-skills.py --archive /path/to/flutter-mvvm-skills.tar.gz
 ```
 
-私有仓库用户请先设置 `GITHUB_TOKEN`。
+更新脚本需要本机有 `python3`。私有仓库用户请先设置 `GITHUB_TOKEN`。
 
 ## 维护者
 

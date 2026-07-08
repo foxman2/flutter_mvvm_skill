@@ -39,7 +39,7 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - app 显示名会同步到 Flutter UI 标题、Android label、iOS display name 和 Web manifest/title。
 - 原生包名会同步到 Android namespace/applicationId/MainActivity package，以及 iOS bundle identifier。
 - 模板内已包含 MVVM 基类、sealed AppPage 导航、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例和 Product Preview 入口；这里不要展开后续开发规范。
-- 生成项目内已包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.sh`。需要更新局部 skills 时，在生成项目根目录运行 `./scripts/update-codex-skills.sh --version vX.Y.Z`。
+- 生成项目内已包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py`。需要更新局部 skills 时，在生成项目根目录运行 `./scripts/update-codex-skills.py --version vX.Y.Z`。
 
 ## CLI 参数
 
@@ -60,6 +60,6 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - `scripts/install_cli.sh`：安装 `flutter-mvvm` 命令软链接。
 - `assets/flutter_mvvm_overlay/`：复制到新 Flutter 应用中的模板文件。
 - `<plugin-root>/project-skills/`：复制到生成项目 `.codex/skills/` 的局部开发 skills。
-- `assets/flutter_mvvm_overlay/scripts/update-codex-skills.sh`：复制到生成项目 `scripts/` 的局部 skills updater。
+- `assets/flutter_mvvm_overlay/scripts/update-codex-skills.py`：复制到生成项目 `scripts/` 的局部 skills updater。
 - `references/architecture.md`：模板边界和生成项目结构。
 - `references/sealed-page.md`：sealed page 路由模式和示例。

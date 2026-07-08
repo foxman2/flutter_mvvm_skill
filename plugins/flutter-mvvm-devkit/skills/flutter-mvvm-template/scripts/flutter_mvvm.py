@@ -189,10 +189,14 @@ def ignored_project_asset_names(directory: str, names: list[str]) -> set[str]:
 
 
 def ensure_update_script(target_dir: Path) -> None:
-    destination = target_dir / "scripts" / "update-codex-skills.sh"
+    destination = target_dir / "scripts" / "update-codex-skills.py"
     if not destination.is_file():
         raise CliError(f"Codex skills updater was not copied from template assets: {destination}")
     destination.chmod(destination.stat().st_mode | 0o755)
+
+    legacy_shell = target_dir / "scripts" / "update-codex-skills.sh"
+    if legacy_shell.exists() or legacy_shell.is_symlink():
+        legacy_shell.unlink()
 
 
 def write_project_skills_manifest(target_dir: Path, managed_skills: list[str]) -> None:
