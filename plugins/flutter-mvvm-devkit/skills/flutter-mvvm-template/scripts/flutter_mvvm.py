@@ -8,7 +8,6 @@ import os
 import plistlib
 import re
 import shutil
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -140,6 +139,9 @@ def copy_overlay(overlay_dir: Path, target_dir: Path, replacements: dict[str, st
             continue
         destination = target_dir / item.name
         if item.is_dir():
+            if item.name == "scripts":
+                shutil.copytree(item, destination, dirs_exist_ok=True)
+                continue
             if destination.exists():
                 shutil.rmtree(destination)
             shutil.copytree(item, destination)
@@ -186,15 +188,11 @@ def ignored_project_asset_names(directory: str, names: list[str]) -> set[str]:
     return ignored
 
 
-def install_update_script(target_dir: Path) -> None:
-    source = repo_root() / "scripts" / "update-codex-skills.sh"
-    if not source.is_file():
-        raise CliError(f"Codex skills updater was not found: {source}")
-
+def ensure_update_script(target_dir: Path) -> None:
     destination = target_dir / "scripts" / "update-codex-skills.sh"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, destination)
-    destination.chmod(destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    if not destination.is_file():
+        raise CliError(f"Codex skills updater was not copied from template assets: {destination}")
+    destination.chmod(destination.stat().st_mode | 0o755)
 
 
 def write_project_skills_manifest(target_dir: Path, managed_skills: list[str]) -> None:
@@ -440,7 +438,7 @@ def create_project(args: argparse.Namespace) -> None:
         overlay_dir / "template_pubspec_patch.yaml",
     )
     managed_skills = copy_project_skills(target_dir)
-    install_update_script(target_dir)
+    ensure_update_script(target_dir)
     write_project_skills_manifest(target_dir, managed_skills)
 
     pub_get_code = run(["flutter", "pub", "get"], cwd=target_dir, allow_failure=True)

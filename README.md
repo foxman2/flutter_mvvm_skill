@@ -11,8 +11,8 @@
 - `project-skills/`：生成项目内置的局部 skills 源码，包括正式功能开发、PM UI 预览、运行中界面源码定位、正式 API 开发和 mock API 开发。
 - `skills/flutter-mvvm-template/scripts/flutter_mvvm.py`：项目生成 CLI。
 - `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/`：覆盖到新 Flutter 项目中的模板文件。
-- `scripts/update-codex-skills.sh`：复制到生成项目中的局部 skills 更新脚本。
-- `scripts/package_project_skills.py`：生成 GitHub Release asset `flutter-mvvm-skills.tar.gz`。
+- `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/scripts/update-codex-skills.sh`：随模板复制到生成项目中的局部 skills 更新脚本。
+- `scripts/package_project_skills.py`：源码仓库维护脚本，生成 GitHub Release asset `flutter-mvvm-skills.tar.gz`，不进入 plugin 分发包。
 - `examples/`：用于手动验证的生成示例项目目录，内容不纳入插件包。
 - `scripts/package_plugin.py`：在 `dist/` 下生成可分发的插件 zip。
 - `scripts/sync_marketplace_plugin.py`：把当前插件源码同步到 `plugins/flutter-mvvm-devkit/`，用于 GitHub 团队安装。
@@ -39,7 +39,7 @@ done
 python3 scripts/package_plugin.py
 ```
 
-压缩包包含 `.codex-plugin/`、全局 `skills/`、`project-skills/`、项目 updater 和 `README.md`，但 Codex 只会从 manifest 的 `skills` 路径发现 `flutter-mvvm-template`。
+压缩包包含 `.codex-plugin/`、全局 `skills/`、`project-skills/` 和 `README.md`；项目 updater 位于 `flutter-mvvm-template` 的模板 assets 中。根目录 `scripts/` 是维护者工具，不进入 plugin 分发包。Codex 只会从 manifest 的 `skills` 路径发现 `flutter-mvvm-template`。
 
 ## Project Skills Release
 
@@ -49,13 +49,20 @@ python3 scripts/package_plugin.py
 flutter-mvvm-skills.tar.gz
 ```
 
-维护者发布新版本：
+维护者发布新版本时，先更新代码和版本号并推送到 `main`，然后打 release tag：
+
+```bash
+git tag v0.1.3
+git push origin v0.1.3
+```
+
+GitHub Actions 会自动运行 `.github/workflows/release-project-skills.yml`，生成 `dist/flutter-mvvm-skills.tar.gz`，创建或更新 GitHub Release `v0.1.3`，并上传同名 asset。
+
+需要本地验证 release asset 时，可以手动打包：
 
 ```bash
 python3 scripts/package_project_skills.py --version v0.1.3
 ```
-
-然后在 GitHub 创建 tag/release `v0.1.3`，上传 `dist/flutter-mvvm-skills.tar.gz`。
 
 生成项目内更新局部 skills：
 

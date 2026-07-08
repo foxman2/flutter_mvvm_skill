@@ -5,6 +5,7 @@ import argparse
 from datetime import datetime, timezone
 import io
 import json
+import re
 import tarfile
 from pathlib import Path
 
@@ -21,6 +22,7 @@ EXCLUDED_SUFFIXES = {
     ".pyc",
     ".pyo",
 }
+RELEASE_TAG_RE = re.compile(r"^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$")
 
 
 def repo_root() -> Path:
@@ -31,7 +33,17 @@ def read_plugin_version(root: Path) -> str:
     manifest_path = root / ".codex-plugin" / "plugin.json"
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     base_version = str(data["version"]).split("+", 1)[0]
-    return base_version if base_version.startswith("v") else f"v{base_version}"
+    return normalize_release_tag(base_version)
+
+
+def normalize_release_tag(version: str) -> str:
+    match = RELEASE_TAG_RE.match(version)
+    if not match:
+        raise ValueError(
+            "Release version must look like vX.Y.Z or X.Y.Z, "
+            "optionally with a prerelease suffix."
+        )
+    return f"v{match.group(1)}"
 
 
 def utc_timestamp() -> str:
@@ -55,6 +67,18 @@ def project_skill_dirs(root: Path) -> list[Path]:
     if not skills:
         raise FileNotFoundError(f"No project skills found in: {source_dir}")
     return skills
+
+
+def update_script_path(root: Path) -> Path:
+    return (
+        root
+        / "skills"
+        / "flutter-mvvm-template"
+        / "assets"
+        / "flutter_mvvm_overlay"
+        / "scripts"
+        / "update-codex-skills.sh"
+    )
 
 
 def add_file(archive: tarfile.TarFile, source: Path, arcname: str) -> None:
@@ -102,7 +126,7 @@ def build_archive(output_dir: Path, version: str, repo: str) -> Path:
 
     skills = project_skill_dirs(root)
     managed_skills = [path.name for path in skills]
-    updater = root / "scripts" / "update-codex-skills.sh"
+    updater = update_script_path(root)
     if not updater.is_file():
         raise FileNotFoundError(f"Updater script not found: {updater}")
 
@@ -142,7 +166,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     root = repo_root()
-    version = args.version or read_plugin_version(root)
+    try:
+        version = normalize_release_tag(args.version) if args.version else read_plugin_version(root)
+    except ValueError as error:
+        raise SystemExit(f"error: {error}") from error
     archive_path = build_archive((root / args.output_dir).resolve(), version, args.repo)
     print(f"Created project skills release asset: {archive_path}")
 

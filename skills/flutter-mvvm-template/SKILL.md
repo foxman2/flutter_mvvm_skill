@@ -60,6 +60,6 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - `scripts/install_cli.sh`：安装 `flutter-mvvm` 命令软链接。
 - `assets/flutter_mvvm_overlay/`：复制到新 Flutter 应用中的模板文件。
 - `<plugin-root>/project-skills/`：复制到生成项目 `.codex/skills/` 的局部开发 skills。
-- `<plugin-root>/scripts/update-codex-skills.sh`：复制到生成项目 `scripts/` 的局部 skills updater。
+- `assets/flutter_mvvm_overlay/scripts/update-codex-skills.sh`：复制到生成项目 `scripts/` 的局部 skills updater。
 - `references/architecture.md`：模板边界和生成项目结构。
 - `references/sealed-page.md`：sealed page 路由模式和示例。
