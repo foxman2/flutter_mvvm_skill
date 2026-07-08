@@ -1,70 +1,61 @@
 # Flutter MVVM DevKit
 
-这个仓库是 `flutter-mvvm-devkit` Codex 插件的源码。全局插件只暴露 `flutter-mvvm-template`，负责创建新的 Flutter MVVM 模板项目；正式功能开发、PM UI 预览、运行中界面源码定位、正式 API 开发和 mock API 开发等 skills 会内置到生成项目的 `.codex/skills/` 中，避免在非 MVVM 项目里误触发。
+`flutter-mvvm-devkit` 是团队内部 Codex 插件，用于快速创建 Flutter MVVM 项目。
+插件全局只暴露 `flutter-mvvm-template`，项目内能力在生成后由 `.codex/skills/` 管理。
 
-## 目录结构
-
-- `.codex-plugin/plugin.json`：Codex 插件 manifest。
-- `.agents/plugins/marketplace.json`：团队内部 GitHub 插件市场入口。
-- `plugins/flutter-mvvm-devkit/`：发布给团队安装的插件目录，由同步脚本生成。
-- `skills/flutter-mvvm-template/`：全局插件唯一暴露的 skill，用于创建新 Flutter MVVM 项目。
-- `project-skills/`：生成项目内置的局部 skills 源码，包括正式功能开发、PM UI 预览、运行中界面源码定位、正式 API 开发和 mock API 开发。
-- `skills/flutter-mvvm-template/scripts/flutter_mvvm.py`：项目生成 CLI。
-- `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/`：覆盖到新 Flutter 项目中的模板文件。
-- `skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/scripts/update-codex-skills.sh`：随模板复制到生成项目中的局部 skills 更新脚本。
-- `scripts/package_project_skills.py`：源码仓库维护脚本，生成 GitHub Release asset `flutter-mvvm-skills.tar.gz`，不进入 plugin 分发包。
-- `examples/`：用于手动验证的生成示例项目目录，内容不纳入插件包。
-- `scripts/package_plugin.py`：在 `dist/` 下生成可分发的插件 zip。
-- `scripts/sync_marketplace_plugin.py`：把当前插件源码同步到 `plugins/flutter-mvvm-devkit/`，用于 GitHub 团队安装。
-
-## 开发
-
-主要修改 `skills/flutter-mvvm-template/` 和 `project-skills/`。模板改动后，可以用本地生成项目检查生成后的 Flutter 代码。
-
-常用检查：
+## 快速安装
 
 ```bash
-python3 scripts/sync_marketplace_plugin.py
-python3 /Users/xiaominliu/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/flutter-mvvm-devkit
-for skill in skills/flutter-mvvm-* project-skills/flutter-mvvm-*; do
-  python3 /Users/xiaominliu/.codex/skills/.system/skill-creator/scripts/quick_validate.py "$skill"
-done
+/Applications/Codex.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
+/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
-## 打包
-
-生成插件压缩包：
+如果 `codex` 已在 PATH，可用短命令：
 
 ```bash
-python3 scripts/package_plugin.py
+codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
+codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
-压缩包包含 `.codex-plugin/`、全局 `skills/`、`project-skills/` 和 `README.md`；项目 updater 位于 `flutter-mvvm-template` 的模板 assets 中。根目录 `scripts/` 是维护者工具，不进入 plugin 分发包。Codex 只会从 manifest 的 `skills` 路径发现 `flutter-mvvm-template`。
-
-## Project Skills Release
-
-局部 skills 通过 GitHub Release asset 分发，asset 名固定为：
+旧名用户先切：
 
 ```bash
-flutter-mvvm-skills.tar.gz
+codex plugin remove flutter-mvvm-template
+codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
-维护者发布新版本时，先更新代码和版本号并推送到 `main`，然后打 release tag：
+安装后新开一个 Codex 线程。
+
+## 3 分钟上手
+
+```text
+Use $flutter-mvvm-template to create a Flutter MVVM app.
+```
+
+或直接运行：
 
 ```bash
-git tag v0.1.3
-git push origin v0.1.3
+python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "My App" --package-name com.example.myapp
 ```
 
-GitHub Actions 会自动运行 `.github/workflows/release-project-skills.yml`，生成 `dist/flutter-mvvm-skills.tar.gz`，创建或更新 GitHub Release `v0.1.3`，并上传同名 asset。
+生成项目里会有：
 
-需要本地验证 release asset 时，可以手动打包：
+- `.codex/skills/`（项目内技能）
+- `.codex/flutter-mvvm-skills.json`（受管清单）
+- `scripts/update-codex-skills.sh`（升级脚本）
+
+常用项目内技能：`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
+
+## 升级
+
+### 插件本体
 
 ```bash
-python3 scripts/package_project_skills.py --version v0.1.3
+/Applications/Codex.app/Contents/Resources/codex plugin marketplace upgrade
+/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
-生成项目内更新局部 skills：
+### 已生成项目技能
 
 ```bash
 ./scripts/update-codex-skills.sh
@@ -72,45 +63,12 @@ python3 scripts/package_project_skills.py --version v0.1.3
 ./scripts/update-codex-skills.sh --archive /path/to/flutter-mvvm-skills.tar.gz
 ```
 
-公开仓库默认走 GitHub release 下载；如果 release asset 在私有仓库中，先设置 `GITHUB_TOKEN`。updater 只替换 `.codex/flutter-mvvm-skills.json` 中记录的 managed skills，不删除项目自定义的其它 `.codex/skills/*`。
+私有仓库用户请先设置 `GITHUB_TOKEN`。
 
-## 团队安装
-
-团队成员通过当前 GitHub 仓库安装内部插件：
-
-```bash
-/Applications/Codex.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
-/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-如果之前安装过旧插件名，先移除旧名字：
-
-```bash
-codex plugin remove flutter-mvvm-template
-codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-插件更新后，团队成员运行：
-
-```bash
-/Applications/Codex.app/Contents/Resources/codex plugin marketplace upgrade
-codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-安装或更新后请新开一个 Codex 线程，让新的 skill 配置生效。
-
-发布新版本前，维护者先同步团队安装目录：
+## 维护者
 
 ```bash
 python3 scripts/sync_marketplace_plugin.py
+python3 scripts/package_project_skills.py --version v0.1.3
+git tag v0.1.3 && git push origin v0.1.3
 ```
-
-## 直接使用生成器
-
-```bash
-python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "My App" --package-name com.example.myapp
-```
-
-生成项目包含首页 `Product Preview` 悬浮入口和 `lib/product_preview/` 隔离目录。产品经理新增 UI 原型时使用 `$flutter-mvvm-pm-ui`，开发审核和正式迁移时再使用 `$flutter-mvvm-feature-dev`。
-
-生成项目还包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.sh`。产品经理新增 UI 原型时在项目线程里使用 `$flutter-mvvm-pm-ui`，开发审核和正式迁移时再使用 `$flutter-mvvm-feature-dev`。定位运行中界面源码时使用 `$flutter-mvvm-inspector`。

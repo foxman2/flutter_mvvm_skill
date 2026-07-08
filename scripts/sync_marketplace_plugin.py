@@ -1,10 +1,48 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
-from package_plugin import DEFAULT_INCLUDE_PATHS, read_manifest, repo_root, should_include_file
+
+DEFAULT_INCLUDE_PATHS = (
+    ".codex-plugin",
+    "skills",
+    "project-skills",
+    "README.md",
+)
+
+EXCLUDED_FILE_NAMES = {
+    ".DS_Store",
+}
+
+EXCLUDED_DIR_NAMES = {
+    "__pycache__",
+}
+
+EXCLUDED_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+}
+
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def read_manifest(root: Path) -> dict:
+    manifest_path = root / ".codex-plugin" / "plugin.json"
+    with manifest_path.open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def should_include_file(path: Path) -> bool:
+    if path.name in EXCLUDED_FILE_NAMES:
+        return False
+    if path.suffix in EXCLUDED_SUFFIXES:
+        return False
+    return not any(part in EXCLUDED_DIR_NAMES for part in path.parts)
 
 
 def copy_plugin_source(root: Path, destination: Path) -> None:
