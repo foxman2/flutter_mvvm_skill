@@ -68,7 +68,7 @@ jobs:
             exit 1
           fi
           grep -q '^\.codex/flutter-mvvm-skills\.json$' /tmp/project-skills-files.txt
-          grep -q '^scripts/update-codex-skills\.sh$' /tmp/project-skills-files.txt
+          grep -q '^scripts/update-codex-skills\.py$' /tmp/project-skills-files.txt
 
       - name: Create or update GitHub Release
         env:
