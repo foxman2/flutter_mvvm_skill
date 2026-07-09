@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
+"""从 GitHub Release 更新项目本地的 Flutter MVVM Codex skills。
+
+流程很短：
+1. 下载固定仓库里的 flutter-mvvm-skills.tar.gz。
+2. 在临时目录中安全解压。
+3. 只替换 manifest 声明的 managedSkills。
+4. 写回 manifest，并同步下一版 updater。
+"""
 from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
 import json
-import os
 from pathlib import Path, PurePosixPath
 import shutil
 import stat
@@ -17,69 +24,55 @@ from urllib.request import Request, urlopen
 
 DEFAULT_REPO = "foxman2/flutter_mvvm_skill"
 ASSET_NAME = "flutter-mvvm-skills.tar.gz"
-GITHUB_API_VERSION = "2022-11-28"
 USER_AGENT = "flutter-mvvm-skills-updater"
+
+# 发布包内和目标项目内使用同一组相对路径。
+MANIFEST_PATH = Path(".codex") / "flutter-mvvm-skills.json"
+SKILLS_PATH = Path(".codex") / "skills"
+UPDATER_PATH = Path("scripts") / "update-codex-skills.py"
+LEGACY_UPDATER_PATH = Path("scripts") / "update-codex-skills.sh"
 
 
 class UpdateError(Exception):
-    pass
+    """更新过程中的可预期错误。"""
 
 
 def parse_args() -> argparse.Namespace:
+    """只保留 --version；仓库和 asset 名称固定在脚本常量里。"""
     parser = argparse.ArgumentParser(description="Update project-local Flutter MVVM Codex skills.")
-    parser.add_argument(
-        "--version",
-        help="Install a specific GitHub Release tag, for example v0.1.3.",
-    )
-    parser.add_argument(
-        "--archive",
-        help="Install from a local flutter-mvvm-skills.tar.gz archive.",
-    )
-    parser.add_argument(
-        "--repo",
-        default=DEFAULT_REPO,
-        help=f"Override the GitHub repository. Defaults to {DEFAULT_REPO}.",
-    )
-    args = parser.parse_args()
-    if args.version and args.archive:
-        parser.error("use either --version or --archive, not both")
-    return args
-
-
-def utc_timestamp() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    parser.add_argument("--version", help="Install a specific GitHub Release tag, for example v0.1.3.")
+    return parser.parse_args()
 
 
 def project_root() -> Path:
+    # 安装后脚本位于 <project>/scripts/update-codex-skills.py。
     return Path(__file__).resolve().parents[1]
 
 
-def github_headers(token: str | None = None, *, accept: str) -> dict[str, str]:
-    headers = {
-        "Accept": accept,
-        "User-Agent": USER_AGENT,
-        "X-GitHub-Api-Version": GITHUB_API_VERSION,
-    }
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
+def utc_timestamp() -> str:
+    """生成 manifest 里记录安装时间用的 UTC 时间戳。"""
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def release_url(version: str | None) -> str:
+    """version 为空时下载 latest，否则下载指定 tag 的 release asset。"""
+    release_path = f"download/{version}" if version else "latest/download"
+    return f"https://github.com/{DEFAULT_REPO}/releases/{release_path}/{ASSET_NAME}"
 
 
 def http_error_message(error: HTTPError) -> str:
+    """把 HTTP 状态和响应体合并成更有用的错误信息。"""
     try:
         body = error.read().decode("utf-8", errors="replace").strip()
     except OSError:
         body = ""
-    if body:
-        return f"{error.code} {error.reason}: {body}"
-    return f"{error.code} {error.reason}"
+    return f"{error.code} {error.reason}: {body}" if body else f"{error.code} {error.reason}"
 
 
-def download_url(url: str, destination: Path, headers: dict[str, str] | None = None) -> None:
-    request_headers = {"User-Agent": USER_AGENT}
-    if headers:
-        request_headers.update(headers)
-    request = Request(url, headers=request_headers)
+def download_archive(version: str | None, destination: Path) -> None:
+    """下载 release asset 到临时目录中的目标文件。"""
+    url = release_url(version)
+    request = Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urlopen(request) as response, destination.open("wb") as output:
             shutil.copyfileobj(response, output)
@@ -91,94 +84,35 @@ def download_url(url: str, destination: Path, headers: dict[str, str] | None = N
         raise UpdateError(f"download failed: {url} ({error})") from error
 
 
-def download_public_asset(repo: str, version: str | None, destination: Path) -> None:
-    if version:
-        url = f"https://github.com/{repo}/releases/download/{version}/{ASSET_NAME}"
-    else:
-        url = f"https://github.com/{repo}/releases/latest/download/{ASSET_NAME}"
-    download_url(url, destination)
-
-
-def read_github_json(url: str, token: str) -> dict:
-    request = Request(
-        url,
-        headers=github_headers(token, accept="application/vnd.github+json"),
+def validate_archive_member(member: tarfile.TarInfo) -> None:
+    """校验 tar 成员，防止恶意压缩包写出目标目录。"""
+    # 禁止 ../、绝对路径、空路径和链接；只接受普通文件和目录。
+    path = PurePosixPath(member.name)
+    unsafe_name = path.is_absolute() or not member.name or any(
+        part in {"", ".", ".."} for part in path.parts
     )
-    try:
-        with urlopen(request) as response:
-            return json.load(response)
-    except HTTPError as error:
-        raise UpdateError(f"GitHub API request failed: {url} ({http_error_message(error)})") from error
-    except URLError as error:
-        raise UpdateError(f"GitHub API request failed: {url} ({error.reason})") from error
-    except json.JSONDecodeError as error:
-        raise UpdateError(f"GitHub API returned invalid JSON: {url}") from error
-
-
-def download_api_asset(repo: str, version: str | None, token: str, destination: Path) -> None:
-    if version:
-        release_url = f"https://api.github.com/repos/{repo}/releases/tags/{version}"
-    else:
-        release_url = f"https://api.github.com/repos/{repo}/releases/latest"
-
-    release = read_github_json(release_url, token)
-    asset_id = None
-    for asset in release.get("assets", []):
-        if asset.get("name") == ASSET_NAME:
-            asset_id = asset.get("id")
-            break
-
-    if asset_id is None:
-        raise UpdateError(f"release asset not found: {ASSET_NAME}")
-
-    asset_url = f"https://api.github.com/repos/{repo}/releases/assets/{asset_id}"
-    download_url(
-        asset_url,
-        destination,
-        github_headers(token, accept="application/octet-stream"),
-    )
-
-
-def download_asset(repo: str, version: str | None, destination: Path) -> None:
-    try:
-        download_public_asset(repo, version, destination)
-        return
-    except UpdateError as public_error:
-        token = os.environ.get("GITHUB_TOKEN")
-        if not token:
-            raise UpdateError(
-                f"could not download {ASSET_NAME}; set GITHUB_TOKEN for private releases "
-                f"({public_error})"
-            ) from public_error
-
-    print("Public release download failed; retrying through the GitHub API with GITHUB_TOKEN.", file=sys.stderr)
-    download_api_asset(repo, version, token, destination)
-
-
-def safe_member_name(name: str) -> bool:
-    path = PurePosixPath(name)
-    if path.is_absolute() or not name:
-        return False
-    return all(part not in {"", ".", ".."} for part in path.parts)
+    if unsafe_name:
+        raise UpdateError(f"archive contains unsafe path: {member.name}")
+    if member.issym() or member.islnk():
+        raise UpdateError(f"archive contains unsupported link: {member.name}")
+    if not (member.isdir() or member.isfile()):
+        raise UpdateError(f"archive contains unsupported member: {member.name}")
 
 
 def extract_archive(archive_path: Path, destination: Path) -> None:
+    """先检查所有 tar 成员，再整体解压。"""
     destination.mkdir(parents=True, exist_ok=True)
     try:
         with tarfile.open(archive_path, "r:gz") as archive:
             for member in archive.getmembers():
-                if not safe_member_name(member.name):
-                    raise UpdateError(f"archive contains unsafe path: {member.name}")
-                if member.issym() or member.islnk():
-                    raise UpdateError(f"archive contains unsupported link: {member.name}")
-                if not (member.isdir() or member.isfile()):
-                    raise UpdateError(f"archive contains unsupported member: {member.name}")
+                validate_archive_member(member)
             archive.extractall(destination)
     except tarfile.TarError as error:
         raise UpdateError(f"could not extract archive: {archive_path}") from error
 
 
-def read_json_file(path: Path) -> dict:
+def read_json(path: Path) -> dict:
+    """读取 JSON；文件不存在时返回空 dict，兼容首次安装和旧包。"""
     if not path.is_file():
         return {}
     try:
@@ -189,151 +123,123 @@ def read_json_file(path: Path) -> dict:
         raise UpdateError(f"could not read file: {path}") from error
 
 
-def validate_skill_name(name: object) -> str:
-    if not isinstance(name, str) or not name.strip():
-        raise UpdateError(f"invalid managed skill name: {name!r}")
-    normalized = name.strip()
-    if normalized in {".", ".."} or "/" in normalized or "\\" in normalized:
-        raise UpdateError(f"unsafe managed skill name: {normalized}")
-    return normalized
-
-
 def normalize_skill_names(names: list[object]) -> list[str]:
-    normalized_names = []
+    """校验 skill 名称、去重，并保留 manifest 中的原始顺序。"""
+    result: list[str] = []
     seen = set()
-    for name in names:
-        normalized = validate_skill_name(name)
-        if normalized in seen:
-            continue
-        seen.add(normalized)
-        normalized_names.append(normalized)
-    return normalized_names
+    for raw_name in names:
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            raise UpdateError(f"invalid managed skill name: {raw_name!r}")
+        name = raw_name.strip()
+        if name in {".", ".."} or "/" in name or "\\" in name:
+            raise UpdateError(f"unsafe managed skill name: {name}")
+        if name not in seen:
+            seen.add(name)
+            result.append(name)
+    return result
 
 
 def manifest_skill_names(manifest_path: Path) -> list[str]:
-    data = read_json_file(manifest_path)
-    names = data.get("managedSkills") or []
+    """读取 manifest 的 managedSkills 字段。"""
+    names = read_json(manifest_path).get("managedSkills") or []
     if not isinstance(names, list):
         raise UpdateError(f"managedSkills must be a list in {manifest_path}")
     return normalize_skill_names(names)
 
 
 def incoming_skill_names(manifest_path: Path, skills_dir: Path) -> list[str]:
-    names = manifest_skill_names(manifest_path)
-    if not names:
-        names = normalize_skill_names(
-            sorted(path.name for path in skills_dir.iterdir() if (path / "SKILL.md").is_file())
-        )
+    # 旧发布包可能没有 managedSkills，这时退回到扫描含 SKILL.md 的目录。
+    names = manifest_skill_names(manifest_path) or normalize_skill_names(
+        sorted(path.name for path in skills_dir.iterdir() if (path / "SKILL.md").is_file())
+    )
     if not names:
         raise UpdateError("archive does not declare any managed skills")
     return names
 
 
-def current_skill_names(manifest_path: Path, fallback_names: list[str]) -> list[str]:
-    names = manifest_skill_names(manifest_path)
-    return names or fallback_names
-
-
 def remove_path(path: Path) -> None:
+    """删除文件、符号链接或目录；路径不存在则什么都不做。"""
     if path.is_dir() and not path.is_symlink():
         shutil.rmtree(path)
     elif path.exists() or path.is_symlink():
         path.unlink()
 
 
-def copy_updater(extract_dir: Path, root: Path) -> None:
-    source = extract_dir / "scripts" / "update-codex-skills.py"
-    scripts_dir = root / "scripts"
-    scripts_dir.mkdir(parents=True, exist_ok=True)
+def install_updater(extract_dir: Path, root: Path) -> None:
+    """同步发布包里的 updater，并清理旧 shell updater。"""
+    source = extract_dir / UPDATER_PATH
+    destination = root / UPDATER_PATH
+    destination.parent.mkdir(parents=True, exist_ok=True)
 
     if source.is_file():
-        destination = scripts_dir / "update-codex-skills.py"
         shutil.copy2(source, destination)
         destination.chmod(destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    legacy_shell = scripts_dir / "update-codex-skills.sh"
-    if legacy_shell.exists() or legacy_shell.is_symlink():
-        legacy_shell.unlink()
+    remove_path(root / LEGACY_UPDATER_PATH)
 
 
-def write_project_manifest(
-    incoming_manifest: Path,
-    target_manifest: Path,
-    *,
-    repo: str,
-    version: str | None,
-    managed_skills: list[str],
-) -> None:
-    data = read_json_file(incoming_manifest)
-    data["source"] = f"github.com/{repo}"
-    data["repo"] = repo
-    data["asset"] = ASSET_NAME
+def write_manifest(source_manifest: Path, target_manifest: Path, version: str | None, names: list[str]) -> None:
+    """写入目标项目 manifest，供下次更新判断哪些 skills 归本脚本管理。"""
+    data = read_json(source_manifest)
+    data.update(
+        {
+            "source": f"github.com/{DEFAULT_REPO}",
+            "repo": DEFAULT_REPO,
+            "asset": ASSET_NAME,
+            "installedAt": utc_timestamp(),
+            "managedSkills": sorted(normalize_skill_names(data.get("managedSkills") or names)),
+        }
+    )
     if version:
         data["version"] = version
-    data["installedAt"] = utc_timestamp()
-    data["managedSkills"] = sorted(normalize_skill_names(data.get("managedSkills") or managed_skills))
 
     target_manifest.parent.mkdir(parents=True, exist_ok=True)
     target_manifest.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def install_skills(root: Path, extract_dir: Path, repo: str, version: str | None) -> str:
-    incoming_manifest = extract_dir / ".codex" / "flutter-mvvm-skills.json"
-    incoming_skills_dir = extract_dir / ".codex" / "skills"
-    if not incoming_skills_dir.is_dir():
+def install_package(root: Path, extract_dir: Path, version: str | None) -> str:
+    """把已经解压的发布包安装到目标项目，并返回安装版本号。"""
+    source_manifest = extract_dir / MANIFEST_PATH
+    source_skills = extract_dir / SKILLS_PATH
+    target_manifest = root / MANIFEST_PATH
+    target_skills = root / SKILLS_PATH
+
+    if not source_skills.is_dir():
         raise UpdateError("archive does not contain .codex/skills")
 
-    incoming_names = incoming_skill_names(incoming_manifest, incoming_skills_dir)
-    current_manifest = root / ".codex" / "flutter-mvvm-skills.json"
-    current_names = current_skill_names(current_manifest, incoming_names)
+    new_names = incoming_skill_names(source_manifest, source_skills)
+    # 当前 manifest 存在时，用它判断旧版 managed skills；首次安装时用新包列表兜底。
+    old_names = manifest_skill_names(target_manifest) or new_names
+    target_skills.mkdir(parents=True, exist_ok=True)
 
-    skills_root = root / ".codex" / "skills"
-    skills_root.mkdir(parents=True, exist_ok=True)
+    # 只替换 manifest 记录的 managed skills，避免误删用户自己的本地 skills。
+    for name in old_names:
+        remove_path(target_skills / name)
+    for name in new_names:
+        source = source_skills / name
+        if not source.is_dir():
+            raise UpdateError(f"managed skill missing from archive: {name}")
+        remove_path(target_skills / name)
+        shutil.copytree(source, target_skills / name)
 
-    for skill_name in current_names:
-        remove_path(skills_root / skill_name)
-
-    for skill_name in incoming_names:
-        source_dir = incoming_skills_dir / skill_name
-        if not source_dir.is_dir():
-            raise UpdateError(f"managed skill missing from archive: {skill_name}")
-        destination = skills_root / skill_name
-        remove_path(destination)
-        shutil.copytree(source_dir, destination)
-
-    copy_updater(extract_dir, root)
-    write_project_manifest(
-        incoming_manifest,
-        current_manifest,
-        repo=repo,
-        version=version,
-        managed_skills=incoming_names,
-    )
-    return str(read_json_file(current_manifest).get("version", "unknown"))
-
-
-def archive_path_from_args(args: argparse.Namespace, tmp_dir: Path) -> Path:
-    if args.archive:
-        archive_path = Path(args.archive).expanduser().resolve()
-        if not archive_path.is_file():
-            raise UpdateError(f"archive not found: {archive_path}")
-        return archive_path
-
-    archive_path = tmp_dir / ASSET_NAME
-    download_asset(args.repo, args.version, archive_path)
-    return archive_path
+    install_updater(extract_dir, root)
+    # manifest 最后写入；如果前面的复制失败，就不会记录一个半安装状态。
+    write_manifest(source_manifest, target_manifest, version, new_names)
+    return str(read_json(target_manifest).get("version", "unknown"))
 
 
 def run() -> int:
+    """脚本入口：临时目录中完成下载/解压，再安装到项目根目录。"""
     args = parse_args()
-    root = project_root()
     try:
         with tempfile.TemporaryDirectory(prefix="flutter-mvvm-skills-") as tmp:
             tmp_dir = Path(tmp)
-            archive_path = archive_path_from_args(args, tmp_dir)
+            archive_path = tmp_dir / ASSET_NAME
             extract_dir = tmp_dir / "extract"
+
+            download_archive(args.version, archive_path)
             extract_archive(archive_path, extract_dir)
-            installed_version = install_skills(root, extract_dir, args.repo, args.version)
+            installed_version = install_package(project_root(), extract_dir, args.version)
     except UpdateError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
