@@ -46,7 +46,6 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - `<project_name>`：可选；不传时从 package name 最后一段推导。
 - `--output`：可选；只在用户指定输出目录时使用。
 - `--platforms`：可选；默认 `ios,android,web`。
-- `--force`：可选；允许覆盖目标目录中的模板文件。
 - `--skip-final-checks`：可选；跳过生成后的 format/analyze。
 
 ## 参考资料

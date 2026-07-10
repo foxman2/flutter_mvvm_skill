@@ -405,10 +405,10 @@ def create_project(args: argparse.Namespace) -> None:
 
     output_dir = Path(args.output).expanduser().resolve()
     target_dir = output_dir / project_name
-    if target_dir.exists() and any(target_dir.iterdir()) and not args.force:
+    if target_dir.exists() and any(target_dir.iterdir()):
         raise CliError(
             f"Target directory is not empty: {target_dir}. "
-            "Use --force to overwrite template files."
+            "Choose a new project name or an empty output directory."
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -423,8 +423,6 @@ def create_project(args: argparse.Namespace) -> None:
         "--platforms",
         platforms,
     ]
-    if args.force:
-        create_cmd.append("--overwrite")
     run(create_cmd, cwd=output_dir)
 
     overlay_dir = skill_root() / "assets" / "flutter_mvvm_overlay"
@@ -626,7 +624,6 @@ def build_parser() -> argparse.ArgumentParser:
     create.add_argument("--output", default=".")
     create.add_argument("--app-name")
     create.add_argument("--package-name")
-    create.add_argument("--force", action="store_true")
     create.add_argument("--skip-final-checks", action="store_true")
     create.set_defaults(func=create_project)
 

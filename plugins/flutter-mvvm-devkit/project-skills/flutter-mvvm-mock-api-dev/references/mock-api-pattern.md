@@ -17,64 +17,55 @@ lib/
             └── mock_order_summary.dart
 ```
 
-- `lib/services/api/`：正式 API contract 和真实 Dio 实现。
+- `lib/services/api/`：已确认 API 的正式 contract/真实 Dio 实现；未确认 domain 只临时放 contract 和 `Unimplemented<Domain>ApiService`。
 - `lib/services/mock_api/`：临时 mock service。
 - `lib/services/mock_api/models/`：后台未确认、只服务 mock 的临时 model。
 - `lib/models/`：已确认 model。
 
 ## Service 写法
 
-正式接口和 Dio 实现放在同一个 domain service 文件：
+后台协议未确认但前端必须先开发时，创建临时 contract 和不依赖 Dio 的明确占位实现。未确认 response shape 使用 mock-only model，不猜正式 URL、字段或 envelope：
 
 ```dart
+import '../mock_api/models/mock_order_summary.dart';
+
 abstract class OrderApiService {
-  Future<List<OrderSummary>> fetchOrders();
+  Future<List<MockOrderSummary>> fetchOrders();
 }
 
-class DioOrderApiService implements OrderApiService {
-  DioOrderApiService(this._dio);
-
-  final Dio _dio;
+class UnimplementedOrderApiService implements OrderApiService {
+  const UnimplementedOrderApiService();
 
   @override
-  Future<List<OrderSummary>> fetchOrders() {
-    return _dio.get<List<dynamic>>('/orders').parseData((data) {
-      return data
-          .whereType<Map<String, dynamic>>()
-          .map(OrderSummary.fromJson)
-          .toList();
-    });
+  Future<List<MockOrderSummary>> fetchOrders() {
+    return Future<List<MockOrderSummary>>.error(
+      UnimplementedError('Backend order list API is not confirmed.'),
+    );
   }
 }
 ```
 
-后台路径未确认但前端必须先开发时，保留正式接口方法；Dio 实现可以先返回明确的未实现错误，不要猜 URL：
-
-```dart
-@override
-Future<List<OrderSummary>> fetchOrders() {
-  return Future<List<OrderSummary>>.error(
-    UnimplementedError('Backend order list API is not confirmed.'),
-  );
-}
-```
+不要为未确认 domain 创建 `DioOrderApiService`。后台确认后，用 `$flutter-mvvm-api-dev` 把 mock-only model 迁移成正式 model，并用真实 Dio 实现替换占位类。
 
 ## Mock 实现
 
 ```dart
+import '../api/order_api_service.dart';
+import 'models/mock_order_summary.dart';
+
 class MockOrderApiService implements OrderApiService {
   const MockOrderApiService();
 
   @override
-  Future<List<OrderSummary>> fetchOrders() async {
+  Future<List<MockOrderSummary>> fetchOrders() async {
     return const [
-      OrderSummary(id: 'mock-order-1', title: 'Mock Order'),
+      MockOrderSummary(id: 'mock-order-1', title: 'Mock Order'),
     ];
   }
 }
 ```
 
-如果 response shape 未确认，先创建 `MockOrderSummary` 到 `lib/services/mock_api/models/`，并让 contract、mock service 和临时调用方统一使用这个 mock-only model；后台确认后再迁移到正式 model。
+只有 response shape 已确认且项目已有正式 model 时才复用 `lib/models/`。否则先创建 `MockOrderSummary` 到 `lib/services/mock_api/models/`，并让临时 contract、mock service 和调用方统一使用这个 mock-only model；后台确认后再迁移到正式 model。
 
 ## ApiService 切换
 
@@ -86,7 +77,7 @@ if (_apiEnvironment == ApiEnvironment.mock) {
   return;
 }
 
-_order = DioOrderApiService(client);
+_order = const UnimplementedOrderApiService();
 ```
 
 开发时需要 mock 环境，使用 `flutter run --dart-define=server=mock`。不要为了预览直接修改代码中的默认环境。

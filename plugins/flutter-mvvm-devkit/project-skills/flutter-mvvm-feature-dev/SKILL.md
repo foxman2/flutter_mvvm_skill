@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-feature-dev
 description: >-
-  用于已有 flutter-mvvm-template 架构项目中的正式功能开发：创建或修改正式页面、UI、共用组件、ViewModel、sealed AppPage 导航、弹窗、ActionSheet、BottomSheet，以及将 lib/product_preview/ 中已审核的隔离预览迁移为正式页面。不用于隔离预览原型创建；使用 flutter-mvvm-pm-ui。不用于创建新项目；使用 flutter-mvvm-template。不用于纯数据层 API/model 开发；已确认后端 API 使用 flutter-mvvm-api-dev，后端未确认或 mock API 使用 flutter-mvvm-mock-api-dev。
+  用于已有 flutter-mvvm-template 架构项目中的正式功能开发：创建或修改正式页面、UI、共用组件、ViewModel、sealed AppPage 导航、弹窗、ActionSheet、BottomSheet，以及将 lib/product_preview/ 中已审核的隔离预览迁移为正式页面。用户未明确提出 PM 评审、UI 原型或隔离预览时，正式 UI 修改默认使用这个 skill。不用于隔离预览原型创建；使用 flutter-mvvm-pm-ui。不用于创建新项目；使用 flutter-mvvm-template。不用于纯数据层 API/model 开发；已确认后端 API 使用 flutter-mvvm-api-dev，后端未确认或 mock API 使用 flutter-mvvm-mock-api-dev。
 ---
 
 # Flutter MVVM Feature Dev

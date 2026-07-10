@@ -23,6 +23,18 @@ lib/product_preview/
 - 类型：`<Feature>Page`、`<Feature>ViewModelInput`、`<Feature>ViewModelOutput`、`<Feature>ViewModelType`、`<Feature>ViewModel`
 - 不要在 `<Feature>` 和 `Page` / `ViewModel` 之间追加 `Preview`，也不要在 `<feature>` 和 `_page.dart` / `_view_model.dart` 之间追加 `_preview`
 
+先在 `lib/l10n/app_en.arb` 添加预览所需文案：
+
+```json
+{
+  "productPreviewCheckoutTitle": "Checkout",
+  "productPreviewCheckoutDescription": "Payment and address layout preview",
+  "productPreviewCheckoutAddress": "Address",
+  "productPreviewCheckoutPayment": "Payment",
+  "productPreviewCheckoutSummary": "Summary"
+}
+```
+
 ```dart
 abstract class CheckoutViewModelInput {
   void onClickDemoItem(String item);
@@ -36,15 +48,17 @@ abstract class CheckoutViewModelType extends AppBaseViewModel
     implements CheckoutViewModelInput, CheckoutViewModelOutput {}
 
 class CheckoutViewModel extends CheckoutViewModelType {
-  final _demoItems = const ['Address', 'Payment', 'Summary'];
-
   @override
   void onClickDemoItem(String item) {
     makeRebuild();
   }
 
   @override
-  List<String> get demoItems => _demoItems;
+  List<String> get demoItems => [
+    localStrings.productPreviewCheckoutAddress,
+    localStrings.productPreviewCheckoutPayment,
+    localStrings.productPreviewCheckoutSummary,
+  ];
 }
 ```
 
@@ -59,8 +73,9 @@ class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModelType> {
 
   @override
   Widget createWidget(BuildContext context, CheckoutViewModelType viewModel) {
+    final strings = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout Preview')),
+      appBar: AppBar(title: Text(strings.productPreviewCheckoutTitle)),
       body: const SafeArea(child: SizedBox.shrink()),
     );
   }
@@ -76,8 +91,8 @@ class CheckoutPage extends AppBaseStatelessPage<CheckoutViewModelType> {
 ```dart
 ProductPreviewItem(
   id: 'checkout',
-  title: 'Checkout',
-  description: 'Payment and address layout preview',
+  title: (strings) => strings.productPreviewCheckoutTitle,
+  description: (strings) => strings.productPreviewCheckoutDescription,
   builder: (_) => const CheckoutPage(),
 )
 ```
