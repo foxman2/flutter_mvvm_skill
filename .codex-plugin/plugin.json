@@ -1,6 +1,6 @@
 {
   "name": "flutter-mvvm-devkit",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Create Flutter MVVM template projects with project-local Codex skills for follow-up development.",
   "author": {
     "name": "xiaominliu"
