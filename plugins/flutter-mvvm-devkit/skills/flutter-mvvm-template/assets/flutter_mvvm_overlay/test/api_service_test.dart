@@ -13,53 +13,52 @@ import 'package:{{project_name}}/services/mock_api/mock_user_api_service.dart';
 
 void main() {
   group('resolveApiEnvironment', () {
-    test('always uses production in release mode', () {
-      for (final server in <String>[
-        '',
-        'production',
-        'test',
-        'mock',
-        'staging',
-      ]) {
-        expect(
-          resolveApiEnvironment(server: server, isReleaseMode: true),
-          ApiEnvironment.production,
-        );
-      }
-    });
-
     for (final entry in <String, ApiEnvironment>{
       'production': ApiEnvironment.production,
       'test': ApiEnvironment.test,
       'mock': ApiEnvironment.mock,
     }.entries) {
-      test('accepts ${entry.key} in non-release mode', () {
-        expect(
-          resolveApiEnvironment(server: entry.key, isReleaseMode: false),
-          entry.value,
-        );
+      test('accepts explicit ${entry.key} in every build mode', () {
+        for (final isReleaseMode in <bool>[true, false]) {
+          expect(
+            resolveApiEnvironment(
+              server: entry.key,
+              isReleaseMode: isReleaseMode,
+            ),
+            entry.value,
+          );
+        }
       });
     }
 
-    test('uses the code default when non-release server is omitted', () {
-      expect(
-        resolveApiEnvironment(
-          server: '',
-          isReleaseMode: false,
-          defaultEnvironment: ApiEnvironment.test,
-        ),
-        ApiEnvironment.test,
-      );
-    });
-
-    test('uses production for unknown or differently cased servers', () {
-      for (final server in <String>['staging', 'Production', 'MOCK']) {
+    test('uses production for missing or invalid release servers', () {
+      for (final server in <String>['', 'staging', 'Production', 'MOCK']) {
         expect(
-          resolveApiEnvironment(server: server, isReleaseMode: false),
+          resolveApiEnvironment(
+            server: server,
+            isReleaseMode: true,
+            defaultEnvironment: ApiEnvironment.test,
+          ),
           ApiEnvironment.production,
         );
       }
     });
+
+    test(
+      'uses the code default for missing or invalid non-release servers',
+      () {
+        for (final server in <String>['', 'staging', 'Production', 'MOCK']) {
+          expect(
+            resolveApiEnvironment(
+              server: server,
+              isReleaseMode: false,
+              defaultEnvironment: ApiEnvironment.test,
+            ),
+            ApiEnvironment.test,
+          );
+        }
+      },
+    );
   });
 
   test('ApiEnvironment maps directly to its configured base URL', () {

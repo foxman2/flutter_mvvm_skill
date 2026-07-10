@@ -81,10 +81,6 @@ ApiEnvironment resolveApiEnvironment({
   required bool isReleaseMode,
   ApiEnvironment defaultEnvironment = defaultApiEnvironment,
 }) {
-  if (isReleaseMode) {
-    return ApiEnvironment.production;
-  }
-
   switch (server) {
     case 'production':
       return ApiEnvironment.production;
@@ -92,10 +88,8 @@ ApiEnvironment resolveApiEnvironment({
       return ApiEnvironment.test;
     case 'mock':
       return ApiEnvironment.mock;
-    case '':
-      return defaultEnvironment;
     default:
-      return ApiEnvironment.production;
+      return isReleaseMode ? ApiEnvironment.production : defaultEnvironment;
   }
 }
 
@@ -154,7 +148,7 @@ class ApiService {
 }
 ```
 
-通过 `--dart-define=server=production|test|mock` 选择环境。Release 始终使用 production；Debug/Profile 未传值时使用 `defaultApiEnvironment`，未知值回退 production。参数值区分大小写。production 和 test 地址直接在 `ApiEnvironmentBaseUrl` 中配置，不再通过 dart-define 注入。
+通过 `--dart-define=server=production|test|mock` 选择环境。任何构建模式下，有效的显式参数都优先使用指定环境；未传值或参数无效时，Release 回退 production，Debug/Profile 回退 `defaultApiEnvironment`。参数值区分大小写。production 和 test 地址直接在 `ApiEnvironmentBaseUrl` 中配置，不再通过 dart-define 注入。
 
 业务模块持有配置好的 Dio，不持有 `ApiService`。
 

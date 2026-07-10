@@ -19,7 +19,7 @@ extension ApiEnvironmentBaseUrl on ApiEnvironment {
   }
 }
 
-// Debug and profile builds use this when --dart-define=server is omitted.
+// Debug and profile builds use this when --dart-define=server is omitted or invalid.
 const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
 
 const String _server = String.fromEnvironment('server');
@@ -33,10 +33,6 @@ ApiEnvironment resolveApiEnvironment({
   required bool isReleaseMode,
   ApiEnvironment defaultEnvironment = defaultApiEnvironment,
 }) {
-  if (isReleaseMode) {
-    return ApiEnvironment.production;
-  }
-
   switch (server) {
     case 'production':
       return ApiEnvironment.production;
@@ -44,10 +40,8 @@ ApiEnvironment resolveApiEnvironment({
       return ApiEnvironment.test;
     case 'mock':
       return ApiEnvironment.mock;
-    case '':
-      return defaultEnvironment;
     default:
-      return ApiEnvironment.production;
+      return isReleaseMode ? ApiEnvironment.production : defaultEnvironment;
   }
 }
 
