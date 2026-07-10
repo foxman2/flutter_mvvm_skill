@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
@@ -12,14 +12,80 @@ import 'package:{{project_name}}/services/app_services.dart';
 import 'package:{{project_name}}/services/mock_api/mock_user_api_service.dart';
 
 void main() {
+  group('resolveApiEnvironment', () {
+    test('always uses production in release mode', () {
+      for (final server in <String>[
+        '',
+        'production',
+        'test',
+        'mock',
+        'staging',
+      ]) {
+        expect(
+          resolveApiEnvironment(server: server, isReleaseMode: true),
+          ApiEnvironment.production,
+        );
+      }
+    });
+
+    for (final entry in <String, ApiEnvironment>{
+      'production': ApiEnvironment.production,
+      'test': ApiEnvironment.test,
+      'mock': ApiEnvironment.mock,
+    }.entries) {
+      test('accepts ${entry.key} in non-release mode', () {
+        expect(
+          resolveApiEnvironment(server: entry.key, isReleaseMode: false),
+          entry.value,
+        );
+      });
+    }
+
+    test('uses the code default when non-release server is omitted', () {
+      expect(
+        resolveApiEnvironment(
+          server: '',
+          isReleaseMode: false,
+          defaultEnvironment: ApiEnvironment.test,
+        ),
+        ApiEnvironment.test,
+      );
+    });
+
+    test('uses production for unknown or differently cased servers', () {
+      for (final server in <String>['staging', 'Production', 'MOCK']) {
+        expect(
+          resolveApiEnvironment(server: server, isReleaseMode: false),
+          ApiEnvironment.production,
+        );
+      }
+    });
+  });
+
+  test('ApiEnvironment maps directly to its configured base URL', () {
+    expect(ApiEnvironment.production.baseUrl, 'https://api.example.com');
+    expect(ApiEnvironment.test.baseUrl, 'https://test-api.example.com');
+    expect(ApiEnvironment.mock.baseUrl, isEmpty);
+  });
+
   test('ApiService user module requires setup', () {
     expect(() => ApiService.shared.user, throwsStateError);
   });
 
-  test('ApiService setup creates Dio user module', () {
+  test('ApiService setup creates the configured user module', () {
     ApiService.shared.setup();
 
-    expect(ApiService.shared.user, isA<DioUserApiService>());
+    const server = String.fromEnvironment('server');
+    final environment = resolveApiEnvironment(
+      server: server,
+      isReleaseMode: kReleaseMode,
+    );
+    expect(
+      ApiService.shared.user,
+      environment == ApiEnvironment.mock
+          ? isA<MockUserApiService>()
+          : isA<DioUserApiService>(),
+    );
   });
 
   test('DioUserApiService sends profile request', () async {

@@ -1,15 +1,55 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../mock_api/mock_user_api_service.dart';
 import 'user_api_service.dart';
 
 enum ApiEnvironment { production, test, mock }
 
-// Run with --dart-define=USE_MOCK_API=true to preview UI with mock services.
-const bool _useMockApi = bool.fromEnvironment('USE_MOCK_API');
-const ApiEnvironment _apiEnvironment = _useMockApi
-    ? ApiEnvironment.mock
-    : ApiEnvironment.production;
+extension ApiEnvironmentBaseUrl on ApiEnvironment {
+  String get baseUrl {
+    switch (this) {
+      case ApiEnvironment.production:
+        return 'https://api.example.com';
+      case ApiEnvironment.test:
+        return 'https://test-api.example.com';
+      case ApiEnvironment.mock:
+        return '';
+    }
+  }
+}
+
+// Debug and profile builds use this when --dart-define=server is omitted.
+const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
+
+const String _server = String.fromEnvironment('server');
+final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
+  server: _server,
+  isReleaseMode: kReleaseMode,
+);
+
+ApiEnvironment resolveApiEnvironment({
+  required String server,
+  required bool isReleaseMode,
+  ApiEnvironment defaultEnvironment = defaultApiEnvironment,
+}) {
+  if (isReleaseMode) {
+    return ApiEnvironment.production;
+  }
+
+  switch (server) {
+    case 'production':
+      return ApiEnvironment.production;
+    case 'test':
+      return ApiEnvironment.test;
+    case 'mock':
+      return ApiEnvironment.mock;
+    case '':
+      return defaultEnvironment;
+    default:
+      return ApiEnvironment.production;
+  }
+}
 
 class ApiService {
   ApiService._();
@@ -34,7 +74,7 @@ class ApiService {
 
     final client = Dio(
       BaseOptions(
-        baseUrl: _apiBaseUrlFor(_apiEnvironment),
+        baseUrl: _apiEnvironment.baseUrl,
         connectTimeout: _connectTimeout,
         receiveTimeout: _receiveTimeout,
         sendTimeout: _sendTimeout,
@@ -62,18 +102,4 @@ class ApiService {
   Map<String, String> get _staticHeaders => const {};
 
   Map<String, String> get _dynamicHeaders => const {};
-}
-
-String _apiBaseUrlFor(ApiEnvironment environment) {
-  switch (environment) {
-    case ApiEnvironment.production:
-      return const String.fromEnvironment('API_BASE_URL', defaultValue: '');
-    case ApiEnvironment.test:
-      return const String.fromEnvironment(
-        'API_TEST_BASE_URL',
-        defaultValue: '',
-      );
-    case ApiEnvironment.mock:
-      return '';
-  }
 }

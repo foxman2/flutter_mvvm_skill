@@ -89,7 +89,7 @@ if (_apiEnvironment == ApiEnvironment.mock) {
 _order = DioOrderApiService(client);
 ```
 
-开发时需要 mock 环境，直接把 `api_service.dart` 顶部的 `_apiEnvironment` 改成 `ApiEnvironment.mock`。
+开发时需要 mock 环境，使用 `flutter run --dart-define=server=mock`。不要为了预览直接修改代码中的默认环境。
 
 不要在 ViewModel 中判断 mock/real：
 
@@ -102,7 +102,7 @@ final orders = await ApiService.shared.order
 ## 测试
 
 - mock service 返回期望数据。
-- 如果项目当前环境常量已经切到 mock，`ApiService.shared.setup()` 会组装 mock service。
+- 使用 `--dart-define=server=mock` 时，`ApiService.shared.setup()` 会组装 mock service。
 - mock 模式不触发 Dio adapter。
 - mock-only model 至少覆盖必填字段和列表解析。
 - 后台确认后，补真实 Dio happy path 或错误路径测试。

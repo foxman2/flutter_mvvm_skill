@@ -52,9 +52,52 @@ class DioOrderApiService implements OrderApiService {
 在 `api_service.dart` 中：
 
 ```dart
+import 'package:flutter/foundation.dart';
+
 enum ApiEnvironment { production, test, mock }
 
-const ApiEnvironment _apiEnvironment = ApiEnvironment.production;
+extension ApiEnvironmentBaseUrl on ApiEnvironment {
+  String get baseUrl {
+    switch (this) {
+      case ApiEnvironment.production:
+        return 'https://api.example.com';
+      case ApiEnvironment.test:
+        return 'https://test-api.example.com';
+      case ApiEnvironment.mock:
+        return '';
+    }
+  }
+}
+
+const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
+const String _server = String.fromEnvironment('server');
+final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
+  server: _server,
+  isReleaseMode: kReleaseMode,
+);
+
+ApiEnvironment resolveApiEnvironment({
+  required String server,
+  required bool isReleaseMode,
+  ApiEnvironment defaultEnvironment = defaultApiEnvironment,
+}) {
+  if (isReleaseMode) {
+    return ApiEnvironment.production;
+  }
+
+  switch (server) {
+    case 'production':
+      return ApiEnvironment.production;
+    case 'test':
+      return ApiEnvironment.test;
+    case 'mock':
+      return ApiEnvironment.mock;
+    case '':
+      return defaultEnvironment;
+    default:
+      return ApiEnvironment.production;
+  }
+}
 
 class ApiService {
   ApiService._();
@@ -76,7 +119,7 @@ class ApiService {
 
     final client = Dio(
       BaseOptions(
-        baseUrl: _apiBaseUrlFor(_apiEnvironment),
+        baseUrl: _apiEnvironment.baseUrl,
         connectTimeout: _connectTimeout,
         receiveTimeout: _receiveTimeout,
         sendTimeout: _sendTimeout,
@@ -110,6 +153,8 @@ class ApiService {
   }
 }
 ```
+
+通过 `--dart-define=server=production|test|mock` 选择环境。Release 始终使用 production；Debug/Profile 未传值时使用 `defaultApiEnvironment`，未知值回退 production。参数值区分大小写。production 和 test 地址直接在 `ApiEnvironmentBaseUrl` 中配置，不再通过 dart-define 注入。
 
 业务模块持有配置好的 Dio，不持有 `ApiService`。
 
