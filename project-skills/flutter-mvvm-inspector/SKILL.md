@@ -1,52 +1,59 @@
 ---
 name: flutter-mvvm-inspector
 description: >-
-  用于在 Codex 内启动或接入 Flutter debug app、获取真实 VM Service URI，并通过 Flutter Inspector VM Service extension 开启 widget 选择、读取选中 widget 的 summary 信息和定位本地源码位置。不用于创建新项目、开发正式功能、API/model 或 mock API；这些任务分别使用 flutter-mvvm-template、flutter-mvvm-feature-dev、flutter-mvvm-api-dev、flutter-mvvm-mock-api-dev。
+  在 Codex 内复用或后台启动由本 skill 管理的单个 Flutter debug app，通过已验证的 VM Service 调用 Flutter Inspector，开启 widget 选择、读取选中 widget 的 summary 信息并定位本地源码。用于已有 Flutter 项目的运行、日志、异常和 Inspector 定位；不用于接入外部 Flutter 进程、接受用户提供的 VM URI、创建项目或开发功能/API/mock。
 ---
 
 # Flutter MVVM Inspector
 
-使用这个 skill 在 Codex 内启动或接入 Flutter debug app，并直接通过 VM Service 调用 Flutter Inspector extension，定位用户点选的 widget 源码位置。
-
-## 核心流程
-
-1. 在 Flutter app 根目录启动 debug app，并保持 `flutter run` 会话运行：
+始终从 Flutter app 根目录运行 bundled helper。把本 skill 目录记为 `SKILL_DIR`：
 
 ```bash
-flutter run --debug --track-widget-creation
+RUNTIME="$SKILL_DIR/scripts/flutter_runtime.py"
 ```
 
-保留用户给的 `-d`、`--flavor`、`--dart-define`、`-t` 等参数。如果用户已经提供运行中 app 的真实 VM Service URI，直接使用该 URI。
-2. 从启动输出或用户提供的信息读取真实 VM Service URI，格式通常是 `http://127.0.0.1:xxxxx/token=/`。不能编造 URI。
-3. 从 VM Service 读取 isolate 列表：
+## 管理运行实例
+
+需要启动、复用或排查运行实例时，先运行：
 
 ```bash
-curl -sS "$VM_SERVICE/getVM"
+python3 "$RUNTIME" status
 ```
 
-使用 `result.isolates` 中非 system isolate 的 `id` 作为 `ISOLATE_ID`。
-4. 开启 widget 选择模式：
+严格按状态处理：
+
+- `running`：直接复用；禁止再次执行 `start`。
+- `starting`：不要启动第二个进程；用 `logs` 查看进度并稍后重试 `status`。
+- `unreachable`：VM endpoint 已生成，但当前沙箱无法访问；不要启动第二个进程。Inspector 操作按下文申请 localhost 网络权限。
+- `not_started` 或 `stopped`：只有这两种状态才执行 `start`。
+
+后台启动时只传递用户需要的 Flutter 参数；helper 会添加 `flutter run --debug --track-widget-creation`：
 
 ```bash
-curl -sS "$VM_SERVICE/ext.flutter.inspector.show?isolateId=$ISOLATE_ID&enabled=true"
+python3 "$RUNTIME" start -- -d macos --flavor dev --dart-define=KEY=value -t lib/main.dart
 ```
 
-确认返回里的 `enabled` 是 `true`。
-5. 用户在 app 里点选目标 widget 后，读取 summary selection：
+运行记录只存在 `.dart_tool/flutter-mvvm-inspector/`，一个项目只管理一个实例。不要扫描、接管或停止其他 Flutter 进程，不要接受用户提供的 VM Service URI。`flutter clean` 会清除运行记录。
+
+只通过 helper 读取日志和异常；不要直接读取运行目录中的文件：
 
 ```bash
-curl -sS "$VM_SERVICE/ext.flutter.inspector.getSelectedSummaryWidget?isolateId=$ISOLATE_ID&objectGroup=codex"
+python3 "$RUNTIME" logs --lines 200
+python3 "$RUNTIME" errors --lines 400
 ```
 
-`objectGroup` 是必需参数；不要写成 `groupName`，否则 Flutter 会抛 `parameters.containsKey('objectGroup')` assertion。
-6. 只提取并报告最小字段：`description`、`creationLocation.file`、`creationLocation.line`、`creationLocation.column`、`creationLocation.name`、`createdByLocalProject`。不要输出整棵 JSON 树。
+需要结束本 skill 保存的进程时运行 `python3 "$RUNTIME" stop`。停止后日志仍保留。
 
-## 原始命中节点
+## 使用 Inspector
 
-一般回答“我的代码是哪一段”时，优先使用 summary selection，因为它会把 Flutter framework 内部命中映射回本地项目创建的 widget。只有当用户明确想知道原始命中节点时，才调用：
+获取当前选中控件时只运行：
 
 ```bash
-curl -sS "$VM_SERVICE/ext.flutter.inspector.getSelectedWidget?isolateId=$ISOLATE_ID&objectGroup=codex"
+python3 "$RUNTIME" selected-summary
 ```
 
-仍只摘取最小字段，并说明它可能比 summary selection 更接近用户实际点中的底层 widget。
+不要预先运行 `status` 或 `endpoint`。执行这条命令时直接申请 localhost 网络权限（在 Codex exec tool 中设置 `sandbox_permissions=require_escalated`，理由说明只读访问本项目受管 Flutter VM Service）；不要先在默认网络沙箱中试跑。它仍是唯一一条 shell 命令。
+
+该命令会在内部重新验证受管 VM Service、查询全部非 system isolate、按 Inspector extension 能力选择唯一 Flutter isolate、开启 widget 选择，并以 `objectGroup=codex` 读取 summary selection。不要把流程拆成 `curl` 或 `jq` 命令，也不要缓存或显示 VM Service URI 和 isolate id。
+
+成功时直接使用 stdout 的 JSON；它只包含 `description`、`creationLocation.file`、`line`、`column`、`name` 和 `createdByLocalProject`。如果命令提示尚未选择 widget，让用户在 app 中点选目标后再次运行同一命令。如果已在 localhost 权限下执行仍返回其他非零退出，再按“管理运行实例”处理。
