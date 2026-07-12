@@ -352,7 +352,10 @@ class FlutterRuntimeTest(unittest.TestCase):
         )
         summary_query = VMHandler.requests[-1]["query"]
         self.assertEqual(
-            {"isolateId": "isolates/flutter+main", "objectGroup": "codex"},
+            {
+                "isolateId": "isolates/flutter+main",
+                "objectGroup": "flutter-mvvm-inspector",
+            },
             summary_query,
         )
         VMHandler.summary_as_json = True

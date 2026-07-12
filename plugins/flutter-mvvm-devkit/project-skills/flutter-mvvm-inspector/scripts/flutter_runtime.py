@@ -52,6 +52,7 @@ MANAGED_FLAGS = {
 INSPECTOR_SHOW = "ext.flutter.inspector.show"
 INSPECTOR_SUMMARY = "ext.flutter.inspector.getSelectedSummaryWidget"
 INSPECTOR_EXTENSIONS = {INSPECTOR_SHOW, INSPECTOR_SUMMARY}
+INSPECTOR_OBJECT_GROUP = "flutter-mvvm-inspector"
 
 
 class RuntimeCommandError(Exception):
@@ -430,7 +431,7 @@ def selected_summary() -> dict[str, Any]:
         vm_service_result(
             base,
             INSPECTOR_SUMMARY,
-            {"isolateId": isolate_id, "objectGroup": "codex"},
+            {"isolateId": isolate_id, "objectGroup": INSPECTOR_OBJECT_GROUP},
         )
     )
     if summary is None:

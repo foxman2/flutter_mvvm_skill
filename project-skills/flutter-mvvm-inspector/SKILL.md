@@ -1,59 +1,84 @@
 ---
 name: flutter-mvvm-inspector
 description: >-
-  在 Codex 内复用或后台启动由本 skill 管理的单个 Flutter debug app，通过已验证的 VM Service 调用 Flutter Inspector，开启 widget 选择、读取选中 widget 的 summary 信息并定位本地源码。用于已有 Flutter 项目的运行、日志、异常和 Inspector 定位；不用于接入外部 Flutter 进程、接受用户提供的 VM URI、创建项目或开发功能/API/mock。
+  管理已有 Flutter 项目的单个 debug 运行实例，并通过已验证的本地 VM Service 使用 Flutter Inspector：查看运行状态、日志与异常，开启 Widget 选择，读取选中 Widget 的摘要并定位本地源码。适用于任何能够运行 bundled Python helper 并按需访问 localhost 的 AI Agent；不用于接管外部 Flutter 进程、使用用户提供的 VM Service URI、创建项目，或开发功能、API 与 mock。
 ---
 
 # Flutter MVVM Inspector
 
-始终从 Flutter app 根目录运行 bundled helper。把本 skill 目录记为 `SKILL_DIR`：
+从 Flutter 应用根目录执行所有命令。把当前 skill 目录记为 `SKILL_DIR`，并使用 bundled helper：
 
 ```bash
 RUNTIME="$SKILL_DIR/scripts/flutter_runtime.py"
 ```
 
-## 管理运行实例
+不要自行发现 Flutter 进程、解析 VM Service 地址或用 `curl` 重组 Inspector 流程。helper 负责限定进程范围、验证本地 endpoint、隐藏服务凭据并输出安全结果。
 
-需要启动、复用或排查运行实例时，先运行：
+## 管理应用实例
+
+需要启动、复用或排查应用时，先检查状态：
 
 ```bash
 python3 "$RUNTIME" status
 ```
 
-严格按状态处理：
+根据 stdout 的单个状态值执行：
 
-- `running`：直接复用；禁止再次执行 `start`。
-- `starting`：不要启动第二个进程；用 `logs` 查看进度并稍后重试 `status`。
-- `unreachable`：VM endpoint 已生成，但当前沙箱无法访问；不要启动第二个进程。Inspector 操作按下文申请 localhost 网络权限。
-- `not_started` 或 `stopped`：只有这两种状态才执行 `start`。
+- `running`：复用现有实例，不要再次执行 `start`。
+- `starting`：不要启动第二个实例；用 `logs` 查看进度，稍后再运行 `status`。
+- `unreachable`：endpoint 已生成但当前执行环境不能访问 localhost；不要启动第二个实例。按“检查选中 Widget”处理本地网络权限。
+- `not_started` 或 `stopped`：允许执行 `start`。
 
-后台启动时只传递用户需要的 Flutter 参数；helper 会添加 `flutter run --debug --track-widget-creation`：
+只把项目实际需要的 Flutter 参数放在 `--` 后。helper 会固定添加 `flutter run --debug --track-widget-creation`：
 
 ```bash
 python3 "$RUNTIME" start -- -d macos --flavor dev --dart-define=KEY=value -t lib/main.dart
 ```
 
-运行记录只存在 `.dart_tool/flutter-mvvm-inspector/`，一个项目只管理一个实例。不要扫描、接管或停止其他 Flutter 进程，不要接受用户提供的 VM Service URI。`flutter clean` 会清除运行记录。
+一个项目只管理一个实例，运行记录保存在 `.dart_tool/flutter-mvvm-inspector/`。不要接管、停止或复用其他 Flutter 进程，也不要接受或传入用户提供的 VM Service URI。`flutter clean` 会删除这些运行记录。
 
-只通过 helper 读取日志和异常；不要直接读取运行目录中的文件：
+只通过 helper 查看日志和异常，不要直接读取运行目录：
 
 ```bash
 python3 "$RUNTIME" logs --lines 200
 python3 "$RUNTIME" errors --lines 400
 ```
 
-需要结束本 skill 保存的进程时运行 `python3 "$RUNTIME" stop`。停止后日志仍保留。
+需要结束本 skill 管理的实例时运行：
 
-## 使用 Inspector
+```bash
+python3 "$RUNTIME" stop
+```
 
-获取当前选中控件时只运行：
+停止后日志仍会保留。
+
+## 检查选中 Widget
+
+直接执行以下命令，不要预先执行 `status` 或 `endpoint`：
 
 ```bash
 python3 "$RUNTIME" selected-summary
 ```
 
-不要预先运行 `status` 或 `endpoint`。执行这条命令时直接申请 localhost 网络权限（在 Codex exec tool 中设置 `sandbox_permissions=require_escalated`，理由说明只读访问本项目受管 Flutter VM Service）；不要先在默认网络沙箱中试跑。它仍是唯一一条 shell 命令。
+这条命令需要访问受管 Flutter VM Service 的 localhost endpoint。若宿主 Agent 或执行环境默认限制本地网络，应在执行前使用该环境提供的授权、提权或网络放行机制，并向用户说明用途是只读访问当前项目受管的 Flutter VM Service。不要通过反复试跑、打印 endpoint 或拆分成其他网络命令来绕过限制。
 
-该命令会在内部重新验证受管 VM Service、查询全部非 system isolate、按 Inspector extension 能力选择唯一 Flutter isolate、开启 widget 选择，并以 `objectGroup=codex` 读取 summary selection。不要把流程拆成 `curl` 或 `jq` 命令，也不要缓存或显示 VM Service URI 和 isolate id。
+helper 会重新验证受管 VM Service，检查全部非 system isolate，按 Inspector extension 能力选择唯一 Flutter isolate，开启 Widget 选择，并读取 summary selection。保持它为一条完整命令；不要缓存、展示或向其他工具传递 VM Service URI 与 isolate id。
 
-成功时直接使用 stdout 的 JSON；它只包含 `description`、`creationLocation.file`、`line`、`column`、`name` 和 `createdByLocalProject`。如果命令提示尚未选择 widget，让用户在 app 中点选目标后再次运行同一命令。如果已在 localhost 权限下执行仍返回其他非零退出，再按“管理运行实例”处理。
+成功时使用 stdout 的 JSON。结果只包含：
+
+- `description`
+- `creationLocation.file`
+- `creationLocation.line`
+- `creationLocation.column`
+- `creationLocation.name`
+- `createdByLocalProject`
+
+用 `creationLocation` 定位并检查本地源码。若提示尚未选择 Widget，让用户在正在运行的应用中点选目标，再执行同一命令。若已具备 localhost 访问权限但命令仍以非零状态退出，再回到“管理应用实例”检查状态、日志和异常。
+
+## 安全边界
+
+- 只操作 helper 创建并验证的当前项目实例。
+- 不输出 VM Service URI、认证 token、isolate id 或运行目录中的原始状态文件。
+- 不执行用户提供的 endpoint，不扫描端口，不搜索系统中的其他 Flutter 进程。
+- 不用 `endpoint` 子命令驱动 Inspector；该子命令仅供 helper 的兼容性与诊断测试使用。
+- 任何需要扩大网络或进程访问范围的操作，都先遵循宿主 Agent 的授权规则。

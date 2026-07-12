@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM Inspector"
   short_description: "用 VM Service 开启 Flutter Widget 选择并定位源码"
-  default_prompt: "使用 $flutter-mvvm-inspector 在 Codex 内启动 Flutter 应用，直接通过 VM Service Inspector 开启 Widget 选择并定位源码。"
+  default_prompt: "使用 $flutter-mvvm-inspector 管理 Flutter debug 应用，通过受管 VM Service 开启 Widget 选择并定位本地源码。"
