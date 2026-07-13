@@ -6,22 +6,8 @@
 ## 快速安装
 
 ```bash
-/Applications/Codex.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
-/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-如果 `codex` 已在 PATH，可用短命令：
-
-```bash
-codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
-codex plugin add flutter-mvvm-devkit@team-internal
-```
-
-旧名用户先切：
-
-```bash
-codex plugin remove flutter-mvvm-template
-codex plugin add flutter-mvvm-devkit@team-internal
+/Applications/ChatGPT.app/Contents/Resources/codex plugin marketplace add https://github.com/foxman2/flutter_mvvm_skill.git --ref main
+/Applications/ChatGPT.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
 安装后新开一个 Codex 线程。
@@ -51,8 +37,8 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ### 插件本体
 
 ```bash
-/Applications/Codex.app/Contents/Resources/codex plugin marketplace upgrade
-/Applications/Codex.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
+/Applications/ChatGPT.app/Contents/Resources/codex plugin marketplace upgrade
+/Applications/ChatGPT.app/Contents/Resources/codex plugin add flutter-mvvm-devkit@team-internal
 ```
 
 ### 已生成项目技能
