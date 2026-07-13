@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-inspector
 description: >-
-  管理已有 Flutter 项目的单个受管 debug 运行实例，并通过已验证的本地 VM Service 使用 Flutter Inspector：启动或复用应用、查看日志与异常、开启 Widget 选择、读取选中 Widget 的摘要并定位本地源码。用于诊断已有 Flutter 应用的运行状态和界面；不用于接管外部 Flutter 进程、使用用户提供的 VM Service URI、创建项目，或开发功能、API 与 mock。
+  管理已有 Flutter 项目的单个受管 debug 运行实例，并通过已验证的本地 VM Service 使用 Flutter Inspector：启动或复用应用、查看日志与异常、开启 Widget 选择、读取选中 Widget 的摘要并定位本地源码。用于诊断已有 Flutter 应用的运行状态和界面，以及用户要求定位或修改“当前选中” Widget 时在每次请求中重新读取选中结果；不用于接管外部 Flutter 进程、使用用户提供的 VM Service URI、创建项目，或独立开发功能、API 与 mock。
 ---
 
 # Flutter MVVM Inspector
@@ -39,6 +39,15 @@ python3 "$RUNTIME" stop
 - 执行 `selected-summary` 前，若环境限制 localhost，先申请只读访问当前项目受管 Flutter VM Service 的权限。保持它为一条完整命令，不要打印、缓存或传递 VM Service URI 与 isolate id。
 - `selected-summary` 成功后，使用 stdout JSON 的 `description`、`creationLocation` 和 `createdByLocalProject`；按 `creationLocation` 定位并检查源码。
 - 只通过 helper 查看日志和异常，不要直接读取 `.dart_tool/flutter-mvvm-inspector/` 中的文件。
+
+## 修改当前选中 Widget
+
+1. 每当用户发出一次定位或修改“当前选中” Widget 的新请求，都先重新执行 `python3 "$RUNTIME" selected-summary`。
+2. 只使用本次命令返回的 `creationLocation` 定位修改目标，再读取源码并实施修改。
+3. 把选中结果视为仅对当前用户请求有效。即使上一轮或同一会话中已经获取过，也不要复用旧的 `description` 或 `creationLocation`。
+4. 若本次没有选中 Widget，先请用户重新选择；在重新执行 `selected-summary` 成功前不要修改上一次的目标。
+
+本 skill 只负责获取当次选中目标并定位源码；实际代码修改仍按对应的开发 skill 执行。
 
 ## 失败恢复
 
