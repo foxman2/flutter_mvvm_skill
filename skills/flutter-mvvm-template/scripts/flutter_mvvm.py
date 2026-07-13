@@ -39,7 +39,6 @@ EXCLUDED_SUFFIXES = {
     ".pyo",
 }
 PROJECT_SKILLS_REPO = "foxman2/flutter_mvvm_skill"
-PROJECT_SKILLS_ASSET = "flutter-mvvm-skills.tar.gz"
 
 
 class CliError(Exception):
@@ -200,13 +199,14 @@ def ensure_update_script(target_dir: Path) -> None:
 
 
 def write_project_skills_manifest(target_dir: Path, managed_skills: list[str]) -> None:
+    version = plugin_source_version()
     manifest_dir = target_dir / ".codex"
     manifest_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "source": f"github.com/{PROJECT_SKILLS_REPO}",
         "repo": PROJECT_SKILLS_REPO,
-        "asset": PROJECT_SKILLS_ASSET,
-        "version": release_tag_from_plugin_version(),
+        "ref": source_ref_from_plugin_version(version),
+        "version": version,
         "installedAt": utc_timestamp(),
         "managedSkills": managed_skills,
     }
@@ -216,7 +216,7 @@ def write_project_skills_manifest(target_dir: Path, managed_skills: list[str]) -
     )
 
 
-def release_tag_from_plugin_version() -> str:
+def plugin_source_version() -> str:
     manifest_path = repo_root() / ".codex-plugin" / "plugin.json"
     if not manifest_path.is_file():
         return "unknown"
@@ -226,7 +226,13 @@ def release_tag_from_plugin_version() -> str:
     except (KeyError, json.JSONDecodeError):
         return "unknown"
 
-    base_version = str(version).split("+", 1)[0]
+    return str(version)
+
+
+def source_ref_from_plugin_version(version: str) -> str:
+    if version == "unknown":
+        return "main"
+    base_version = version.split("+", 1)[0]
     return base_version if base_version.startswith("v") else f"v{base_version}"
 
 

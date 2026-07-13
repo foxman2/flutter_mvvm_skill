@@ -66,6 +66,7 @@ class ProfileViewModel extends ProfileViewModelType {}
 4. 运行 `flutter test`。
 5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 和 `test/` 都已覆盖到位。
 6. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py` 已生成。
+7. 需要更新项目局部 skills 时，确认环境同时提供 `python3` 和 `git`；无参数 updater 跟随 `main`，`--version vX.Y.Z` 固定到对应 tag。
 
 ## 不要放入模板的内容
 
