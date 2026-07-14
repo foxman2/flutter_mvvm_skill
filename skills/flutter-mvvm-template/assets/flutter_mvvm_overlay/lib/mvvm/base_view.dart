@@ -10,19 +10,20 @@ import 'base_view_model.dart';
 import 'dispose_bag.dart';
 import 'error_tracker.dart';
 
-typedef ViewModelProvider<T extends BaseViewModel> = T? Function();
+typedef ViewModelProvider<T extends BaseViewModel> = T Function();
 
 abstract class BaseStatefulView<ViewModel extends BaseViewModel>
     extends StatefulWidget {
   const BaseStatefulView({super.key, required this.viewModelProvider});
 
-  final ViewModelProvider<ViewModel> viewModelProvider;
+  final ViewModelProvider<ViewModel>? viewModelProvider;
 
-  ViewModel? defaultViewModel() {
+  ViewModel defaultViewModel() {
     throw StateError('Provide a view model or override defaultViewModel().');
   }
 
-  ViewModel createViewModel() => viewModelProvider() ?? defaultViewModel()!;
+  ViewModel createViewModel() =>
+      viewModelProvider?.call() ?? defaultViewModel();
 }
 
 abstract class BaseStatefulViewState<

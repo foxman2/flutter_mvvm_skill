@@ -64,12 +64,10 @@ class CheckoutViewModel extends CheckoutViewModelType {
 
 ```dart
 class CheckoutPage extends AppBaseStatefulPage<CheckoutViewModelType> {
-  const CheckoutPage({super.key}) : super(viewModelProvider: _defaultProvider);
-
-  static CheckoutViewModelType? _defaultProvider() => null;
+  const CheckoutPage({super.key, required super.viewModelProvider});
 
   @override
-  CheckoutViewModelType? defaultViewModel() => CheckoutViewModel();
+  CheckoutViewModelType defaultViewModel() => CheckoutViewModel();
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -99,7 +97,7 @@ ProductPreviewItem(
   id: 'checkout',
   title: (strings) => strings.productPreviewCheckoutTitle,
   description: (strings) => strings.productPreviewCheckoutDescription,
-  builder: (_) => const CheckoutPage(),
+  builder: (_) => const CheckoutPage(viewModelProvider: null),
 )
 ```
 

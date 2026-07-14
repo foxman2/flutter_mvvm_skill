@@ -7,9 +7,7 @@ abstract class SampleProductViewModelOutput {
 }
 
 abstract class SampleProductViewModelType extends AppBaseViewModel
-    implements
-        SampleProductViewModelInput,
-        SampleProductViewModelOutput {}
+    implements SampleProductViewModelInput, SampleProductViewModelOutput {}
 
 class SampleProductViewModel extends SampleProductViewModelType {
   @override

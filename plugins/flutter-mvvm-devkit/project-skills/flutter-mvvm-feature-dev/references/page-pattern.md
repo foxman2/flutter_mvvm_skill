@@ -93,6 +93,12 @@ class ProfileViewModel extends ProfileViewModelType {
 
 ## Page 写法
 
+`ViewModelProvider<T>` 是返回非空 ViewModel 的工厂，但 provider 本身可以为
+`null`。每个 ViewModel Page 都要显式接收 `required super.viewModelProvider`，
+让调用点明确选择默认实现或注入工厂。
+
+ViewModel 需要参数时，Page 不提供默认实现，也不接收已创建的 ViewModel 实例：
+
 ```dart
 import '../../l10n/app_localizations.dart';
 
@@ -100,19 +106,10 @@ class ProfilePage extends AppBaseStatefulPage<ProfileViewModelType> {
   const ProfilePage({
     super.key,
     required this.userId,
-    ProfileViewModelType? viewModel,
-  }) : _viewModel = viewModel,
-       super(viewModelProvider: _defaultProvider);
+    required super.viewModelProvider,
+  });
 
   final String userId;
-  final ProfileViewModelType? _viewModel;
-
-  static ProfileViewModelType? _defaultProvider() => null;
-
-  @override
-  ProfileViewModelType? defaultViewModel() {
-    return _viewModel ?? ProfileViewModel(userId: userId);
-  }
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -131,7 +128,38 @@ class _ProfilePageState
 }
 ```
 
-如果现有项目页面不使用可注入 `viewModel` 参数，就跟随项目现有写法，不强行引入。
+对应 `AppPage` 在 WidgetBuilder 内放入 provider 工厂，ViewModel 会在 Page 的
+`initState()` 才创建：
+
+```dart
+@override
+WidgetBuilder generateWidgetBuilder() {
+  return (_) => ProfilePage(
+    userId: userId,
+    viewModelProvider: () => ProfileViewModel(userId: userId),
+  );
+}
+```
+
+只有 ViewModel 无构造参数且无外部依赖时才覆盖 `defaultViewModel()`：
+
+```dart
+class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
+  const HomePage({super.key, required super.viewModelProvider});
+
+  @override
+  HomeViewModelType defaultViewModel() => HomeViewModel();
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+```
+
+调用方必须写出 `HomePage(viewModelProvider: null)`。不要用返回 `null` 的
+`_defaultProvider()` 占位，也不要让非空 provider 返回 nullable ViewModel。
+
+Alert、ActionSheet、child ViewModel 等特殊场景可能需要先配置动作、回调或父子关系。
+修改前先确认谁创建、谁绑定、谁释放；不要仅为了统一写法改变现有所有权。
 
 页面或纯 Widget 中只负责展示的文案直接用 `AppLocalizations.of(context)!`。需要由 ViewModel 发起的弹窗、toast、ActionSheet 和状态文案不要从 Widget 传字符串对象缓存给 ViewModel，直接在 ViewModel 中用 `localStrings` 现取。
 
@@ -142,6 +170,8 @@ class _ProfilePageState
 - `lib/l10n/app_en.arb` 是否包含新增用户可见文案。
 - ViewModel 方法是否触发预期状态。
 - Page 是否只依赖 `<Feature>ViewModelType`。
+- Page 是否显式接收 nullable provider，非空 provider 是否只返回非空 ViewModel。
+- 无依赖 VM 的调用点是否显式传 `viewModelProvider: null`；带参数或依赖的 VM 是否由 `AppPage` 中的 provider 延迟创建。
 - getter + `makeRebuild()` 或 `ValueStream<T>` output 是否按场景选择。
 - `AppPage` 的 `routeName`、`defaultTransition` 是否正确。
 - 关键页面是否能 `pumpWidget`。

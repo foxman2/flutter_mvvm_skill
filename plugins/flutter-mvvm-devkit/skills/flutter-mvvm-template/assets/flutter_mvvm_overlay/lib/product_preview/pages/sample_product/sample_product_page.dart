@@ -6,13 +6,10 @@ import 'sample_product_view_model.dart';
 
 class SampleProductPage
     extends AppBaseStatefulPage<SampleProductViewModelType> {
-  const SampleProductPage({super.key})
-    : super(viewModelProvider: _defaultProvider);
-
-  static SampleProductViewModelType? _defaultProvider() => null;
+  const SampleProductPage({super.key, required super.viewModelProvider});
 
   @override
-  SampleProductViewModelType? defaultViewModel() {
+  SampleProductViewModelType defaultViewModel() {
     return SampleProductViewModel();
   }
 

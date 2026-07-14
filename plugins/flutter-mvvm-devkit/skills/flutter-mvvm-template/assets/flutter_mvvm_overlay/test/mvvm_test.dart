@@ -75,16 +75,27 @@ void main() {
     viewModel.dispose();
   });
 
-  test(
-    'page can depend on ViewModelType instead of concrete implementation',
-    () {
-      const page = _StrictPage();
-      final viewModel = page.createViewModel();
+  test('page uses its default view model when provider is explicitly null', () {
+    const page = _StrictPage(viewModelProvider: null);
+    final viewModel = page.createViewModel();
 
-      expect(viewModel, isA<_StrictViewModelType>());
-      expect(viewModel.title, 'Strict MVVM');
-    },
-  );
+    expect(viewModel, isA<_StrictViewModelType>());
+    expect(viewModel.title, 'Strict MVVM');
+  });
+
+  test('page provider lazily creates a non-null injected view model', () {
+    var createCount = 0;
+    final page = _StrictPage(
+      viewModelProvider: () {
+        createCount += 1;
+        return _StrictViewModel();
+      },
+    );
+
+    expect(createCount, 0);
+    expect(page.createViewModel(), isA<_StrictViewModelType>());
+    expect(createCount, 1);
+  });
 
   test('localStrings throws before a view model is bound to a page', () {
     final viewModel = _LocalizedViewModel();
@@ -113,7 +124,7 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const _LocalizedPage(),
+        home: const _LocalizedPage(viewModelProvider: null),
       ),
     );
 
@@ -148,12 +159,10 @@ class _StrictViewModel extends _StrictViewModelType {
 }
 
 class _StrictPage extends AppBaseStatefulPage<_StrictViewModelType> {
-  const _StrictPage() : super(viewModelProvider: _defaultProvider);
-
-  static _StrictViewModelType? _defaultProvider() => null;
+  const _StrictPage({required super.viewModelProvider});
 
   @override
-  _StrictViewModelType? defaultViewModel() => _StrictViewModel();
+  _StrictViewModelType defaultViewModel() => _StrictViewModel();
 
   @override
   State<_StrictPage> createState() => _StrictPageState();
@@ -180,12 +189,10 @@ class _LocalizedViewModel extends _LocalizedViewModelType {
 }
 
 class _LocalizedPage extends AppBaseStatefulPage<_LocalizedViewModelType> {
-  const _LocalizedPage() : super(viewModelProvider: _defaultProvider);
-
-  static _LocalizedViewModelType? _defaultProvider() => null;
+  const _LocalizedPage({required super.viewModelProvider});
 
   @override
-  _LocalizedViewModelType? defaultViewModel() => _LocalizedViewModel();
+  _LocalizedViewModelType defaultViewModel() => _LocalizedViewModel();
 
   @override
   State<_LocalizedPage> createState() => _LocalizedPageState();

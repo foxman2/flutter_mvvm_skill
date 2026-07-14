@@ -31,10 +31,18 @@ final class ProfileAppPage extends AppPage {
 
   @override
   WidgetBuilder generateWidgetBuilder() {
-    return (_) => ProfilePage(userId: userId);
+    return (_) => ProfilePage(
+      userId: userId,
+      viewModelProvider: () => ProfileViewModel(userId: userId),
+    );
   }
 }
 ```
+
+provider 闭包只在 Page 初始化 ViewModel 时执行。带参数或依赖的普通页面应在这里
+延迟组装，不要在 `generateWidgetBuilder()` 外提前创建实例再传给 Page。无参数、
+无外部依赖且覆盖了 `defaultViewModel()` 的页面则显式传
+`viewModelProvider: null`。
 
 ViewModel 中调用：
 
@@ -66,6 +74,11 @@ final class ConfirmDeleteAppPage extends AppPage {
   }
 }
 ```
+
+这里保留已创建的 `ConfirmDeleteViewModelType` 是特殊所有权：调用方需要先为弹窗
+配置动作或结果回调，弹窗 Page 随后负责绑定并在退出时释放它。ActionSheet、child
+ViewModel 等类似场景也要先检查生命周期；不能把这个例外推广到普通参数化页面，
+也不能机械改写已有所有权链路。
 
 BottomSheet：
 

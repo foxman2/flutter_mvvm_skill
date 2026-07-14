@@ -41,7 +41,7 @@ final class HomeAppPage extends AppPage {
 
   @override
   WidgetBuilder generateWidgetBuilder() {
-    return (_) => const HomePage();
+    return (_) => const HomePage(viewModelProvider: null);
   }
 }
 

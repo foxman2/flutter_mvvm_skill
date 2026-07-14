@@ -6,12 +6,10 @@ import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
 
 class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
-  const HomePage({super.key}) : super(viewModelProvider: _defaultProvider);
-
-  static HomeViewModelType? _defaultProvider() => null;
+  const HomePage({super.key, required super.viewModelProvider});
 
   @override
-  HomeViewModelType? defaultViewModel() => HomeViewModel();
+  HomeViewModelType defaultViewModel() => HomeViewModel();
 
   @override
   State<HomePage> createState() => _HomePageState();

@@ -38,7 +38,9 @@ description: >-
 - 页面文件命名为 `<feature>_page.dart`，ViewModel 文件命名为 `<feature>_view_model.dart`。
 - 页面类命名为 `<Feature>Page`，ViewModel 类命名为 `<Feature>ViewModel`。
 - ViewModel 契约命名为 `<Feature>ViewModelInput`、`<Feature>ViewModelOutput`、`<Feature>ViewModelType`。
-- Page 泛型使用 `<Feature>ViewModelType`，`defaultViewModel()` 返回 `<Feature>ViewModel()`。
+- Page 泛型使用 `<Feature>ViewModelType`，并显式声明 `required super.viewModelProvider`；provider 可以为 `null`，但非空 provider 必须返回非空 ViewModel。
+- 只有无参数、无外部依赖的 ViewModel 才通过 `defaultViewModel()` 创建，调用方仍显式传 `viewModelProvider: null`。
+- ViewModel 需要参数或依赖时，由 `AppPage.generateWidgetBuilder()` 传入 provider 闭包延迟创建；普通页面不要先创建 ViewModel 实例再捕获或传入 Page。
 - input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放到实现类私有方法里。
 - output 默认使用 getter + `makeRebuild()`；高频或局部刷新状态才使用 `ValueStream<T>`/`Stream<T>`。
 - 用户可见文案必须走 l10n。新增文案先写入 `lib/l10n/app_en.arb`；当前模板默认只支持英语。
@@ -52,10 +54,11 @@ description: >-
 - 不在 input 接口里使用裸的 `show/open/load/save/delete/submit/close/select/fetch` 这类目的性方法名；点击 Delete 或 Submit 这类 UI 文案时写 `onClickDelete()`、`onClickSubmit()`。
 - 不把 `ValueNotifier` 作为页面 ViewModel output；输入联动、进度、倒计时、刷新状态和一次性 UI 事件使用 `ValueStream<T>` 或 `Stream<T>`。
 - 共用组件保持展示型，通过 callback 暴露事件，不直接依赖业务服务、具体 ViewModel 或页面路由。
+- child ViewModel、Alert、ActionSheet 等场景先确认创建者、页面绑定和释放责任；允许为动作配置或父子协作保留已创建实例，不机械改成普通页面的延迟工厂。
 
 ## 输出标准
 
-- 代码看起来像项目里原本就有的：目录、命名、import 顺序、构造参数、默认 provider 都和相邻页面一致。
+- 代码看起来像项目里原本就有的：目录、命名、import 顺序、构造参数和 provider 组装位置都和相邻页面一致。
 - 新页面可以从 ViewModel 发起导航和弹窗，不在 Widget 里直接堆业务流程。
 - routeName 稳定、语义清楚，并且需要深链或解析时同步更新 parser。
 - UI 修改不破坏现有交互、返回行为、loading/error 展示和测试。

@@ -22,6 +22,6 @@ final List<ProductPreviewItem> productPreviewItems = [
     id: 'sample-ui',
     title: (strings) => strings.productPreviewSampleTitle,
     description: (strings) => strings.productPreviewSampleDescription,
-    builder: (_) => const SampleProductPage(),
+    builder: (_) => const SampleProductPage(viewModelProvider: null),
   ),
 ];
