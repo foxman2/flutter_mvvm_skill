@@ -57,7 +57,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ```bash
 python3 scripts/sync_marketplace_plugin.py
 python3 -m unittest discover -s tests -v
-git tag v0.1.8 && git push origin main v0.1.8
+git tag v0.1.9 && git push origin main v0.1.9
 ```
 
 发布新版本只需更新源码中的插件版本、同步插件镜像并推送 tag。
