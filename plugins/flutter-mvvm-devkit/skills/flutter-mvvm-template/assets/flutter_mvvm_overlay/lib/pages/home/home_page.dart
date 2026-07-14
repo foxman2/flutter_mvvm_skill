@@ -5,7 +5,7 @@ import '../../mvvm/base_view.dart';
 import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
 
-class HomePage extends AppBaseStatelessPage<HomeViewModelType> {
+class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
   const HomePage({super.key}) : super(viewModelProvider: _defaultProvider);
 
   static HomeViewModelType? _defaultProvider() => null;
@@ -14,7 +14,13 @@ class HomePage extends AppBaseStatelessPage<HomeViewModelType> {
   HomeViewModelType? defaultViewModel() => HomeViewModel();
 
   @override
-  Widget createWidget(BuildContext context, HomeViewModelType viewModel) {
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState
+    extends AppBaseStatefulPageState<HomeViewModelType, HomePage> {
+  @override
+  Widget createWidget2(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(strings.appTitle)),

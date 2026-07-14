@@ -5,7 +5,7 @@ import '../../../mvvm/base_view.dart';
 import 'sample_product_view_model.dart';
 
 class SampleProductPage
-    extends AppBaseStatelessPage<SampleProductViewModelType> {
+    extends AppBaseStatefulPage<SampleProductViewModelType> {
   const SampleProductPage({super.key})
     : super(viewModelProvider: _defaultProvider);
 
@@ -17,10 +17,17 @@ class SampleProductPage
   }
 
   @override
-  Widget createWidget(
-    BuildContext context,
-    SampleProductViewModelType viewModel,
-  ) {
+  State<SampleProductPage> createState() => _SampleProductPageState();
+}
+
+class _SampleProductPageState
+    extends
+        AppBaseStatefulPageState<
+          SampleProductViewModelType,
+          SampleProductPage
+        > {
+  @override
+  Widget createWidget2(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(

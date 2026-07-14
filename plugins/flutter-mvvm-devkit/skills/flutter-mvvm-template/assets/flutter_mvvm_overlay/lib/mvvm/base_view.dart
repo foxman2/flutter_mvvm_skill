@@ -10,8 +10,6 @@ import 'base_view_model.dart';
 import 'dispose_bag.dart';
 import 'error_tracker.dart';
 
-typedef ViewModelWidgetBuilder<T extends BaseViewModel> =
-    Widget Function(BuildContext, T);
 typedef ViewModelProvider<T extends BaseViewModel> = T? Function();
 
 abstract class BaseStatefulView<ViewModel extends BaseViewModel>
@@ -131,28 +129,6 @@ abstract class BaseStatefulViewState<
   Widget createWidget(BuildContext context);
 }
 
-abstract class AppBaseStatelessPage<ViewModel extends AppBaseViewModel>
-    extends StatelessWidget {
-  const AppBaseStatelessPage({super.key, required this.viewModelProvider});
-
-  final ViewModelProvider<ViewModel> viewModelProvider;
-
-  ViewModel? defaultViewModel() =>
-      throw StateError('Provide a view model or override defaultViewModel().');
-
-  ViewModel createViewModel() => viewModelProvider() ?? defaultViewModel()!;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppViewModelView<ViewModel>(
-      viewModelProvider: createViewModel,
-      builder: createWidget,
-    );
-  }
-
-  Widget createWidget(BuildContext context, ViewModel viewModel);
-}
-
 typedef AppBaseStatefulPage<ViewModel extends AppBaseViewModel> =
     BaseStatefulView<ViewModel>;
 
@@ -249,26 +225,4 @@ abstract class AppBaseStatefulPageState<
   }
 
   Widget createWidget2(BuildContext context);
-}
-
-class AppViewModelView<ViewModel extends AppBaseViewModel>
-    extends AppBaseStatefulPage<ViewModel> {
-  const AppViewModelView({
-    super.key,
-    required super.viewModelProvider,
-    required this.builder,
-  });
-
-  final ViewModelWidgetBuilder<ViewModel> builder;
-
-  @override
-  State<StatefulWidget> createState() => AppViewModelViewState<ViewModel>();
-}
-
-class AppViewModelViewState<ViewModel extends AppBaseViewModel>
-    extends AppBaseStatefulPageState<ViewModel, AppViewModelView<ViewModel>> {
-  @override
-  Widget createWidget2(BuildContext context) {
-    return widget.builder(context, viewModel);
-  }
 }

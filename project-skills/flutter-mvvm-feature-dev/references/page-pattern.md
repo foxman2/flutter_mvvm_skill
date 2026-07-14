@@ -10,10 +10,9 @@
 - 相关 widget 或测试
 - `lib/l10n/app_en.arb` 中已有的文案命名方式
 
-优先沿用已有页面的继承方式。如果项目同时有 stateless 和 stateful 基类，按需求选择：
-
-- 页面只消费 ViewModel 并由 ViewModel 触发刷新：优先 `AppBaseStatelessPage<T>`。
-- 页面需要本地 controller、animation、focus、tab 等生命周期对象：使用 `AppBaseStatefulPage<T>` 和对应 state。
+优先沿用已有页面的组织方式。ViewModel 页面统一使用
+`AppBaseStatefulPage<T>` 和对应 state；即使页面没有本地 controller、animation、
+focus 或 tab，也通过 state 持有并绑定 ViewModel。
 
 ## 推荐目录
 
@@ -97,7 +96,7 @@ class ProfileViewModel extends ProfileViewModelType {
 ```dart
 import '../../l10n/app_localizations.dart';
 
-class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
+class ProfilePage extends AppBaseStatefulPage<ProfileViewModelType> {
   const ProfilePage({
     super.key,
     required this.userId,
@@ -116,7 +115,13 @@ class ProfilePage extends AppBaseStatelessPage<ProfileViewModelType> {
   }
 
   @override
-  Widget createWidget(BuildContext context, ProfileViewModelType viewModel) {
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState
+    extends AppBaseStatefulPageState<ProfileViewModelType, ProfilePage> {
+  @override
+  Widget createWidget2(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(viewModel.title)),

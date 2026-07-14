@@ -147,7 +147,7 @@ class _StrictViewModel extends _StrictViewModelType {
   String get title => _title;
 }
 
-class _StrictPage extends AppBaseStatelessPage<_StrictViewModelType> {
+class _StrictPage extends AppBaseStatefulPage<_StrictViewModelType> {
   const _StrictPage() : super(viewModelProvider: _defaultProvider);
 
   static _StrictViewModelType? _defaultProvider() => null;
@@ -156,7 +156,13 @@ class _StrictPage extends AppBaseStatelessPage<_StrictViewModelType> {
   _StrictViewModelType? defaultViewModel() => _StrictViewModel();
 
   @override
-  Widget createWidget(BuildContext context, _StrictViewModelType viewModel) {
+  State<_StrictPage> createState() => _StrictPageState();
+}
+
+class _StrictPageState
+    extends AppBaseStatefulPageState<_StrictViewModelType, _StrictPage> {
+  @override
+  Widget createWidget2(BuildContext context) {
     return Text(viewModel.title);
   }
 }
@@ -173,7 +179,7 @@ class _LocalizedViewModel extends _LocalizedViewModelType {
   String get title => localStrings.homeTemplateTitle;
 }
 
-class _LocalizedPage extends AppBaseStatelessPage<_LocalizedViewModelType> {
+class _LocalizedPage extends AppBaseStatefulPage<_LocalizedViewModelType> {
   const _LocalizedPage() : super(viewModelProvider: _defaultProvider);
 
   static _LocalizedViewModelType? _defaultProvider() => null;
@@ -182,7 +188,13 @@ class _LocalizedPage extends AppBaseStatelessPage<_LocalizedViewModelType> {
   _LocalizedViewModelType? defaultViewModel() => _LocalizedViewModel();
 
   @override
-  Widget createWidget(BuildContext context, _LocalizedViewModelType viewModel) {
+  State<_LocalizedPage> createState() => _LocalizedPageState();
+}
+
+class _LocalizedPageState
+    extends AppBaseStatefulPageState<_LocalizedViewModelType, _LocalizedPage> {
+  @override
+  Widget createWidget2(BuildContext context) {
     return Text(viewModel.title);
   }
 }
