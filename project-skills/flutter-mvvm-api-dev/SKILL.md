@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-api-dev
 description: >-
-  用于已有 flutter-mvvm-template 架构项目中的已确认正式后端 API 开发：新增或修改 ApiService 业务模块、Dio 实现、request/response model 的 fromJson/toJson、repository/ViewModel 调用和接口测试，并在后端协议确认后把已审核的 mock/preview 数据迁移为正式 API/model。不用于后端未确认、前端先行 mock 或临时预览数据；使用 flutter-mvvm-mock-api-dev。不用于纯页面/UI/导航/组件工作；使用 flutter-mvvm-feature-dev 或 flutter-mvvm-pm-ui。
+  用于已有 flutter-mvvm-template 架构项目中的已确认正式后端 API 开发：新增或修改 ApiService 业务模块、Dio 实现、request/response model 的 fromJson/toJson、repository/ViewModel 调用，并在后端协议确认后把已审核的 mock/preview 数据迁移为正式 API/model。不用于后端未确认、前端先行 mock 或临时预览数据；使用 flutter-mvvm-mock-api-dev。不用于纯页面/UI/导航/组件工作；使用 flutter-mvvm-feature-dev 或 flutter-mvvm-pm-ui。
 ---
 
 # Flutter MVVM API Dev
@@ -22,7 +22,8 @@ description: >-
 3. 请求/响应数据结构放在 `lib/models/<domain>/`，先用普通 Dart model 和手写 `fromJson/toJson`。
 4. Dio service 方法直接使用构造函数传入的 Dio 发请求，并通过 `.parseData(...)` 统一转换 `DioException` 和调用 model 的 `fromJson`。
 5. ViewModel 不直接解析 JSON；简单场景可直接调 `ApiService.shared.<domain>`，复杂场景优先经 repository。
-6. 完成后运行项目已有检查；通常是 `dart format lib test`、`flutter analyze`，相关逻辑补 `flutter test`。
+6. 完成后格式化本次改动文件并运行 `flutter analyze`；先运行覆盖受影响 contract 的已有测试。
+7. 只为复杂解析/转换、错误映射、重要请求分支或回归问题新增针对性测试。简单字段直映射和无分支 wiring 默认不新增测试；交付时说明新增测试对应的风险，或说明本次无需新增测试的理由。
 
 ## 读取参考
 
@@ -45,4 +46,5 @@ description: >-
 - API contract、Dio 实现、model、repository/ViewModel 的职责分开，JSON 解析不散落到 Widget 中。
 - 新增接口能复用 `ApiServiceException`、baseUrl、静态/动态 headers 和 timeout 配置。
 - model 字段类型明确，`fromJson` 对可空字段和列表做必要防御。
-- 测试覆盖新增 model 解析和至少一条 API service happy path 或错误路径。
+- 一个代表性 contract 测试可以同时覆盖 method、path、body 和 response parsing，不要按文件或 happy/error 分类机械拆测试。
+- 简单 DTO 直映射默认不测试；只有默认值、可空兼容、嵌套集合、类型转换、异常映射或回归风险需要针对性覆盖。

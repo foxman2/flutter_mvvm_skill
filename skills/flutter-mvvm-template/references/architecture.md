@@ -38,6 +38,8 @@ lib/
 └── widgets/
 scripts/
 └── update-codex-skills.py
+test/
+└── app_smoke_test.dart
 ```
 
 页面 ViewModel 推荐结构：
@@ -58,13 +60,19 @@ class ProfileViewModel extends ProfileViewModelType {}
 
 `product_preview/` 是 UI 预览隔离区。首页通过悬浮按钮进入 `ProductPreviewAppPage`，新增预览页面放在 `product_preview/pages/` 并通过 `product_preview_registry.dart` 注册；审核通过后再迁移到正式 `pages/`、ViewModel 和 AppPage 导航。
 
+## 测试责任边界
+
+- 生成项目只包含一个应用初始化和渲染 smoke test，不复制模板内部的 MVVM、导航和 API 回归测试。
+- 完整模板契约测试保留在 DevKit 源码仓库的 `tests/template_contract/`，由维护者在发布前通过临时生成项目运行。
+- 后续业务开发按行为风险补测试，不根据 `test/` 目录是否存在、修改文件数量或代码类型机械生成测试。
+
 ## 生成后检查清单
 
 1. 运行 `flutter pub get`。
 2. 运行 `dart format lib test`。
 3. 运行 `flutter analyze`。
-4. 运行 `flutter test`。
-5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 和 `test/` 都已覆盖到位。
+4. 运行 `flutter test test/app_smoke_test.dart`。
+5. 打开生成项目，确认 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 已覆盖到位，且 `test/` 默认只包含 `app_smoke_test.dart`。
 6. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py` 已生成。
 7. 需要更新项目局部 skills 时，确认环境同时提供 `python3` 和 `git`；无参数 updater 跟随 `main`，`--version vX.Y.Z` 固定到对应 tag。
 

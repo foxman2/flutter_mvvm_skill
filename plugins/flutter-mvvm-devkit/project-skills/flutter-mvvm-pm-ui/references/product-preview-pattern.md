@@ -105,4 +105,4 @@ ProductPreviewItem(
 
 ## 审核迁移
 
-开发审核通过后，用 `$flutter-mvvm-feature-dev` 把页面迁移到正式 `lib/pages/<feature>/`，补正式 AppPage、真实导航和测试，并把临时展示状态替换成正式业务状态。不要直接把临时 mock 或 demo 逻辑当成最终实现。
+开发审核通过后，用 `$flutter-mvvm-feature-dev` 把页面迁移到正式 `lib/pages/<feature>/`，补正式 AppPage 和真实导航，按行为风险决定是否需要针对性测试，并把临时展示状态替换成正式业务状态。不要直接把临时 mock 或 demo 逻辑当成最终实现。

@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM 模拟接口开发"
-  short_description: "接入后端未确认的 mock API、临时模型和测试"
-  default_prompt: "使用 $flutter-mvvm-mock-api-dev 在已有 Flutter MVVM 项目中接入后端未确认的 mock API、临时模型和测试。"
+  short_description: "接入未确认 mock API 和临时模型，按风险补测试"
+  default_prompt: "使用 $flutter-mvvm-mock-api-dev 在已有 Flutter MVVM 项目中接入后端未确认的 mock API 和临时模型，仅按重要行为风险补充针对性测试。"

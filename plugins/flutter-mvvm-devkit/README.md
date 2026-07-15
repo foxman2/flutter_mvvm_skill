@@ -57,7 +57,9 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ```bash
 python3 scripts/sync_marketplace_plugin.py
 python3 -m unittest discover -s tests -v
-git tag v0.1.9 && git push origin main v0.1.9
+git tag v0.1.10 && git push origin main v0.1.10
 ```
+
+完整模板契约验收需要本机安装 Flutter；没有 Flutter 时 Python 测试会明确跳过该集成用例。发布前必须在有 Flutter 的环境运行并通过。
 
 发布新版本只需更新源码中的插件版本、同步插件镜像并推送 tag。

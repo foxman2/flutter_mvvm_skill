@@ -163,15 +163,12 @@ Alert、ActionSheet、child ViewModel 等特殊场景可能需要先配置动作
 
 页面或纯 Widget 中只负责展示的文案直接用 `AppLocalizations.of(context)!`。需要由 ViewModel 发起的弹窗、toast、ActionSheet 和状态文案不要从 Widget 传字符串对象缓存给 ViewModel，直接在 ViewModel 中用 `localStrings` 现取。
 
-## 测试
+## 测试决策
 
-有测试目录时，优先补充轻量测试：
+先运行覆盖受影响行为的已有测试。只有以下变化需要新增针对性测试：
 
-- `lib/l10n/app_en.arb` 是否包含新增用户可见文案。
-- ViewModel 方法是否触发预期状态。
-- Page 是否只依赖 `<Feature>ViewModelType`。
-- Page 是否显式接收 nullable provider，非空 provider 是否只返回非空 ViewModel。
-- 无依赖 VM 的调用点是否显式传 `viewModelProvider: null`；带参数或依赖的 VM 是否由 `AppPage` 中的 provider 延迟创建。
-- getter + `makeRebuild()` 或 `ValueStream<T>` output 是否按场景选择。
-- `AppPage` 的 `routeName`、`defaultTransition` 是否正确。
-- 关键页面是否能 `pumpWidget`。
+- ViewModel 包含非平凡状态转换、异步竞争或错误恢复。
+- 页面包含稳定且关键的用户交互，或本次改动修复了回归问题。
+- 自定义导航参数或 transition 包含无法由类型系统覆盖的分支。
+
+纯布局、文案、样式、l10n key 是否存在、class/provider 类型结构、普通 route metadata 和简单 getter/setter 默认不新增测试；这些优先由代码审查、编译器和 `flutter analyze` 覆盖。不要把 `test/` 目录存在当作补测试条件。

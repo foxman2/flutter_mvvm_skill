@@ -92,8 +92,7 @@ final orders = await ApiService.shared.order
 
 ## 测试
 
-- mock service 返回期望数据。
-- 使用 `--dart-define=server=mock` 时，`ApiService.shared.setup()` 会组装 mock service。
-- mock 模式不触发 Dio adapter。
-- mock-only model 至少覆盖必填字段和列表解析。
-- 后台确认后，补真实 Dio happy path 或错误路径测试。
+- 静态 fixture 直接返回、简单必填字段赋值和无分支 mock-only model 默认不测试。
+- 修改环境组装逻辑时，覆盖 `ApiService.shared.setup()` 的 mock wiring，并确认 mock 模式不触发 Dio adapter。
+- mock 包含延迟、错误、分页、状态切换或复杂列表解析时，只覆盖对应的非平凡行为。
+- 后台确认后，由正式 API 的实际解析、异常或 contract 风险决定是否补测试，不机械生成 happy/error 两套用例。

@@ -404,6 +404,16 @@ def resolve_create_inputs(args: argparse.Namespace) -> tuple[str, str, str | Non
     return project_name, app_name, package_name
 
 
+def run_final_checks(target_dir: Path) -> None:
+    run(["dart", "format", "lib", "test"], cwd=target_dir, allow_failure=True)
+    run(["flutter", "analyze"], cwd=target_dir, allow_failure=True)
+    run(
+        ["flutter", "test", "test/app_smoke_test.dart"],
+        cwd=target_dir,
+        allow_failure=True,
+    )
+
+
 def create_project(args: argparse.Namespace) -> None:
     project_name, app_name, package_name = resolve_create_inputs(args)
     platforms = validate_platforms(args.platforms)
@@ -458,8 +468,7 @@ def create_project(args: argparse.Namespace) -> None:
         return
 
     if not args.skip_final_checks:
-        run(["dart", "format", "lib", "test"], cwd=target_dir, allow_failure=True)
-        run(["flutter", "analyze"], cwd=target_dir, allow_failure=True)
+        run_final_checks(target_dir)
 
     print(f"Created Flutter MVVM project at {target_dir}")
 

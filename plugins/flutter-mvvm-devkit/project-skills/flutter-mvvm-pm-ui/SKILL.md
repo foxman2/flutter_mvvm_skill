@@ -27,7 +27,7 @@ description: >-
    - 需要数据：同时使用 `$flutter-mvvm-mock-api-dev`，允许按其规则修改临时 domain contract、`ApiService` wiring、mock service 和 mock-only model，并标记待开发审核；只有纯布局占位、没有 service 层价值的小型 UI 状态才保留在同目录 ViewModel 中。
 3. 做 UI 时复用现有组件、theme、间距、按钮和弹层风格。
 4. 完成后输出审核说明：列出 PM 改动文件、待开发审核的 mock/API 文件、不得直接发布的预览页面。
-5. 运行项目已有检查；通常是 `dart format lib test`、`flutter analyze`，能跑测试时运行相关 widget/mock 测试。
+5. 格式化本次改动文件、运行 `flutter analyze` 并通过实际 Product Preview 验收；先运行覆盖受影响正式行为的已有测试。纯布局、文案、样式、隔离预览和静态 mock 默认不新增自动化测试，只有修复正式页面回归时才补针对性测试。
 
 ## 读取参考
 
@@ -43,3 +43,4 @@ description: >-
 - 数据驱动的 PM 预览优先复用或新增 mock API，不把业务形态列表/详情长期硬编码在页面 ViewModel 中。
 - mock API 改动和 mock-only model 有清楚的 `PM preview / pending developer review` 标记。
 - 开发可以根据预览页面审核、迁移和重写正式 ViewModel/API 接入。
+- 交付时说明新增测试保护的正式行为风险，或说明本次无需新增测试的理由。
