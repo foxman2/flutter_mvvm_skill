@@ -21,8 +21,6 @@ abstract class BaseViewModel {
   void Function()? rebuild;
   AppLocalizations Function()? getLocalStrings;
 
-  Map<String, String> get queryParameters => {};
-
   AppLocalizations get localStrings {
     final callback = getLocalStrings;
     if (callback == null) {

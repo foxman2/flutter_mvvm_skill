@@ -60,8 +60,12 @@ void _confirmDelete() {
     title: strings.confirmDeleteTitle,
     content: strings.confirmDeleteContent,
   )
-    ..addLocalizedCancelAction(strings.commonCancel)
-    ..addLocalizedDeleteAction(strings.commonDelete, delete);
+    ..addAction(strings.commonCancel)
+    ..addAction(
+      strings.commonDelete,
+      isDestructive: true,
+      handler: delete,
+    );
   show(AlertAppPage(alert));
 }
 ```

@@ -2,21 +2,18 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/navigation/app_page.dart';
 import 'package:{{project_name}}/navigation/app_page_transition.dart';
-import 'package:{{project_name}}/navigation/app_route_parser.dart';
 import 'package:{{project_name}}/pages/alert/alert_page.dart';
 import 'package:{{project_name}}/pages/alert/alert_view_model.dart';
 import 'package:{{project_name}}/pages/home/home_page.dart';
 
 void main() {
   test('parameterized AppPage owns route metadata', () {
-    final page = AlertAppPage(AlertViewModel(title: 'Hi')..addOkAction());
+    final page = AlertAppPage(
+      AlertViewModel(title: 'Hi')..addAction('OK', isDefault: true),
+    );
 
     expect(page.routeName, '/alert');
     expect(page.defaultTransition, AppPageTransition.alert);
-  });
-
-  test('route parser resolves home route', () {
-    expect(AppRouteParser.parse('/'), isA<HomeAppPage>());
   });
 
   test('home route uses normal page transition by default', () {
@@ -40,7 +37,8 @@ void main() {
   testWidgets('alert AppPage preserves its configured view model instance', (
     tester,
   ) async {
-    final viewModel = AlertViewModel(title: 'Hi')..addOkAction();
+    final viewModel = AlertViewModel(title: 'Hi')
+      ..addAction('OK', isDefault: true);
     await tester.pumpWidget(const SizedBox());
     final context = tester.element(find.byType(SizedBox));
 

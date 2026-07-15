@@ -34,34 +34,11 @@ class HomeViewModel extends HomeViewModelType {
 
   @override
   void onClickProductPreview() {
-    _showProductPreview();
+    show(const ProductPreviewAppPage());
   }
 
   @override
   void onClickAlertDemo() {
-    _showAlertDemo();
-  }
-
-  @override
-  void onClickInputAlertDemo() {
-    _showInputAlertDemo();
-  }
-
-  @override
-  void onClickActionSheetDemo() {
-    _showActionSheetDemo();
-  }
-
-  @override
-  void onClickBottomSheetDemo() {
-    _showBottomSheetDemo();
-  }
-
-  void _showProductPreview() {
-    show(const ProductPreviewAppPage());
-  }
-
-  void _showAlertDemo() {
     final strings = localStrings;
     final alert = AlertViewModel(
       title: strings.homeAlertTitle,
@@ -70,7 +47,8 @@ class HomeViewModel extends HomeViewModelType {
     show(AlertAppPage(alert));
   }
 
-  void _showInputAlertDemo() {
+  @override
+  void onClickInputAlertDemo() {
     final strings = localStrings;
     final input = InputAlertViewModel(
       title: strings.homeInputAlertTitle,
@@ -84,7 +62,8 @@ class HomeViewModel extends HomeViewModelType {
     show(InputAlertAppPage(input));
   }
 
-  void _showActionSheetDemo() {
+  @override
+  void onClickActionSheetDemo() {
     final strings = localStrings;
     final sheet =
         ActionSheetViewModel(
@@ -97,7 +76,8 @@ class HomeViewModel extends HomeViewModelType {
     show(ActionSheetAppPage(sheet));
   }
 
-  void _showBottomSheetDemo() {
+  @override
+  void onClickBottomSheetDemo() {
     show(const BottomSheetDemoAppPage());
   }
 }

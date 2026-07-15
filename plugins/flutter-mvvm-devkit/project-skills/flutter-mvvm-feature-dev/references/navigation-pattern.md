@@ -104,9 +104,9 @@ final class FilterSheetAppPage extends AppPage
 }
 ```
 
-## Route parser
+## 可选 Route parser
 
-如果页面需要从字符串路由恢复，更新 `AppRouteParser`：
+只有页面确实需要从深链、浏览器地址或恢复状态中的字符串路由创建时，才新增 `AppRouteParser`，并把它接入应用路由入口：
 
 ```dart
 static AppPage? parse(String routeString) {
@@ -121,7 +121,7 @@ static AppPage? parse(String routeString) {
 }
 ```
 
-不需要深链、浏览器地址或恢复路由时，不要为了形式主义添加 parser 分支。
+不需要深链、浏览器地址或恢复路由时，不要创建未接入运行时的 parser 文件。
 
 ## 命名和稳定性
 

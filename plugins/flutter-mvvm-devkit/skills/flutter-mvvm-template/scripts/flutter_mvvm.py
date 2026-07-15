@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
-import os
 import plistlib
 import re
 import shutil
@@ -113,10 +112,6 @@ def project_name_from_package_name(package_name: str) -> str:
         name = f"app_{name}" if name else "app"
     validate_project_name(name)
     return name
-
-
-def package_name_from_org(org: str, project_name: str) -> str:
-    return f"{org}.{project_name}"
 
 
 def suggested_package_name_from_project(org: str, project_name: str) -> str:
@@ -445,9 +440,6 @@ def create_project(args: argparse.Namespace) -> None:
     replacements = {
         "{{project_name}}": project_name,
         "{{app_name}}": app_name,
-        "{{org}}": create_org,
-        "{{package_name}}": package_name or package_name_from_org(create_org, project_name),
-        "{{package_import}}": project_name,
     }
     copy_overlay(overlay_dir, target_dir, replacements)
     apply_native_identity(target_dir, app_name, package_name)
