@@ -39,10 +39,11 @@ final class ProfileAppPage extends AppPage {
 }
 ```
 
-provider 闭包只在 Page 初始化 ViewModel 时执行。带参数或依赖的普通页面应在这里
-延迟组装，不要在 `generateWidgetBuilder()` 外提前创建实例再传给 Page。无参数、
-无外部依赖且覆盖了 `defaultViewModel()` 的页面则显式传
-`viewModelProvider: null`。
+provider 闭包只在 Page 初始化 ViewModel 时执行。带路由或页面运行参数的普通页面应在
+这里延迟组装，不要在 `generateWidgetBuilder()` 外提前创建实例再传给 Page。无页面
+运行参数且覆盖了 `defaultViewModel()` 的页面则显式传 `viewModelProvider: null`。
+所有由 `AppContainer` 持有的 App 生命周期依赖统一从 `AppContainer.shared` 获取，
+不要作为页面运行参数放进 AppPage、Page 或 ViewModel 构造函数。
 
 ViewModel 中调用：
 

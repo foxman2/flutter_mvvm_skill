@@ -38,7 +38,7 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 - 创建项目时先调用官方 `flutter create`，然后只覆盖 Dart/template 文件。
 - app 显示名会同步到 Flutter UI 标题、Android label、iOS display name 和 Web manifest/title。
 - 原生包名会同步到 Android namespace/applicationId/MainActivity package，以及 iOS bundle identifier。
-- 模板内已包含 MVVM 基类、sealed AppPage 导航、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例、Product Preview 入口和一个应用启动 smoke test；这里不要展开后续开发规范。
+- 模板内已包含 MVVM 基类、sealed AppPage 导航、AppContainer 全局依赖容器、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例、Product Preview 入口和一个应用启动 smoke test；这里不要展开后续开发规范。
 - 生成项目内已包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py`。需要更新局部 skills 时，在生成项目根目录运行 `./scripts/update-codex-skills.py` 获取 `main`，或运行 `./scripts/update-codex-skills.py --version vX.Y.Z` 检出指定 tag；运行环境需要 `python3` 和 `git`。
 
 ## CLI 参数

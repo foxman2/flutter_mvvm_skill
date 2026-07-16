@@ -86,7 +86,7 @@ class _CheckoutPageState
 }
 ```
 
-页面使用同目录 ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，优先通过 `ApiService.shared.<domain>` 读取 mock API 返回的数据，并用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。本文件或 ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。ViewModel 遵守正式 input/output/type 结构；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要创建正式 AppPage case、route parser 分支或真实 API 接入。
+页面使用同目录 ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，优先通过 `AppContainer.shared.apiService.<domain>` 读取 mock API 返回的数据，并用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。本文件或 ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。ViewModel 遵守正式 input/output/type 结构；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要把 App 级依赖加入预览 Page 或 ViewModel 构造函数，也不要创建正式 AppPage case、route parser 分支或真实 API 接入。
 
 ## 注册预览入口
 

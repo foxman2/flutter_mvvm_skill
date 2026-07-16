@@ -46,29 +46,24 @@ ApiEnvironment resolveApiEnvironment({
 }
 
 class ApiService {
-  ApiService._();
-
-  static final ApiService shared = ApiService._();
-
-  UserApiService? _user;
-
-  UserApiService get user {
-    final service = _user;
-    if (service == null) {
-      throw StateError('ApiService.shared.setup() must be called before use.');
+  factory ApiService({ApiEnvironment? environment}) {
+    final selectedEnvironment = environment ?? _apiEnvironment;
+    if (selectedEnvironment == ApiEnvironment.mock) {
+      return ApiService.withModules(user: const MockUserApiService());
     }
-    return service;
+
+    final client = _createDio(selectedEnvironment);
+    return ApiService.withModules(user: DioUserApiService(client));
   }
 
-  void setup() {
-    if (_apiEnvironment == ApiEnvironment.mock) {
-      _user = const MockUserApiService();
-      return;
-    }
+  ApiService.withModules({required this.user});
 
+  final UserApiService user;
+
+  static Dio _createDio(ApiEnvironment environment) {
     final client = Dio(
       BaseOptions(
-        baseUrl: _apiEnvironment.baseUrl,
+        baseUrl: environment.baseUrl,
         connectTimeout: _connectTimeout,
         receiveTimeout: _receiveTimeout,
         sendTimeout: _sendTimeout,
@@ -83,17 +78,16 @@ class ApiService {
         },
       ),
     );
-
-    _user = DioUserApiService(client);
+    return client;
   }
 
-  Duration get _connectTimeout => const Duration(seconds: 15);
+  static Duration get _connectTimeout => const Duration(seconds: 15);
 
-  Duration get _receiveTimeout => const Duration(seconds: 15);
+  static Duration get _receiveTimeout => const Duration(seconds: 15);
 
-  Duration get _sendTimeout => const Duration(seconds: 15);
+  static Duration get _sendTimeout => const Duration(seconds: 15);
 
-  Map<String, String> get _staticHeaders => const {};
+  static Map<String, String> get _staticHeaders => const {};
 
-  Map<String, String> get _dynamicHeaders => const {};
+  static Map<String, String> get _dynamicHeaders => const {};
 }

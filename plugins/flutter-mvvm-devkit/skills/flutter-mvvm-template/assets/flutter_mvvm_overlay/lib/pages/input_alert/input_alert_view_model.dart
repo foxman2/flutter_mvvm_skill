@@ -32,7 +32,7 @@ abstract class InputAlertViewModelType extends AppBaseViewModel
     implements InputAlertViewModelInput, InputAlertViewModelOutput {}
 
 class InputAlertViewModel extends InputAlertViewModelType {
-  InputAlertViewModel({
+  factory InputAlertViewModel({
     String? title,
     String? content,
     String? hint,
@@ -42,15 +42,31 @@ class InputAlertViewModel extends InputAlertViewModelType {
     String okText = 'OK',
     String? errorMessage,
     Future<void> Function(String value)? onSubmitted,
-  }) : _title = title,
-       _content = content,
-       _hint = hint,
-       _initialValue = initialValue,
-       _allowEmpty = allowEmpty,
-       _cancelText = cancelText,
-       _okText = okText,
-       _errorMessage = errorMessage,
-       _onSubmitted = onSubmitted;
+  }) {
+    return InputAlertViewModel._(
+      title: title,
+      content: content,
+      hint: hint,
+      initialValue: initialValue,
+      allowEmpty: allowEmpty,
+      cancelText: cancelText,
+      okText: okText,
+      errorMessage: errorMessage,
+      onSubmitted: onSubmitted,
+    );
+  }
+
+  InputAlertViewModel._({
+    required this._title,
+    required this._content,
+    required this._hint,
+    required this._initialValue,
+    required this._allowEmpty,
+    required this._cancelText,
+    required this._okText,
+    required this._errorMessage,
+    required this._onSubmitted,
+  });
 
   final String? _title;
   final String? _content;

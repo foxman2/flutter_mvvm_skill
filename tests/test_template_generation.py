@@ -12,10 +12,22 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERATOR_PATH = ROOT / "skills/flutter-mvvm-template/scripts/flutter_mvvm.py"
-OVERLAY_TEST_PATH = (
-    ROOT / "skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/test"
-)
+OVERLAY_PATH = ROOT / "skills/flutter-mvvm-template/assets/flutter_mvvm_overlay"
+OVERLAY_TEST_PATH = OVERLAY_PATH / "test"
 CONTRACT_TEST_PATH = ROOT / "tests/template_contract"
+AFFECTED_PROJECT_SKILLS = (
+    "flutter-mvvm-api-dev",
+    "flutter-mvvm-feature-dev",
+    "flutter-mvvm-mock-api-dev",
+    "flutter-mvvm-pm-ui",
+)
+REMOVED_ARCHITECTURE_REFERENCES = (
+    "App" + "Services",
+    "app_" + "services.dart",
+    "ApiService." + "shared",
+    "AuthRepository." + "shared",
+)
+LEGACY_APP_SERVICES_FILE = "app_" + "services.dart"
 
 
 def load_generator():
@@ -34,7 +46,35 @@ def load_generator():
 generator = load_generator()
 
 
+def directory_snapshot(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    }
+
+
+def searchable_text(root: Path) -> str:
+    contents: list[str] = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts or path.suffix == ".pyc":
+            continue
+        try:
+            contents.append(path.read_text(encoding="utf-8"))
+        except UnicodeDecodeError:
+            continue
+    return "\n".join(contents)
+
+
 class TemplateGenerationUnitTests(unittest.TestCase):
+    def test_overlay_uses_app_container_architecture(self) -> None:
+        lib = OVERLAY_PATH / "lib"
+
+        self.assertTrue((lib / "app_container.dart").is_file())
+        self.assertFalse((lib / "services" / LEGACY_APP_SERVICES_FILE).exists())
+        for removed in REMOVED_ARCHITECTURE_REFERENCES:
+            self.assertNotIn(removed, searchable_text(OVERLAY_PATH))
+
     def test_default_overlay_contains_only_smoke_test(self) -> None:
         generated_tests = sorted(path.name for path in OVERLAY_TEST_PATH.glob("*.dart"))
         contract_tests = sorted(path.name for path in CONTRACT_TEST_PATH.glob("*.dart"))
@@ -115,11 +155,16 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                 sorted(path.name for path in (project / "test").glob("*.dart")),
                 ["app_smoke_test.dart"],
             )
-            self.run_command(["flutter", "analyze"], cwd=project)
-            self.run_command(
-                ["flutter", "test", "test/app_smoke_test.dart"],
-                cwd=project,
+            self.assertTrue((project / "lib/app_container.dart").is_file())
+            self.assertFalse(
+                (project / "lib/services" / LEGACY_APP_SERVICES_FILE).exists()
             )
+
+            for skill_name in AFFECTED_PROJECT_SKILLS:
+                self.assertEqual(
+                    directory_snapshot(ROOT / "project-skills" / skill_name),
+                    directory_snapshot(project / ".codex/skills" / skill_name),
+                )
 
             for source in CONTRACT_TEST_PATH.glob("*.dart"):
                 content = source.read_text(encoding="utf-8").replace(
@@ -129,10 +174,30 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                 (project / "test" / source.name).write_text(content, encoding="utf-8")
 
             self.run_command(
-                ["dart", "format", "--output=none", "--set-exit-if-changed", "test"],
+                [
+                    "dart",
+                    "format",
+                    "--output=none",
+                    "--set-exit-if-changed",
+                    "lib",
+                    "test",
+                ],
                 cwd=project,
             )
+            self.run_command(["flutter", "analyze"], cwd=project)
             self.run_command(["flutter", "test"], cwd=project)
+
+            generated_architecture = "\n".join(
+                [
+                    searchable_text(project / "lib"),
+                    *[
+                        searchable_text(project / ".codex/skills" / skill_name)
+                        for skill_name in AFFECTED_PROJECT_SKILLS
+                    ],
+                ]
+            )
+            for removed in REMOVED_ARCHITECTURE_REFERENCES:
+                self.assertNotIn(removed, generated_architecture)
 
 
 if __name__ == "__main__":

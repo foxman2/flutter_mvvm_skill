@@ -64,7 +64,7 @@ AppEmptyView(
 
 组件不要直接依赖：
 
-- API client、repository、manager。
+- `AppContainer` 或其持有的 App 级依赖。
 - 具体业务 ViewModel。
 - `AppPage` case 或 `Navigator` 跳转。
 - Firebase、推送、分析埋点等产品服务。

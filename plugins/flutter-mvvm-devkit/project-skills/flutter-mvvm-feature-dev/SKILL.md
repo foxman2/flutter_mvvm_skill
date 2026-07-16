@@ -13,11 +13,11 @@ description: >-
 - 只处理已有项目里的页面、UI、组件、导航和 ViewModel 侧工作。
 - 负责把审核通过的 `lib/product_preview/` 隔离原型迁移为正式 `lib/pages/<feature>/`、ViewModel 和 `AppPage`。
 - 可以把 ViewModel 接到已有 API 方法，但不负责新增正式 API service 或 mock service。
-- 当前项目应包含 `lib/mvvm/`、`lib/navigation/`、`lib/pages/`，并使用 `sealed class AppPage` 表达页面路由。
+- 当前项目应包含 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/`、`lib/pages/`，并使用 `sealed class AppPage` 表达页面路由。
 
 ## 工作流程
 
-1. 先读当前项目结构：`pubspec.yaml`、`lib/l10n/`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
+1. 先读当前项目结构：`pubspec.yaml`、`lib/app_container.dart`、`lib/l10n/`、`lib/mvvm/`、`lib/navigation/app_page.dart`、`lib/navigation/app_navigator.dart`、`lib/pages/`。
 2. 找一个最相似的已有页面和 ViewModel，优先复制它的组织方式、命名、状态管理和 UI 风格。
 3. 如果任务来自隔离预览，先读 `lib/product_preview/` 的原型，再重新按正式 MVVM 边界实现，不直接把原型当最终业务代码搬过去。
 4. 创建或修改页面时保持职责分离：Widget 负责展示和事件绑定，ViewModel 负责状态、异步、导航、弹窗和业务动作；新增页面 ViewModel 必须拆成 input/output/type/实现类。
@@ -40,8 +40,9 @@ description: >-
 - 页面类命名为 `<Feature>Page`，ViewModel 类命名为 `<Feature>ViewModel`。
 - ViewModel 契约命名为 `<Feature>ViewModelInput`、`<Feature>ViewModelOutput`、`<Feature>ViewModelType`。
 - Page 泛型使用 `<Feature>ViewModelType`，并显式声明 `required super.viewModelProvider`；provider 可以为 `null`，但非空 provider 必须返回非空 ViewModel。
-- 只有无参数、无外部依赖的 ViewModel 才通过 `defaultViewModel()` 创建，调用方仍显式传 `viewModelProvider: null`。
-- ViewModel 需要参数或依赖时，由 `AppPage.generateWidgetBuilder()` 传入 provider 闭包延迟创建；普通页面不要先创建 ViewModel 实例再捕获或传入 Page。
+- 只有无路由或页面运行参数的 ViewModel 才通过 `defaultViewModel()` 创建，调用方仍显式传 `viewModelProvider: null`。
+- ViewModel 需要路由或页面运行参数时，由 `AppPage.generateWidgetBuilder()` 传入 provider 闭包延迟创建；普通页面不要先创建 ViewModel 实例再捕获或传入 Page。
+- 所有由 `AppContainer` 持有的 App 生命周期依赖都不属于页面运行参数；ViewModel 直接从 `AppContainer.shared` 获取，不要把这些依赖加入 AppPage、Page 或 ViewModel 构造参数。测试通过 `AppContainer.replaceForTesting()` 整体替换依赖图并在 tearDown 中 `restore()`。
 - input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放到实现类私有方法里。
 - output 默认使用 getter + `makeRebuild()`；高频或局部刷新状态才使用 `ValueStream<T>`/`Stream<T>`。
 - 用户可见文案必须走 l10n。新增文案先写入 `lib/l10n/app_en.arb`；当前模板默认只支持英语。
@@ -49,7 +50,7 @@ description: >-
 - 不在 ViewModel 构造函数或 `initState()` 里读取 `localStrings`，因为本地化 callback 由页面绑定后提供。
 - 页面 case 命名为 `<Feature>AppPage`，参数放在构造器中并保持强类型。
 - 普通页面默认 `AppPageTransition.push`；弹窗使用 `alert`；操作面板使用 `actionSheet`；底部弹层使用 `bottomSheet` 或 `bottomSheetWithNavigator`。
-- 不把业务服务、API client、Firebase、推送、本地化生成逻辑塞进通用 MVVM 基类。
+- 不为 Service 或 Repository 新增 `shared` 单例，也不把业务服务、API client、Firebase、推送、本地化生成逻辑塞进通用 MVVM 基类。
 - 不把隔离预览页面留在正式导航里；迁移后保持 `lib/product_preview/` 和正式页面职责分开。
 - 不绕过现有 `show()`、`pushReplacement()`、`pushAndRemoveUntil()`、`replaceRoot()`、`pop()`、`loadingTracker`、`errorTracker` 等封装。
 - 不在 input 接口里使用裸的 `show/open/load/save/delete/submit/close/select/fetch` 这类目的性方法名；点击 Delete 或 Submit 这类 UI 文案时写 `onClickDelete()`、`onClickSubmit()`。
@@ -61,7 +62,7 @@ description: >-
 
 - 代码看起来像项目里原本就有的：目录、命名、import 顺序、构造参数和 provider 组装位置都和相邻页面一致。
 - 新页面可以从 ViewModel 发起导航和弹窗，不在 Widget 里直接堆业务流程。
-- routeName 稳定、语义清楚；只有项目实际接入深链或字符串路由恢复时才创建并同步 parser。
+- routeName 稳定、语义清楚，并且需要深链或解析时同步更新 parser。
 - UI 修改不破坏现有交互、返回行为、loading/error 展示和测试。
 - 新抽取的组件有清楚的复用半径：局部组件留在 feature 内，跨页面且不依赖业务模型的组件才进入 `lib/widgets/`。
 - 测试只覆盖本次变更的重要行为风险；纯布局、文案、样式和可由编译器或 analyzer 约束的结构默认不新增测试。

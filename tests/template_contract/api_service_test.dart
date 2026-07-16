@@ -3,15 +3,28 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:{{project_name}}/app_container.dart';
 import 'package:{{project_name}}/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
 import 'package:{{project_name}}/services/api/api_service_exception.dart';
 import 'package:{{project_name}}/services/api/api_service_future.dart';
 import 'package:{{project_name}}/services/api/user_api_service.dart';
-import 'package:{{project_name}}/services/app_services.dart';
 import 'package:{{project_name}}/services/mock_api/mock_user_api_service.dart';
 
 void main() {
+  test('AppContainer shared requires setup', () {
+    expect(
+      () => AppContainer.shared,
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'AppContainer.setup() must be called before use.',
+        ),
+      ),
+    );
+  });
+
   group('resolveApiEnvironment', () {
     for (final entry in <String, ApiEnvironment>{
       'production': ApiEnvironment.production,
@@ -67,24 +80,23 @@ void main() {
     expect(ApiEnvironment.mock.baseUrl, isEmpty);
   });
 
-  test('ApiService user module requires setup', () {
-    expect(() => ApiService.shared.user, throwsStateError);
+  test('ApiService creates modules for every environment', () {
+    for (final environment in ApiEnvironment.values) {
+      expect(
+        ApiService(environment: environment).user,
+        environment == ApiEnvironment.mock
+            ? isA<MockUserApiService>()
+            : isA<DioUserApiService>(),
+        reason: 'unexpected user module for $environment',
+      );
+    }
   });
 
-  test('ApiService setup creates the configured user module', () {
-    ApiService.shared.setup();
+  test('ApiService keeps explicitly provided modules', () {
+    const user = MockUserApiService();
+    final service = ApiService.withModules(user: user);
 
-    const server = String.fromEnvironment('server');
-    final environment = resolveApiEnvironment(
-      server: server,
-      isReleaseMode: kReleaseMode,
-    );
-    expect(
-      ApiService.shared.user,
-      environment == ApiEnvironment.mock
-          ? isA<MockUserApiService>()
-          : isA<DioUserApiService>(),
-    );
+    expect(service.user, same(user));
   });
 
   test('DioUserApiService sends profile request', () async {
@@ -189,10 +201,58 @@ void main() {
     expect(profile.toJson(), {'id': '42', 'name': 'Ada'});
   });
 
-  test('AppServices setup completes', () async {
-    await AppServices.setup();
+  test('AppContainer setup installs the configured ApiService', () async {
+    await AppContainer.setup();
 
-    expect(ApiService.shared.user, isNotNull);
+    const server = String.fromEnvironment('server');
+    final environment = resolveApiEnvironment(
+      server: server,
+      isReleaseMode: kReleaseMode,
+    );
+    expect(
+      AppContainer.shared.apiService.user,
+      environment == ApiEnvironment.mock
+          ? isA<MockUserApiService>()
+          : isA<DioUserApiService>(),
+    );
+  });
+
+  test(
+    'AppContainer replaces and restores the whole dependency graph',
+    () async {
+      await AppContainer.setup();
+      final original = AppContainer.shared;
+      final replacement = AppContainer(
+        apiService: ApiService.withModules(user: const MockUserApiService()),
+      );
+
+      AppContainer.replaceForTesting(replacement);
+      expect(AppContainer.shared, same(replacement));
+      expect(AppContainer.shared.apiService.user, isA<MockUserApiService>());
+
+      AppContainer.restore();
+      expect(AppContainer.shared, same(original));
+    },
+  );
+
+  test('AppContainer rejects invalid test replacement state', () async {
+    await AppContainer.setup();
+    final replacement = AppContainer(
+      apiService: ApiService.withModules(user: const MockUserApiService()),
+    );
+
+    AppContainer.replaceForTesting(replacement);
+    try {
+      expect(
+        () => AppContainer.replaceForTesting(replacement),
+        throwsStateError,
+      );
+      await expectLater(AppContainer.setup(), throwsStateError);
+    } finally {
+      AppContainer.restore();
+    }
+
+    expect(AppContainer.restore, throwsStateError);
   });
 }
 

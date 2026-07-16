@@ -40,19 +40,32 @@ abstract class AlertViewModelType extends BaseViewModel
     implements AlertViewModelInput, AlertViewModelOutput {}
 
 class AlertViewModel extends AlertViewModelType {
-  AlertViewModel({
+  factory AlertViewModel({
     String? title,
     String? content,
     TextSpan? richTitle,
     TextSpan? richContent,
     bool cancelable = true,
     VoidCallback? cancelHandler,
-  }) : _title = title,
-       _content = content,
-       _richTitle = richTitle,
-       _richContent = richContent,
-       _cancelable = cancelable,
-       _cancelHandler = cancelHandler;
+  }) {
+    return AlertViewModel._(
+      title: title,
+      content: content,
+      richTitle: richTitle,
+      richContent: richContent,
+      cancelable: cancelable,
+      cancelHandler: cancelHandler,
+    );
+  }
+
+  AlertViewModel._({
+    required this._title,
+    required this._content,
+    required this._richTitle,
+    required this._richContent,
+    required this._cancelable,
+    required this._cancelHandler,
+  });
 
   final String? _title;
   final String? _content;

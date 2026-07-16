@@ -1,14 +1,19 @@
-# API Service 模式
+# API Service 与 AppContainer 模式
 
-## 目录和命名
+## 目录和入口
 
 ```text
-lib/services/api/
-├── api_service.dart
-├── api_service_exception.dart
-├── api_service_future.dart
-├── user_api_service.dart
-└── order_api_service.dart
+lib/
+├── app_container.dart
+├── repositories/
+│   └── user_repository.dart
+└── services/
+    └── api/
+        ├── api_service.dart
+        ├── api_service_exception.dart
+        ├── api_service_future.dart
+        ├── user_api_service.dart
+        └── order_api_service.dart
 ```
 
 新增业务域时：
@@ -16,7 +21,10 @@ lib/services/api/
 - 文件：`<domain>_api_service.dart`
 - 正式接口：`<Domain>ApiService`
 - 真实网络实现：`Dio<Domain>ApiService`
-- 入口：`ApiService.shared.<domain>`
+- 业务入口：`AppContainer.shared.apiService.<domain>`
+
+ApiService、Repository 和其他 Service 都是普通实例，不声明 `shared`。只有
+AppContainer 是全局依赖入口。
 
 ## 新增模块
 
@@ -49,11 +57,9 @@ class DioOrderApiService implements OrderApiService {
 }
 ```
 
-在 `api_service.dart` 中：
+在 `api_service.dart` 的默认 factory 中一次性组装所有 final 模块：
 
 ```dart
-import 'package:flutter/foundation.dart';
-
 enum ApiEnvironment { production, test, mock }
 
 extension ApiEnvironmentBaseUrl on ApiEnvironment {
@@ -76,105 +82,84 @@ final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
   isReleaseMode: kReleaseMode,
 );
 
-ApiEnvironment resolveApiEnvironment({
-  required String server,
-  required bool isReleaseMode,
-  ApiEnvironment defaultEnvironment = defaultApiEnvironment,
-}) {
-  switch (server) {
-    case 'production':
-      return ApiEnvironment.production;
-    case 'test':
-      return ApiEnvironment.test;
-    case 'mock':
-      return ApiEnvironment.mock;
-    default:
-      return isReleaseMode ? ApiEnvironment.production : defaultEnvironment;
-  }
-}
-
 class ApiService {
-  ApiService._();
-
-  static final ApiService shared = ApiService._();
-
-  UserApiService? _user;
-  OrderApiService? _order;
-
-  UserApiService get user => _user ?? _notSetUp();
-  OrderApiService get order => _order ?? _notSetUp();
-
-  void setup() {
-    if (_apiEnvironment == ApiEnvironment.mock) {
-      _user = const MockUserApiService();
-      _order = const MockOrderApiService();
-      return;
+  factory ApiService({ApiEnvironment? environment}) {
+    final selectedEnvironment = environment ?? _apiEnvironment;
+    if (selectedEnvironment == ApiEnvironment.mock) {
+      return ApiService.withModules(
+        user: const MockUserApiService(),
+        order: const MockOrderApiService(),
+      );
     }
 
-    final client = Dio(
-      BaseOptions(
-        baseUrl: _apiEnvironment.baseUrl,
-        connectTimeout: _connectTimeout,
-        receiveTimeout: _receiveTimeout,
-        sendTimeout: _sendTimeout,
-        headers: Map<String, dynamic>.from(_staticHeaders),
-      ),
+    final client = _createDio(selectedEnvironment);
+    return ApiService.withModules(
+      user: DioUserApiService(client),
+      order: DioOrderApiService(client),
     );
-    client.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          options.headers.addAll(_dynamicHeaders);
-          handler.next(options);
-        },
-      ),
-    );
-    _user = DioUserApiService(client);
-    _order = DioOrderApiService(client);
   }
 
-  Duration get _connectTimeout => const Duration(seconds: 15);
+  ApiService.withModules({required this.user, required this.order});
 
-  Duration get _receiveTimeout => const Duration(seconds: 15);
+  final UserApiService user;
+  final OrderApiService order;
 
-  Duration get _sendTimeout => const Duration(seconds: 15);
-
-  Map<String, String> get _staticHeaders => const {};
-
-  Map<String, String> get _dynamicHeaders => const {};
-
-  Never _notSetUp() {
-    throw StateError('ApiService.shared.setup() must be called before use.');
+  static Dio _createDio(ApiEnvironment environment) {
+    final client = Dio(
+      BaseOptions(
+        baseUrl: environment.baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+      ),
+    );
+    return client;
   }
 }
 ```
 
-通过 `--dart-define=server=production|test|mock` 选择环境。任何构建模式下，有效的显式参数都优先使用指定环境；未传值或参数无效时，Release 回退 production，Debug/Profile 回退 `defaultApiEnvironment`。参数值区分大小写。production 和 test 地址直接在 `ApiEnvironmentBaseUrl` 中配置，不再通过 dart-define 注入。
+通过 `--dart-define=server=production|test|mock` 选择环境。有效显式参数在所有构建
+模式下优先；无效或缺失参数在 Release 回退 production，在 Debug/Profile 回退
+`defaultApiEnvironment`。production 和 test 地址直接配置在
+`ApiEnvironmentBaseUrl` 中。
 
-业务模块持有配置好的 Dio，不持有 `ApiService`。
+所有真实业务模块共享默认 factory 创建的同一个 Dio。`withModules(...)` 只做显式
+对象组装，不读取环境，也不维护可变 setup 状态。
 
-## 方法规则
+## AppContainer 与 Repository
 
-- GET 查询参数使用 Dio 的 `queryParameters`，不要手拼 query string。
-- POST/PUT body 使用 model 的 `toJson()` 或简单 `Map<String, dynamic>`。
-- 使用 `.parseData(...)` 统一解析 `response.data` 并把 `DioException` 转换为 `ApiServiceException`。
-- response data 的空值或字段缺失由 parser/model 按业务语义处理。
-- 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
-- 未确认的 mock-only model 不进入 `lib/models/`；改用 `$flutter-mvvm-mock-api-dev`。
+新增需要贯穿 App 生命周期的 Repository 时，把它注册到 AppContainer，并只在这个
+composition root 内传递依赖：
+
+```dart
+class UserRepository {
+  UserRepository({required ApiService apiService})
+    : _apiService = apiService;
+
+  final ApiService _apiService;
+
+  Future<UserProfile> fetchProfile() {
+    return _apiService.user.fetchProfile();
+  }
+}
+
+static Future<void> setup() async {
+  final apiService = ApiService();
+  _shared = AppContainer(
+    apiService: apiService,
+    userRepository: UserRepository(apiService: apiService),
+  );
+}
+```
+
+AppContainer 构造函数和 final 字段要同步加入 `userRepository`。ViewModel 不接收
+ApiService 或 Repository 构造参数，直接读取
+`AppContainer.shared.userRepository`；简单调用可读取
+`AppContainer.shared.apiService.user`。
 
 ## ViewModel 调用
 
-ViewModel 继续使用现有 loading/error 追踪：
-
 ```dart
-abstract class ProfileViewModelInput {}
-
-abstract class ProfileViewModelOutput {
-  UserProfile? get profile;
-}
-
-abstract class ProfileViewModelType extends AppBaseViewModel
-    implements ProfileViewModelInput, ProfileViewModelOutput {}
-
 class ProfileViewModel extends ProfileViewModelType {
   UserProfile? _profile;
 
@@ -185,7 +170,7 @@ class ProfileViewModel extends ProfileViewModelType {
   }
 
   Future<void> _loadProfile() async {
-    _profile = await ApiService.shared.user
+    _profile = await AppContainer.shared.apiService.user
         .fetchProfile()
         .trackLoadingAndConsumeError(this);
     makeRebuild();
@@ -196,12 +181,30 @@ class ProfileViewModel extends ProfileViewModelType {
 }
 ```
 
-复杂业务可以先加 repository：
+## 测试替换
+
+测试不要修改独立 Service 或 Repository 的静态状态。先创建完整替代容器，再整体替换：
 
 ```dart
-class UserRepository {
-  Future<UserProfile> fetchProfile() {
-    return ApiService.shared.user.fetchProfile();
-  }
+final replacement = AppContainer(
+  apiService: ApiService.withModules(
+    user: const MockUserApiService(),
+    order: const MockOrderApiService(),
+  ),
+);
+
+AppContainer.replaceForTesting(replacement);
+try {
+  // Exercise business behavior through AppContainer.shared.
+} finally {
+  AppContainer.restore();
 }
 ```
+
+## 方法规则
+
+- GET 查询参数使用 Dio 的 `queryParameters`，不要手拼 query string。
+- POST/PUT body 使用 model 的 `toJson()` 或简单 `Map<String, dynamic>`。
+- 使用 `.parseData(...)` 解析 `response.data` 并转换 `DioException`。
+- 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
+- 未确认的 mock-only model 不进入 `lib/models/`；改用 `$flutter-mvvm-mock-api-dev`。

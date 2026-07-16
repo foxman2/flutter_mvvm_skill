@@ -43,8 +43,9 @@ final class ProfileAppPage extends AppPage {
 ```
 
 provider 在 Page 初始化时才执行。不要先创建普通页面的 ViewModel 实例再传给
-Page；无参数、无外部依赖并由 `defaultViewModel()` 创建的页面显式传
-`viewModelProvider: null`。Alert、ActionSheet、child ViewModel 等需要预配置或
+Page；无页面运行参数并由 `defaultViewModel()` 创建的页面显式传
+`viewModelProvider: null`。App 级依赖从 `AppContainer.shared` 获取，不作为路由、
+Page 或 ViewModel 构造参数传递。Alert、ActionSheet、child ViewModel 等需要预配置或
 共享实例的特殊所有权场景应单独判断生命周期。
 
 ## 调用方式
