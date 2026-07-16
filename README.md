@@ -57,6 +57,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 ```bash
 python3 scripts/sync_marketplace_plugin.py
 python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s project-skills/flutter-mvvm-inspector/tests -v
 git tag v0.1.11 && git push origin main v0.1.11
 ```
 

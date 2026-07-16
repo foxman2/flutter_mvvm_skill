@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,11 +16,17 @@ GENERATOR_PATH = ROOT / "skills/flutter-mvvm-template/scripts/flutter_mvvm.py"
 OVERLAY_PATH = ROOT / "skills/flutter-mvvm-template/assets/flutter_mvvm_overlay"
 OVERLAY_TEST_PATH = OVERLAY_PATH / "test"
 CONTRACT_TEST_PATH = ROOT / "tests/template_contract"
-AFFECTED_PROJECT_SKILLS = (
+PROJECT_SKILLS = (
     "flutter-mvvm-api-dev",
     "flutter-mvvm-feature-dev",
+    "flutter-mvvm-inspector",
     "flutter-mvvm-mock-api-dev",
     "flutter-mvvm-pm-ui",
+)
+ARCHITECTURE_PROJECT_SKILLS = tuple(
+    skill_name
+    for skill_name in PROJECT_SKILLS
+    if skill_name != "flutter-mvvm-inspector"
 )
 REMOVED_ARCHITECTURE_REFERENCES = (
     "App" + "Services",
@@ -160,7 +167,14 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                 (project / "lib/services" / LEGACY_APP_SERVICES_FILE).exists()
             )
 
-            for skill_name in AFFECTED_PROJECT_SKILLS:
+            manifest = json.loads(
+                (project / ".codex/flutter-mvvm-skills.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["managedSkills"], list(PROJECT_SKILLS))
+
+            for skill_name in PROJECT_SKILLS:
                 self.assertEqual(
                     directory_snapshot(ROOT / "project-skills" / skill_name),
                     directory_snapshot(project / ".codex/skills" / skill_name),
@@ -192,7 +206,7 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                     searchable_text(project / "lib"),
                     *[
                         searchable_text(project / ".codex/skills" / skill_name)
-                        for skill_name in AFFECTED_PROJECT_SKILLS
+                        for skill_name in ARCHITECTURE_PROJECT_SKILLS
                     ],
                 ]
             )
