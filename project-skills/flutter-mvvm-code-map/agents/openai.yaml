@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter MVVM 功能代码地图"
+  short_description: "扫描现有 Flutter 项目并创建或更新简洁可维护的功能代码地图"
+  default_prompt: "使用 $flutter-mvvm-code-map 扫描当前 Flutter 项目并创建或更新 docs/FEATURE_CODE_MAP.md。"

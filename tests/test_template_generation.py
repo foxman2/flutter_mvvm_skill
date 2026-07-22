@@ -21,9 +21,14 @@ PM_UI_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-pm-ui"
 MARKETPLACE_PM_UI_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-pm-ui"
 )
+CODE_MAP_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-code-map"
+MARKETPLACE_CODE_MAP_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-code-map"
+)
 ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 PROJECT_SKILLS = (
     "flutter-mvvm-api-dev",
+    "flutter-mvvm-code-map",
     "flutter-mvvm-feature-dev",
     "flutter-mvvm-inspector",
     "flutter-mvvm-mock-api-dev",
@@ -98,6 +103,30 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             directory_snapshot(PM_UI_SKILL_PATH),
             directory_snapshot(MARKETPLACE_PM_UI_SKILL_PATH),
         )
+
+    def test_code_map_skill_is_concise_and_matches_marketplace_source(self) -> None:
+        skill = (CODE_MAP_SKILL_PATH / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("docs/FEATURE_CODE_MAP.md", skill)
+        self.assertIn("| 功能/别名 | 代码入口 | 检索锚点 |", skill)
+        self.assertIn("不使用绝对路径、Markdown 文件链接或行号", skill)
+        self.assertEqual(
+            directory_snapshot(CODE_MAP_SKILL_PATH),
+            directory_snapshot(MARKETPLACE_CODE_MAP_SKILL_PATH),
+        )
+
+    def test_copy_project_skills_installs_all_managed_skills(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flutter-mvvm-project-skills-") as temporary:
+            target = Path(temporary)
+
+            managed_skills = generator.copy_project_skills(target)
+
+            self.assertEqual(tuple(managed_skills), PROJECT_SKILLS)
+            for skill_name in PROJECT_SKILLS:
+                self.assertEqual(
+                    directory_snapshot(ROOT / "project-skills" / skill_name),
+                    directory_snapshot(target / ".codex/skills" / skill_name),
+                )
 
     def test_overlay_uses_app_container_architecture(self) -> None:
         lib = OVERLAY_PATH / "lib"

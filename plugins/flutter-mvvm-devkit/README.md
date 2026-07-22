@@ -30,7 +30,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 - `.codex/flutter-mvvm-skills.json`（受管清单）
 - `scripts/update-codex-skills.py`（升级脚本）
 
-常用项目内技能：`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
+常用项目内技能：`$flutter-mvvm-code-map`、`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
 
 ## 升级
 
