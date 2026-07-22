@@ -8,13 +8,15 @@
 - 纯展示组件：`lib/widgets/`、`lib/theme/`、页面局部 `widgets/`。
 - 产品预览入口按钮：`lib/product_preview/product_preview_entry_button.dart`。
 - 隔离页面的同目录 ViewModel：`lib/product_preview/pages/<feature>/<feature>_view_model.dart`。
-- 配合 `$flutter-mvvm-mock-api-dev` 时，可以按其规则修改临时 `lib/services/api/<domain>_api_service.dart`、`lib/services/api/api_service.dart` 的实例 wiring、`lib/services/mock_api/` 和 mock-only model；全部标记为 `PM preview / pending developer review`。全局入口保持 `AppContainer.shared`。
+- 配合 `$flutter-mvvm-mock-api-dev` 时，可以按其规则修改临时 `lib/services/api/<domain>_api_service.dart`、`lib/services/api/api_service.dart` 的 domain 实例 wiring、`lib/services/mock_api/` 和 mock-only model；全部标记为 `PM preview / pending developer review`。只组装 domain service，不改环境选择机制；全局入口保持 `AppContainer.shared`。
 
 ## 不可以改
 
 - 正式 `lib/pages/**/<feature>_view_model.dart` 中的状态、异步流程、业务动作、弹窗和导航决策。
 - `lib/navigation/`，除了模板已提供的 `ProductPreviewAppPage` 不再追加 PM 页面 case。
 - 已确认的正式 API/model、真实 Dio 请求，以及 `AppContainer` 持有的正式业务依赖及其逻辑。
+- 任何 Dart define key、值域、解析逻辑或默认值，包括 `String.fromEnvironment`、`ApiEnvironment`、环境解析函数和默认环境常量。
+- IDE launch configuration、运行脚本、构建脚本或 CI 中的 Dart define 参数；需要新增或修改时，停止 PM 修改并交由开发处理。
 - Widget 里新增业务流程，例如直接调用 API、解析 JSON、写缓存、判断登录态、决定下一步业务路由。
 
 ## 绑定规则

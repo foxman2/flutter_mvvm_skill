@@ -30,11 +30,9 @@ abstract class ActionSheetViewModelType extends BaseViewModel
     implements ActionSheetViewModelInput, ActionSheetViewModelOutput {}
 
 class ActionSheetViewModel extends ActionSheetViewModelType {
-  factory ActionSheetViewModel({String? title, String? message}) {
-    return ActionSheetViewModel._(title: title, message: message);
-  }
-
-  ActionSheetViewModel._({required this._title, required this._message});
+  ActionSheetViewModel({String? title, String? message})
+    : _title = title,
+      _message = message;
 
   final String? _title;
   final String? _message;

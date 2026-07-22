@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,11 @@ GENERATOR_PATH = ROOT / "skills/flutter-mvvm-template/scripts/flutter_mvvm.py"
 OVERLAY_PATH = ROOT / "skills/flutter-mvvm-template/assets/flutter_mvvm_overlay"
 OVERLAY_TEST_PATH = OVERLAY_PATH / "test"
 CONTRACT_TEST_PATH = ROOT / "tests/template_contract"
+PM_UI_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-pm-ui"
+MARKETPLACE_PM_UI_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-pm-ui"
+)
+ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 PROJECT_SKILLS = (
     "flutter-mvvm-api-dev",
     "flutter-mvvm-feature-dev",
@@ -74,6 +80,25 @@ def searchable_text(root: Path) -> str:
 
 
 class TemplateGenerationUnitTests(unittest.TestCase):
+    def test_pm_ui_allows_only_the_existing_mock_dart_define(self) -> None:
+        markdown = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in sorted(PM_UI_SKILL_PATH.rglob("*.md"))
+        )
+        dart_define_arguments = set(
+            re.findall(r"--dart-define=[A-Za-z0-9_.-]+=[A-Za-z0-9_.-]+", markdown)
+        )
+
+        self.assertEqual(dart_define_arguments, {ALLOWED_PM_DART_DEFINE})
+        self.assertIn("不得新增或修改任何 Dart define", markdown)
+        self.assertIn("停止 PM 修改并交由开发处理", markdown)
+
+    def test_marketplace_pm_ui_skill_matches_source(self) -> None:
+        self.assertEqual(
+            directory_snapshot(PM_UI_SKILL_PATH),
+            directory_snapshot(MARKETPLACE_PM_UI_SKILL_PATH),
+        )
+
     def test_overlay_uses_app_container_architecture(self) -> None:
         lib = OVERLAY_PATH / "lib"
 

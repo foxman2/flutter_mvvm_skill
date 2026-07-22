@@ -16,6 +16,8 @@ description: >-
 - 新增页面命名和正式页面完全一致：`<feature>_page.dart`、`<feature>_view_model.dart`、`<Feature>Page`、`<Feature>ViewModel`，不要额外追加 `preview` 后缀。
 - 同目录 ViewModel 按正式 MVVM 拆成 `Input`、`Output`、`Type` 和实现类；Widget 负责展示和事件绑定，ViewModel 负责展示状态、临时交互和 mock 数据绑定。
 - 需要列表、卡片、详情、状态等业务形态数据时，同时使用 `$flutter-mvvm-mock-api-dev` 开发临时 contract、mock service、mock-only model 和 AppContainer/ApiService wiring；这些文件都必须标记待开发审核。
+- 只在项目已经提供该开关时，原样使用 `--dart-define=server=mock` 运行本地 mock 预览。
+- 不得新增或修改任何 Dart define key、值域、解析逻辑、默认值、启动配置或构建/CI 参数；同时使用 `$flutter-mvvm-mock-api-dev` 不扩大这项权限。
 - 不修改正式 ViewModel、正式 `AppPage` 导航、route parser、已确认的正式 API/model、真实 Dio 请求、正式业务依赖，以及认证、埋点、推送或持久化逻辑。
 
 ## 工作流程
@@ -25,9 +27,10 @@ description: >-
    - 现有 UI 微调：只改展示层文件，事件仍绑定已有 ViewModel 方法。
    - 新页面或新流程原型：放到 `lib/product_preview/pages/<feature>/`，按正式页面命名和职责拆分，不要接入正式导航。
    - 需要数据：同时使用 `$flutter-mvvm-mock-api-dev`，允许按其规则修改临时 domain contract、AppContainer/ApiService wiring、mock service 和 mock-only model，并标记待开发审核；只有纯布局占位、没有 service 层价值的小型 UI 状态才保留在同目录 ViewModel 中。
-3. 做 UI 时复用现有组件、theme、间距、按钮和弹层风格。
-4. 完成后输出审核说明：列出 PM 改动文件、待开发审核的 mock/API 文件、不得直接发布的预览页面。
-5. 格式化本次改动文件、运行 `flutter analyze` 并通过实际 Product Preview 验收；先运行覆盖受影响正式行为的已有测试。纯布局、文案、样式、隔离预览和静态 mock 默认不新增自动化测试，只有修复正式页面回归时才补针对性测试。
+3. 需要运行 mock 预览时，先确认项目已经支持 `server=mock`；如果缺少该既有开关或需要其他环境参数，停止 PM 修改并交由开发处理，不要自行补充环境配置。
+4. 做 UI 时复用现有组件、theme、间距、按钮和弹层风格。
+5. 完成后输出审核说明：列出 PM 改动文件、待开发审核的 mock/API 文件、不得直接发布的预览页面。
+6. 格式化本次改动文件、运行 `flutter analyze` 并通过实际 Product Preview 验收；先运行覆盖受影响正式行为的已有测试。纯布局、文案、样式、隔离预览和静态 mock 默认不新增自动化测试，只有修复正式页面回归时才补针对性测试。
 
 ## 读取参考
 
@@ -42,5 +45,6 @@ description: >-
 - 首页悬浮入口仅打开产品预览，不承载业务逻辑。
 - 数据驱动的 PM 预览优先复用或新增 mock API，不把业务形态列表/详情长期硬编码在页面 ViewModel 中。
 - mock API 改动和 mock-only model 有清楚的 `PM preview / pending developer review` 标记。
+- PM 改动没有新增或修改 Dart define；本地 mock 预览只使用项目预先存在的 `server=mock`，缺失时已经交由开发处理。
 - 开发可以根据预览页面审核、迁移和重写正式 ViewModel/API 接入。
 - 交付时说明新增测试保护的正式行为风险，或说明本次无需新增测试的理由。
