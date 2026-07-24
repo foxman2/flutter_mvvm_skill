@@ -31,14 +31,14 @@ flutter-mvvm create --app-name "My App" --package-name com.example.myapp
 3. 除非用户明确要求手动复制，否则运行 `scripts/flutter_mvvm.py create --app-name "<App Name>" --package-name <package.name>`。
 4. 只生成新项目或模板文件，不修改已有 Flutter 应用。
 5. 用户要求改造已有 app、新增页面/UI/API/mock 或创建功能代码地图时，说明这个 skill 只负责创建新模板项目；对应开发型 skills 只在已生成的 MVVM 项目 `.codex/skills/` 中局部可见。
-6. 生成完成后，报告项目路径和 CLI 输出中的关键结果；如果 `flutter pub get`、`dart format`、`flutter analyze` 或 smoke test 因本地工具链/网络失败，说明项目文件已经生成。
+6. 生成完成后，报告项目路径和 CLI 输出中的关键结果；如果 `flutter pub get`、`build_runner`、`dart format`、`flutter analyze` 或 smoke test 因本地工具链/网络失败，说明项目文件已经生成。
 
 ## 生成内容
 
 - 创建项目时先调用官方 `flutter create`，然后只覆盖 Dart/template 文件。
 - app 显示名会同步到 Flutter UI 标题、Android label、iOS display name 和 Web manifest/title。
 - 原生包名会同步到 Android namespace/applicationId/MainActivity package，以及 iOS bundle identifier。
-- 模板内已包含 MVVM 基类、sealed AppPage 导航、AppContainer 全局依赖容器、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例、Product Preview 入口和一个应用启动 smoke test；这里不要展开后续开发规范。
+- 模板内已包含 MVVM 基类、sealed AppPage 导航、AppContainer 全局依赖容器、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例、`json_serializable` model 代码生成、Product Preview 入口和一个应用启动 smoke test；这里不要展开后续开发规范。
 - 生成项目内已包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py`。需要更新局部 skills 时，在生成项目根目录运行 `./scripts/update-codex-skills.py` 获取 `main`，或运行 `./scripts/update-codex-skills.py --version vX.Y.Z` 检出指定 tag；运行环境需要 `python3` 和 `git`。
 
 ## CLI 参数

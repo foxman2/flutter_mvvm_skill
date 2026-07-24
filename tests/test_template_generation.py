@@ -21,6 +21,10 @@ PM_UI_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-pm-ui"
 MARKETPLACE_PM_UI_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-pm-ui"
 )
+API_DEV_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-api-dev"
+MARKETPLACE_API_DEV_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-api-dev"
+)
 CODE_MAP_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-code-map"
 MARKETPLACE_CODE_MAP_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-code-map"
@@ -85,6 +89,24 @@ def searchable_text(root: Path) -> str:
 
 
 class TemplateGenerationUnitTests(unittest.TestCase):
+    def test_api_dev_recommends_json_serializable_and_matches_marketplace_source(
+        self,
+    ) -> None:
+        skill_text = searchable_text(API_DEV_SKILL_PATH)
+
+        self.assertIn("推荐使用 `json_serializable`", skill_text)
+        self.assertIn(
+            "dart run build_runner build --delete-conflicting-outputs",
+            skill_text,
+        )
+        self.assertNotIn("JSON model 必须使用", skill_text)
+        self.assertNotIn("所有正式 request/response model 都使用", skill_text)
+        self.assertNotIn("先用普通 Dart model 和手写", skill_text)
+        self.assertEqual(
+            directory_snapshot(API_DEV_SKILL_PATH),
+            directory_snapshot(MARKETPLACE_API_DEV_SKILL_PATH),
+        )
+
     def test_pm_ui_allows_only_the_existing_mock_dart_define(self) -> None:
         markdown = "\n".join(
             path.read_text(encoding="utf-8")
@@ -136,6 +158,24 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         for removed in REMOVED_ARCHITECTURE_REFERENCES:
             self.assertNotIn(removed, searchable_text(OVERLAY_PATH))
 
+    def test_overlay_uses_json_serializable(self) -> None:
+        pubspec_patch = (OVERLAY_PATH / "template_pubspec_patch.yaml").read_text(
+            encoding="utf-8"
+        )
+        user_model = (
+            OVERLAY_PATH / "lib/models/user/user_profile.dart"
+        ).read_text(encoding="utf-8")
+        generated_model = (
+            OVERLAY_PATH / "lib/models/user/user_profile.g.dart"
+        ).read_text(encoding="utf-8")
+
+        for dependency in ("json_annotation", "json_serializable", "build_runner"):
+            self.assertIn(dependency, pubspec_patch)
+        self.assertIn("@JsonSerializable()", user_model)
+        self.assertIn("part 'user_profile.g.dart';", user_model)
+        self.assertIn("_$UserProfileFromJson", generated_model)
+        self.assertIn("_$UserProfileToJson", generated_model)
+
     def test_default_overlay_contains_only_smoke_test(self) -> None:
         generated_tests = sorted(path.name for path in OVERLAY_TEST_PATH.glob("*.dart"))
         contract_tests = sorted(path.name for path in CONTRACT_TEST_PATH.glob("*.dart"))
@@ -160,6 +200,17 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertEqual(
             run.call_args_list,
             [
+                mock.call(
+                    [
+                        "dart",
+                        "run",
+                        "build_runner",
+                        "build",
+                        "--delete-conflicting-outputs",
+                    ],
+                    cwd=target,
+                    allow_failure=True,
+                ),
                 mock.call(
                     ["dart", "format", "lib", "test"],
                     cwd=target,
@@ -241,6 +292,16 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                 )
                 (project / "test" / source.name).write_text(content, encoding="utf-8")
 
+            self.run_command(
+                [
+                    "dart",
+                    "run",
+                    "build_runner",
+                    "build",
+                    "--delete-conflicting-outputs",
+                ],
+                cwd=project,
+            )
             self.run_command(
                 [
                     "dart",

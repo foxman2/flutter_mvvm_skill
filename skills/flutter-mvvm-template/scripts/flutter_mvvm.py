@@ -400,6 +400,17 @@ def resolve_create_inputs(args: argparse.Namespace) -> tuple[str, str, str | Non
 
 
 def run_final_checks(target_dir: Path) -> None:
+    run(
+        [
+            "dart",
+            "run",
+            "build_runner",
+            "build",
+            "--delete-conflicting-outputs",
+        ],
+        cwd=target_dir,
+        allow_failure=True,
+    )
     run(["dart", "format", "lib", "test"], cwd=target_dir, allow_failure=True)
     run(["flutter", "analyze"], cwd=target_dir, allow_failure=True)
     run(

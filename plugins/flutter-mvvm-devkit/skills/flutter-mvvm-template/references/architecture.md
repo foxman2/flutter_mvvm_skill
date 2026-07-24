@@ -4,7 +4,7 @@
 
 - 模板代码要独立于产品专属能力：Firebase、推送处理、运行时语言切换、资源和认证/session 等都留在应用层。
 - `AppContainer` 是唯一全局依赖容器，负责创建并持有整个 App 生命周期内存活的依赖；这些依赖自身不提供 `shared` 单例。
-- 网络层只预设基础 `ApiService` 规则：Dio 实例组装、通用请求、错误转换、代码级 API 环境切换和 `user` real/mock 示例模块，不预设真实业务接口或后端响应协议。
+- 网络层只预设基础 `ApiService` 规则：Dio 实例组装、通用请求、错误转换、代码级 API 环境切换、`json_serializable` model 和 `user` real/mock 示例模块，不预设真实业务接口或后端响应协议。
 - 跨项目可复用的生命周期代码放到 `mvvm/`：view model 绑定、dispose 管理、loading/error 跟踪和基础 page widget。
 - 模板默认启用 Flutter 官方 l10n，当前只提供 `en`。用户可见文案放在 `lib/l10n/app_en.arb`；Page/Widget 直接用 `AppLocalizations.of(context)!`，ViewModel 通过 `BaseViewModel.localStrings` callback 现用现取。
 - `localStrings` 只能在页面绑定后使用；不要在 ViewModel 构造函数或 `initState()` 里读取本地化文案。
@@ -71,12 +71,13 @@ class ProfileViewModel extends ProfileViewModelType {}
 ## 生成后检查清单
 
 1. 运行 `flutter pub get`。
-2. 运行 `dart format lib test`。
-3. 运行 `flutter analyze`。
-4. 运行 `flutter test test/app_smoke_test.dart`。
-5. 打开生成项目，确认 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 已覆盖到位，且 `test/` 默认只包含 `app_smoke_test.dart`。
-6. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py` 已生成。
-7. 需要更新项目局部 skills 时，确认环境同时提供 `python3` 和 `git`；无参数 updater 跟随 `main`，`--version vX.Y.Z` 固定到对应 tag。
+2. 运行 `dart run build_runner build --delete-conflicting-outputs`。
+3. 运行 `dart format lib test`。
+4. 运行 `flutter analyze`。
+5. 运行 `flutter test test/app_smoke_test.dart`。
+6. 打开生成项目，确认 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/`、`lib/pages/`、`lib/services/`、`lib/models/` 已覆盖到位，且 `test/` 默认只包含 `app_smoke_test.dart`。
+7. 确认 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py` 已生成。
+8. 需要更新项目局部 skills 时，确认环境同时提供 `python3` 和 `git`；无参数 updater 跟随 `main`，`--version vX.Y.Z` 固定到对应 tag。
 
 ## 不要放入模板的内容
 
@@ -84,7 +85,7 @@ class ProfileViewModel extends ProfileViewModelType {}
 - 真实业务 API、认证/session 等产品专属依赖。
 - 后台未确认的 mock-only model；新增时先放在 `lib/services/mock_api/models/`，确认后再合并到正式 model。
 - 未经开发审核的隔离预览页面；这类页面先留在 `lib/product_preview/`。
-- Retrofit、Chopper、freezed、json_serializable 或其他代码生成依赖。
+- Retrofit、Chopper、freezed 或 `json_serializable` 以外的代码生成依赖。
 - Firebase、推送通知、app link 和 analytics 配置。
 - 产品资源、运行时语言切换、应用专属主题。
 - 平台目录，除非用户明确想复制完整项目。

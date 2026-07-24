@@ -204,7 +204,7 @@ try {
 ## 方法规则
 
 - GET 查询参数使用 Dio 的 `queryParameters`，不要手拼 query string。
-- POST/PUT body 使用 model 的 `toJson()` 或简单 `Map<String, dynamic>`。
+- POST/PUT body 优先使用 model 的 `toJson()`；推荐由 `json_serializable` 生成，也可遵循项目已有序列化方案。没有对应 model 的简单场景可使用 `Map<String, dynamic>`。
 - 使用 `.parseData(...)` 解析 `response.data` 并转换 `DioException`。
 - 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
 - 未确认的 mock-only model 不进入 `lib/models/`；改用 `$flutter-mvvm-mock-api-dev`。
