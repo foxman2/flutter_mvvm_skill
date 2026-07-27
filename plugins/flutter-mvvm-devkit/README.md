@@ -30,7 +30,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 - `.codex/flutter-mvvm-skills.json`（受管清单）
 - `scripts/update-codex-skills.py`（升级脚本）
 
-常用项目内技能：`$flutter-mvvm-code-map`、`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
+常用项目内技能：`$code-quality`、`$flutter-mvvm-code-map`、`$flutter-mvvm-pm-ui`、`$flutter-mvvm-feature-dev`、`$flutter-mvvm-api-dev`、`$flutter-mvvm-mock-api-dev`、`$flutter-mvvm-inspector`。
 
 ## 升级
 
@@ -58,7 +58,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 python3 scripts/sync_marketplace_plugin.py
 python3 -m unittest discover -s tests -v
 python3 -m unittest discover -s project-skills/flutter-mvvm-inspector/tests -v
-git tag v0.1.11 && git push origin main v0.1.11
+git tag v0.1.12 && git push origin main v0.1.12
 ```
 
 完整模板契约验收需要本机安装 Flutter；没有 Flutter 时 Python 测试会明确跳过该集成用例。发布前必须在有 Flutter 的环境运行并通过。

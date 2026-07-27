@@ -29,8 +29,13 @@ CODE_MAP_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-code-map"
 MARKETPLACE_CODE_MAP_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-code-map"
 )
+CODE_QUALITY_SKILL_PATH = ROOT / "project-skills/code-quality"
+MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/code-quality"
+)
 ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 PROJECT_SKILLS = (
+    "code-quality",
     "flutter-mvvm-api-dev",
     "flutter-mvvm-code-map",
     "flutter-mvvm-feature-dev",
@@ -135,6 +140,22 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertEqual(
             directory_snapshot(CODE_MAP_SKILL_PATH),
             directory_snapshot(MARKETPLACE_CODE_MAP_SKILL_PATH),
+        )
+
+    def test_code_quality_skill_is_language_agnostic_and_matches_marketplace_source(
+        self,
+    ) -> None:
+        skill = (CODE_QUALITY_SKILL_PATH / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("任意编程语言", skill)
+        self.assertIn("可读性作为有效方案之间的首要选择标准", skill)
+        self.assertIn("适配当前项目", skill)
+        self.assertIn("避免过度设计", skill)
+        self.assertIn("不强制跨语言的函数行数", skill)
+        self.assertNotIn("Flutter", skill)
+        self.assertEqual(
+            directory_snapshot(CODE_QUALITY_SKILL_PATH),
+            directory_snapshot(MARKETPLACE_CODE_QUALITY_SKILL_PATH),
         )
 
     def test_copy_project_skills_installs_all_managed_skills(self) -> None:

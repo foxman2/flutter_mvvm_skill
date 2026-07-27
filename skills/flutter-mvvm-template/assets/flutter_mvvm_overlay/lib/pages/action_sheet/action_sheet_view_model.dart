@@ -30,12 +30,14 @@ abstract class ActionSheetViewModelType extends BaseViewModel
     implements ActionSheetViewModelInput, ActionSheetViewModelOutput {}
 
 class ActionSheetViewModel extends ActionSheetViewModelType {
-  ActionSheetViewModel({String? title, String? message})
-    : _title = title,
-      _message = message;
+  ActionSheetViewModel({this.title, this.message});
 
-  final String? _title;
-  final String? _message;
+  @override
+  final String? title;
+
+  @override
+  final String? message;
+
   final _actions = <ActionSheetAction>[];
   ActionSheetAction? _cancelAction;
 
@@ -64,12 +66,6 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
   void setCancelAction([VoidCallback? handler, String title = 'Cancel']) {
     _cancelAction = ActionSheetAction(title, handler: handler);
   }
-
-  @override
-  String? get title => _title;
-
-  @override
-  String? get message => _message;
 
   @override
   List<ActionSheetAction> get actions => List.unmodifiable(_actions);

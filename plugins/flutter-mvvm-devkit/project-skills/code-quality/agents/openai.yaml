@@ -1,0 +1,4 @@
+interface:
+  display_name: "代码质量（可读性优先）"
+  short_description: "以可读性为最高优先级审查和改进任意编程语言代码，避免过度设计"
+  default_prompt: "使用 $code-quality 审查或改进当前代码：在保证正确性的前提下把可读性放在首位，遵循项目现有约定并避免过度设计。"
