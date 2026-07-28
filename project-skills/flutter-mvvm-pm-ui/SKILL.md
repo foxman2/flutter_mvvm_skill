@@ -1,50 +1,35 @@
 ---
 name: flutter-mvvm-pm-ui
 description: >-
-  用于用户明确提出 PM 评审、UI 原型、隔离预览或非发布展示调整时，在已有 Flutter MVVM 项目中调整展示型 UI、文案或样式，在 lib/product_preview/ 新增按正式 MVVM 页面命名和结构实现的隔离页面及对应 AppPage，并可同时使用 flutter-mvvm-mock-api-dev 新增临时 contract、mock service、mock-only model 和 AppContainer/ApiService wiring。不用于正式业务逻辑、正式功能集成、已确认后端 API/model、真实 Dio 请求或正式页面迁移；按任务使用 flutter-mvvm-feature-dev 或 flutter-mvvm-api-dev。
+  在已有 Flutter MVVM 项目中完成用户明确要求的 PM 评审、UI 原型、隔离预览或非发布展示调整，包括展示型 UI、文案、样式、lib/product_preview/ 页面和对应 AppPage。需要临时业务数据时同时使用 flutter-mvvm-mock-api-dev；不用于正式业务逻辑、已确认 API/model、真实 Dio 请求或正式页面迁移。
 ---
 
 # Flutter MVVM PM UI
 
-使用这个 skill 帮产品经理在 Flutter MVVM 项目里做 UI 预览、文案和展示层调整。核心原则是：PM 页面像正式页面一样写，只是放在 `lib/product_preview/` 隔离目录里，不直接进入正式业务发布链路。
+## 允许范围
 
-## 职责边界
-
-- 可以修改展示层：`lib/pages/**/<feature>_page.dart`、`lib/widgets/`、`lib/theme/` 或项目已有纯 UI 目录。
-- 可以修改产品预览入口按钮：`lib/product_preview/product_preview_entry_button.dart`。
-- 可以新增页面：只放在 `lib/product_preview/pages/<feature>/`，通过目录表达隔离边界，为页面新增 AppPage，并通过 `product_preview_registry.dart` 注册。
-- 新增页面命名和正式页面完全一致：`<feature>_page.dart`、`<feature>_view_model.dart`、`<Feature>Page`、`<Feature>ViewModel`，不要额外追加 `preview` 后缀。
-- 同目录 ViewModel 按正式 MVVM 拆成 `Input`、`Output`、`Type` 和实现类；Widget 负责展示和事件绑定，ViewModel 负责展示状态、临时交互和 mock 数据绑定。
-- 需要列表、卡片、详情、状态等业务形态数据时，同时使用 `$flutter-mvvm-mock-api-dev` 开发临时 contract、mock service、mock-only model 和 AppContainer/ApiService wiring；这些文件都必须标记待开发审核。
-- 只在项目已经提供该开关时，原样使用 `--dart-define=server=mock` 运行本地 mock 预览。
-- 不得新增或修改任何 Dart define key、值域、解析逻辑、默认值、启动配置或构建/CI 参数；同时使用 `$flutter-mvvm-mock-api-dev` 不扩大这项权限。
-- 不修改正式 ViewModel、与预览无关的 AppPage、route parser、已确认的正式 API/model、真实 Dio 请求、正式业务依赖，以及认证、埋点、推送或持久化逻辑。
+- 调整正式页面、共用 Widget 或 theme 的纯展示层，不改变已有 ViewModel 行为。
+- 在 `lib/product_preview/pages/<feature>/` 新增按正式 MVVM 命名和结构实现的隔离页面，为其创建 AppPage 并注册到 Product Preview。
+- 需要列表、详情或状态等业务形态数据时，同时使用 `$flutter-mvvm-mock-api-dev`；相关 contract、wiring、mock service 和 mock-only model 必须标记待开发审核。
 
 ## 工作流程
 
-1. 先读项目结构：`lib/product_preview/`、相关页面的 `_page.dart`、已有 `widgets/`、相关 mock API 文件。
-2. 判断任务类型：
-   - 现有 UI 微调：只改展示层文件，事件仍绑定已有 ViewModel 方法。
-   - 新页面或新流程原型：放到 `lib/product_preview/pages/<feature>/`，按正式页面命名和职责拆分，新增 AppPage 并注册到 Product Preview。
-   - 需要数据：同时使用 `$flutter-mvvm-mock-api-dev`，允许按其规则修改临时 domain contract、AppContainer/ApiService wiring、mock service 和 mock-only model，并标记待开发审核；只有纯布局占位、没有 service 层价值的小型 UI 状态才保留在同目录 ViewModel 中。
-3. 需要运行 mock 预览时，先确认项目已经支持 `server=mock`；如果缺少该既有开关或需要其他环境参数，停止 PM 修改并交由开发处理，不要自行补充环境配置。
-4. 做 UI 时复用现有组件、theme、间距、按钮和弹层风格。
-5. 完成后输出审核说明：列出 PM 改动文件、待开发审核的 mock/API 文件、不得直接发布的预览页面。
-6. 格式化本次改动文件、运行 `flutter analyze` 并通过实际 Product Preview 验收；先运行覆盖受影响正式行为的已有测试。纯布局、文案、样式、隔离预览和静态 mock 默认不新增自动化测试，只有修复正式页面回归时才补针对性测试。
+1. 读取相关 `_page.dart`、现有组件、`lib/product_preview/` 示例与 registry；需要数据时同时读取现有 mock API。
+2. 现有 UI 微调只改展示层；新页面或流程原型只放入 `lib/product_preview/`，并使用同目录 ViewModel 管理展示状态和临时交互。
+3. 业务形态数据走 mock service；只有纯布局占位、tab、选中态或筛选项等小型 UI 状态保留在预览 ViewModel。
+4. 复用项目已有组件、theme、间距、按钮和弹层风格。
+5. 格式化、运行 `flutter analyze` 并通过实际 Product Preview 验收；仅在修复正式页面回归时新增针对性测试。
+6. 交付时列出 PM 改动、待开发审核的 mock/API 文件和不得直接发布的预览页面。
+
+## 关键边界
+
+- 不修改正式 ViewModel 的状态、异步、业务动作、导航决策或数据持久化，也不修改与预览无关的 AppPage、route parser 和正式依赖。
+- 不实现已确认的正式 API/model、真实 Dio 请求、认证、埋点、推送或持久化逻辑。
+- 不得新增或修改任何 Dart define、环境解析、默认环境、启动配置、构建脚本或 CI 参数；同时使用 mock skill 不扩大这项权限。
+- 仅在项目已有开关时原样使用 `--dart-define=server=mock`；缺少开关或需要新环境参数时停止 PM 修改并交由开发处理。
 
 ## 读取参考
 
-- 修改现有 UI 或判断可改范围：读 `references/ui-scope.md`。
-- 新增或注册 PM 预览页面：读 `references/product-preview-pattern.md`。
-- 使用 mock 数据或新增 mock API：读 `references/mock-review-boundary.md`。
-
-## 输出标准
-
-- 正式页面的展示层微调不改变业务状态、异步流程、导航决策、API 调用或数据持久化；隔离预览页可以按 `$flutter-mvvm-mock-api-dev` 接入临时 mock API。
-- 新增 PM Page 仍放在 `lib/product_preview/`，文件名、类名和 ViewModel 名称按正式页面规则书写，并通过普通 AppPage 导航。
-- 首页悬浮入口仅打开产品预览，不承载业务逻辑。
-- 数据驱动的 PM 预览优先复用或新增 mock API，不把业务形态列表/详情长期硬编码在页面 ViewModel 中。
-- mock API 改动和 mock-only model 有清楚的 `PM preview / pending developer review` 标记。
-- PM 改动没有新增或修改 Dart define；本地 mock 预览只使用项目预先存在的 `server=mock`，缺失时已经交由开发处理。
-- 开发可以根据预览页面审核、迁移和重写正式 ViewModel/API 接入。
-- 交付时说明新增测试保护的正式行为风险，或说明本次无需新增测试的理由。
+- 修改现有 UI 或判断权限边界：读 `references/ui-scope.md`。
+- 新增或注册隔离预览页面：读 `references/product-preview-pattern.md`。
+- 使用业务形态数据时直接同时使用 `$flutter-mvvm-mock-api-dev`，不再加载重复的 PM mock 规则。

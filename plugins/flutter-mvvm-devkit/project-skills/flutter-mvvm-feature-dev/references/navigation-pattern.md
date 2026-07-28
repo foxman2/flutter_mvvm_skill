@@ -1,134 +1,31 @@
 # Sealed AppPage 导航模式
 
-## 核心原则
+## 核心结构
 
-页面导航使用具体 `AppPage` 子类表达，不使用 `enum + dynamic param`。
+先读取 `lib/navigation/app_page.dart` 和最接近的页面 case。每个可导航页面使用具体 `AppPage` 子类，而不是 `enum + dynamic param`，并按需要提供：
 
-每个可导航页面都应该自己持有：
-
-- `routeName`
+- 稳定的 `routeName`
 - `defaultTransition`
-- `queryParameters`，仅当需要路由字符串或深链参数时添加
-- `generateWidgetBuilder()`
 - 强类型构造参数
+- `queryParameters`，仅用于路由字符串、深链或恢复
+- `generateWidgetBuilder()`
 
-## 新增普通页面
+## ViewModel 组装
 
-```dart
-final class ProfileAppPage extends AppPage {
-  const ProfileAppPage({required this.userId});
+- 普通页面无论是否包含运行参数，都在 `generateWidgetBuilder()` 返回的 provider 中延迟创建 ViewModel。
+- ViewModel 通过构造函数接收依赖；AppPage provider 从 `AppContainer.shared` 取得具体 Service 或 Repository。
+- 不在 `generateWidgetBuilder()` 外预先创建普通页面 ViewModel。
+- Alert、ActionSheet 或 child ViewModel 需要先配置动作、回调或父子关系时，可以保留已创建实例；先确认生命周期，不能把例外推广到普通页面。
 
-  final String userId;
+## Transition
 
-  @override
-  String get routeName => '/profile';
-
-  @override
-  AppPageTransition get defaultTransition => AppPageTransition.push;
-
-  @override
-  Map<String, String> get queryParameters => {'userId': userId};
-
-  @override
-  WidgetBuilder generateWidgetBuilder() {
-    return (_) => ProfilePage(
-      userId: userId,
-      viewModelProvider: () => ProfileViewModel(
-        userId: userId,
-        profileRepository: AppContainer.shared.profileRepository,
-      ),
-    );
-  }
-}
-```
-
-provider 闭包只在 Page 初始化 ViewModel 时执行。普通页面无论是否包含路由或页面
-运行参数，都在这里延迟组装。ViewModel 通过构造函数接收依赖，AppPage provider
-从 `AppContainer.shared` 取得具体 Service 或 Repository。不要在
-`generateWidgetBuilder()` 外提前创建普通页面的 ViewModel 实例再传给 Page。
-
-ViewModel 中调用：
-
-```dart
-show(ProfileAppPage(userId: userId));
-```
-
-需要清空导航栈时调用 `replaceRoot(...)`；不要把它作为 `AppPageTransition`。
-
-## 新增弹窗或弹层
-
-Alert：
-
-```dart
-final class ConfirmDeleteAppPage extends AppPage {
-  const ConfirmDeleteAppPage(this.viewModel);
-
-  final ConfirmDeleteViewModelType viewModel;
-
-  @override
-  String get routeName => '/confirm-delete';
-
-  @override
-  AppPageTransition get defaultTransition => AppPageTransition.alert;
-
-  @override
-  WidgetBuilder generateWidgetBuilder() {
-    return (_) => ConfirmDeletePage(viewModelProvider: () => viewModel);
-  }
-}
-```
-
-这里保留已创建的 `ConfirmDeleteViewModelType` 是特殊所有权：调用方需要先为弹窗
-配置动作或结果回调，弹窗 Page 随后负责绑定并在退出时释放它。ActionSheet、child
-ViewModel 等类似场景也要先检查生命周期；不能把这个例外推广到普通参数化页面，
-也不能机械改写已有所有权链路。
-
-BottomSheet：
-
-```dart
-final class FilterSheetAppPage extends AppPage
-    implements BottomSheetConfigProvider {
-  const FilterSheetAppPage();
-
-  @override
-  String get routeName => '/filter-sheet';
-
-  @override
-  AppPageTransition get defaultTransition => AppPageTransition.bottomSheet;
-
-  @override
-  BottomSheetConfig get bottomSheetConfig =>
-      const BottomSheetConfig(height: 360);
-
-  @override
-  WidgetBuilder generateWidgetBuilder() {
-    return (_) => const FilterSheetPage();
-  }
-}
-```
+- 普通页面通常使用 `push`。
+- Alert 使用 `alert`，操作面板使用 `actionSheet`。
+- BottomSheet 使用 `bottomSheet` 或 `bottomSheetWithNavigator`，高度和拖拽配置跟随现有 `BottomSheetConfigProvider`。
+- 清空导航栈调用 `replaceRoot(...)`，不要把它建成 transition。
 
 ## Route parser
 
-如果页面需要从字符串路由恢复，更新 `AppRouteParser`：
+只有页面需要深链、浏览器地址或路由恢复时才更新 parser。解析失败返回项目约定的失败结果，不为形式统一给所有页面添加 parser 分支。
 
-```dart
-static AppPage? parse(String routeString) {
-  final uri = Uri.parse(routeString);
-  switch (uri.path) {
-    case '/profile':
-      final userId = uri.queryParameters['userId'];
-      return userId == null ? null : ProfileAppPage(userId: userId);
-    default:
-      return null;
-  }
-}
-```
-
-不需要深链、浏览器地址或恢复路由时，不要为了形式主义添加 parser 分支。
-
-## 命名和稳定性
-
-- routeName 使用短横线或普通路径风格：`/profile-detail`。
-- 页面改名时尽量不改 routeName，避免破坏外部跳转。
-- transition 放在 page case 附近，让页面展示方式和页面定义一起维护。
-- 不在 Widget 里直接 `Navigator.push`，除非项目当前局部代码已经这样做且没有 ViewModel 入口。
+保持既有 routeName 稳定；页面改名时不要无必要改变外部路由。业务页面从 ViewModel 使用项目的 `show()`、replacement、root replacement 和 `pop()` 封装，不直接绕到 `Navigator`。

@@ -1,84 +1,35 @@
 # Model 解析模式
 
-## 命名
+## 先读项目实现
 
-- 响应 model：`UserProfile`、`OrderSummary`。
-- 请求 model：`UpdateProfileRequest`、`CreateOrderRequest`。
+优先读取同一 domain 的现有 model；模板示例存在时可参考 `lib/models/user/user_profile.dart`。沿用项目已有序列化方案，不并行引入第二套机制。
+
+## 命名与职责
+
+- 响应类型使用业务名，如 `UserProfile`、`OrderSummary`。
+- 请求类型使用动作后缀，如 `UpdateProfileRequest`。
 - 文件使用 snake_case，类使用 PascalCase。
+- JSON 字段映射只放在 model 内，不散落到 API service、ViewModel 或 Widget。
 
-## 推荐方案：json_serializable
+## json_serializable
 
-正式 request/response model 推荐使用 `json_serializable`。采用时确保项目包含运行时
-依赖 `json_annotation`，以及开发依赖 `json_serializable` 和 `build_runner`。项目已有
-稳定序列化方案时沿用现有约定，不并行引入另一套方案。
+正式 request/response model 推荐使用 `json_serializable`：
 
-```dart
-import 'package:json_annotation/json_annotation.dart';
-
-part 'user_profile.g.dart';
-
-@JsonSerializable()
-class UserProfile {
-  const UserProfile({required this.id, required this.name});
-
-  final String id;
-  final String name;
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) =>
-      _$UserProfileFromJson(json);
-
-  Map<String, dynamic> toJson() => _$UserProfileToJson(this);
-}
-```
-
-采用 `json_serializable` 后，在新增或修改 JSON model 时生成代码：
+- 添加 `@JsonSerializable()`、对应 `part`，并让 `fromJson/toJson` 委托给生成函数。
+- 运行时依赖使用 `json_annotation`，开发依赖使用 `json_serializable` 和 `build_runner`。
+- 新增或修改 model 后运行：
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
-采用该方案时保留生成的 `.g.dart` 文件，但不要手动修改。
+- 保留生成的 `.g.dart`，不要手动修改。
+- 字段改名、默认值和自定义转换使用 `JsonKey` 或 `JsonConverter`；嵌套 model 需要序列化时使用 `explicitToJson: true`。
 
-## 缺失值和嵌套列表
+项目已有稳定手写解析方案时可继续使用，但同样把解析限制在 model 内。
 
-使用 `JsonKey` 明确缺失字段的默认值；包含嵌套 model 的响应使用
-`explicitToJson: true`：
+## 测试边界
 
-```dart
-import 'package:json_annotation/json_annotation.dart';
+只为缺失值、可空兼容、嵌套集合、自定义转换、复杂序列化或已发生的解析回归新增测试。简单必填字段的生成映射由代码生成、analyzer 和代表性 API contract 覆盖。
 
-import 'user_profile.dart';
-
-part 'user_list_response.g.dart';
-
-@JsonSerializable(explicitToJson: true)
-class UserListResponse {
-  const UserListResponse({this.users = const []});
-
-  @JsonKey(defaultValue: <UserProfile>[])
-  final List<UserProfile> users;
-
-  factory UserListResponse.fromJson(Map<String, dynamic> json) =>
-      _$UserListResponseFromJson(json);
-
-  Map<String, dynamic> toJson() => _$UserListResponseToJson(this);
-}
-```
-
-字段名不一致、日期格式或其他协议转换使用 `JsonKey` 的 `name`、`fromJson`、
-`toJson`，或定义可复用的 `JsonConverter`，不要把字段解析重新写回 factory。
-
-## 测试
-
-不要为每个新增 model 固定生成测试。只有 model 包含以下行为时补针对性测试：
-
-- `JsonKey` 默认值、缺失字段或可空兼容逻辑。
-- 嵌套集合、自定义 `JsonConverter` 或非直映射字段。
-- 复杂序列化约定或已发生过的解析回归。
-
-`json_serializable` 生成的简单必填字段映射由代码生成、analyzer 和代表性 API
-contract 覆盖，不单独为每个 DTO 创建测试文件。
-
-## Mock-only model
-
-后台未确认的临时结构不要放在 `lib/models/`。先放到 `lib/services/mock_api/models/`，并使用 `$flutter-mvvm-mock-api-dev` 的迁移约定；后台确认后再合并到正式 model。
+后台未确认的临时结构放入 `lib/services/mock_api/models/`，不要提前进入 `lib/models/`。

@@ -2,106 +2,34 @@
 
 ## 修改前
 
-先看当前页面和相邻页面：
-
-- 是否使用 `Scaffold`、`AppBar`、`ListView`、`CustomScrollView`、`SafeArea`。
-- 按钮使用 `FilledButton`、`OutlinedButton`、`TextButton` 还是项目自定义组件。
-- 间距、圆角、颜色、字体是否来自 `Theme.of(context)`。
-- 页面动作是否已经通过 ViewModel input 方法暴露。
+读取当前页面和相邻页面，确认使用的布局、按钮、theme、间距、弹层容器，以及已有 ViewModel input/output。优先沿用项目现状。
 
 ## 职责边界
 
-Widget 中保留：
+Widget 负责：
 
-- 布局结构
-- 文案展示
-- 绑定 `onPressed: viewModel.onClickXxx`
-- 根据 ViewModel 状态显示不同 UI
-- 使用 `AppLocalizations.of(context)!` 读取纯展示文案
+- 布局、样式和文案展示
+- 绑定 ViewModel 事件
+- 根据 output 状态选择 UI
 
-ViewModel 中保留：
+ViewModel 负责：
 
-- 点击后的业务动作
-- 异步加载
-- loading/error 展示
-- 页面跳转
-- 弹窗、ActionSheet、BottomSheet 调用
-- 使用 `localStrings` 读取由 ViewModel 发起的弹窗、toast、ActionSheet 和状态文案
+- 点击后的业务动作和异步加载
+- loading/error
+- 导航、Alert、ActionSheet 和 BottomSheet
 
-避免在 Widget 里直接写复杂流程：
+不要在 Widget callback 中直接调用 API、写缓存或决定业务导航。
 
-```dart
-onPressed: () async {
-  await api.save();
-  Navigator.of(context).push(...);
-}
-```
+## 弹层选择
 
-优先写成：
+- 普通错误优先使用项目现有 `errorTracker`。
+- 业务确认使用现有 Alert ViewModel 与对应 AppPage。
+- 多个互斥操作使用 ActionSheet。
+- 复杂内容或完整布局使用独立 BottomSheet 页面；内部还需导航时使用带 Navigator 的变体。
+- 高度、拖拽和顶部间距跟随现有 BottomSheet 配置接口。
 
-```dart
-onPressed: viewModel.onClickSave
-```
+## 视觉检查
 
-## 弹窗
-
-普通错误优先走 `errorTracker`，由基类统一展示。
-
-业务确认弹窗可以创建独立 ViewModel 和 `AlertAppPage`，由当前 ViewModel 发起：
-
-```dart
-void onClickDelete() {
-  _confirmDelete();
-}
-
-void _confirmDelete() {
-  final strings = localStrings;
-  final alert = AlertViewModel(
-    title: strings.confirmDeleteTitle,
-    content: strings.confirmDeleteContent,
-  )
-    ..addAction(strings.commonCancel)
-    ..addAction(
-      strings.commonDelete,
-      isDestructive: true,
-      handler: delete,
-    );
-  show(AlertAppPage(alert));
-}
-```
-
-如果项目已有固定 alert ViewModel API，按现有 API 写。
-
-## ActionSheet
-
-多个互斥操作优先使用 `ActionSheetAppPage` 或项目已有 action sheet：
-
-```dart
-void onClickMore() {
-  _showMoreActions();
-}
-
-void _showMoreActions() {
-  final strings = localStrings;
-  final sheet = ActionSheetViewModel(title: strings.moreActionsTitle)
-    ..addAction(strings.editAction, handler: edit)
-    ..addAction(strings.shareAction, handler: share)
-    ..setCancelAction(null, strings.commonCancel);
-  show(ActionSheetAppPage(sheet));
-}
-```
-
-## BottomSheet
-
-内容较复杂、需要完整布局或内部导航时，创建独立页面和对应 `AppPage`：
-
-- 简单静态内容：`bottomSheet`
-- 弹层内部还要 push 子页面：`bottomSheetWithNavigator`
-- 高度、拖拽、顶部间距走 `BottomSheetConfigProvider`
-
-## 视觉一致性
-
-- 优先复用已有 widget 和 theme，不临时发明一套样式。
-- 不把业务页面改成孤立的“展示 demo”风格。
-- 移动端页面要检查长文案、按钮文本和小屏滚动。
-- 表单类 UI 要处理键盘、安全区和错误提示。
+- 复用已有 Widget 和 theme，不为单页发明另一套样式。
+- 检查长文案、按钮文本、小屏滚动、键盘、安全区和表单错误。
+- 保持原有返回行为、loading/error 呈现和交互语义。

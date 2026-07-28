@@ -406,7 +406,6 @@ def run_final_checks(target_dir: Path) -> None:
             "run",
             "build_runner",
             "build",
-            "--delete-conflicting-outputs",
         ],
         cwd=target_dir,
         allow_failure=True,

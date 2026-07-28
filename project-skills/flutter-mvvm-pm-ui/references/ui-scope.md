@@ -1,49 +1,20 @@
 # PM UI 改动范围
 
-## 可以改
+## 可以修改
 
-- 页面展示结构、文案、颜色、字体、间距、图标、空态、loading/empty/error 的呈现。
-- `lib/pages/**/<feature>_page.dart` 中已有 ViewModel output 的展示方式。
-- `onPressed: viewModel.onClickXxx` 这类已有 input 绑定的按钮位置和样式。
-- 纯展示组件：`lib/widgets/`、`lib/theme/`、页面局部 `widgets/`。
-- 产品预览入口按钮：`lib/product_preview/product_preview_entry_button.dart`。
-- 隔离页面的同目录 ViewModel：`lib/product_preview/pages/<feature>/<feature>_view_model.dart`。
-- `lib/navigation/app_page.dart` 中与新增预览页面对应的 AppPage case。
-- 配合 `$flutter-mvvm-mock-api-dev` 时，可以按其规则修改临时 `lib/services/api/<domain>_api_service.dart`、`lib/services/api/api_service.dart` 的 domain 实例 wiring、`lib/services/mock_api/` 和 mock-only model；全部标记为 `PM preview / pending developer review`。只组装 domain service，不改环境选择机制；AppPage provider 从 `AppContainer.shared` 取得依赖并传给 ViewModel。
+- 页面布局、文案、颜色、字体、间距、图标和 loading/empty/error 的呈现
+- 正式 `_page.dart` 对已有 ViewModel input/output 的展示与绑定
+- `lib/widgets/`、theme 和页面局部纯展示组件
+- `lib/product_preview/` 下的入口、隔离页面、同目录 ViewModel 与 registry
+- 与新增预览页面对应的 AppPage case
+- 配合 `$flutter-mvvm-mock-api-dev` 时获准的临时 contract、domain wiring、mock service 和 mock-only model
 
-## 不可以改
+## 不可以修改
 
-- 正式 `lib/pages/**/<feature>_view_model.dart` 中的状态、异步流程、业务动作、弹窗和导航决策。
-- `lib/navigation/` 中与新增预览 AppPage 无关的 case、navigator、transition 和 route parser。
-- 已确认的正式 API/model、真实 Dio 请求，以及 `AppContainer` 持有的正式业务依赖及其逻辑。
-- 任何 Dart define key、值域、解析逻辑或默认值，包括 `String.fromEnvironment`、`ApiEnvironment`、环境解析函数和默认环境常量。
-- IDE launch configuration、运行脚本、构建脚本或 CI 中的 Dart define 参数；需要新增或修改时，停止 PM 修改并交由开发处理。
-- Widget 里新增业务流程，例如直接调用 API、解析 JSON、写缓存、判断登录态、决定下一步业务路由。
+- 正式 ViewModel 的状态、异步、业务动作、弹窗和导航决策
+- 与新增预览 AppPage 无关的 navigator、transition 或 route parser
+- 正式 API/model、真实 Dio 请求和正式业务依赖逻辑
+- Dart define、环境解析、默认环境、启动配置、构建脚本或 CI 参数
+- Widget 中的 API 调用、JSON 解析、缓存、登录态判断或业务路由
 
-## 绑定规则
-
-Widget 可以绑定已有 ViewModel input 方法：
-
-```dart
-FilledButton(
-  onPressed: viewModel.onClickSubmit,
-  child: const Text('Submit'),
-)
-```
-
-隔离页面可以绑定同目录 ViewModel input 方法，但这些方法只表达展示状态和临时交互，不接正式业务流程。
-
-input 方法命名保持简短：点击用 `onClickXxx`，输入用 `onInputXxx`，不要默认追加 `Button`、`Field`、`Tile` 等控件类型后缀。
-
-展示状态优先读取 output getter；只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等局部高频状态才用 `ValueStream<T>`/`Stream<T>`。
-
-Widget 不要把业务流程写进回调：
-
-```dart
-onPressed: () async {
-  await AppContainer.shared.apiService.order.submit();
-  Navigator.of(context).push(...);
-}
-```
-
-如果正式 UI 需要新动作，先在 PM 输出中描述需求，由开发用 `$flutter-mvvm-feature-dev` 增加正式 ViewModel 行为。
+Widget 可以绑定已有 ViewModel 事件；隔离页面可以通过同目录 ViewModel 表达展示状态和临时交互。正式 UI 需要新业务动作时，在 PM 交付说明中描述需求，交由 `$flutter-mvvm-feature-dev` 实现。

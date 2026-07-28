@@ -1,64 +1,38 @@
 ---
 name: flutter-mvvm-template
 description: >-
-  创建新的 Flutter MVVM 模板项目并套用 bundled flutter-mvvm-template assets，同时把 Flutter MVVM 开发型 Codex skills 安装为生成项目内的局部 skills。用于用户要求生成、初始化或脚手架化一个全新的 Flutter MVVM app 时；生成前需要确认 app 显示名和原生包名。不用于修改已有应用、代码质量审查或重构、新增正式页面/UI/导航/ViewModel、创建功能代码地图、PM UI 原型、API/model 开发、mock API 开发或 Inspector 定位；这些任务应在已生成的 MVVM 项目线程里使用项目局部 code-quality、flutter-mvvm-code-map、flutter-mvvm-feature-dev、flutter-mvvm-pm-ui、flutter-mvvm-api-dev、flutter-mvvm-mock-api-dev、flutter-mvvm-inspector。
+  从 bundled assets 创建新的 Flutter MVVM 项目并安装项目局部开发 skills。用于生成、初始化或脚手架化全新 Flutter app，执行前必须取得 app 显示名和原生包名；不用于修改已有应用或开发现有项目功能。
 ---
 
 # Flutter MVVM Template
 
-使用这个 skill 创建新的 Flutter MVVM 模板项目。
+## 创建项目
 
-## 快速开始
-
-创建新项目时，优先运行 CLI：
+优先运行 bundled CLI：
 
 ```bash
 python3 <skill-dir>/scripts/flutter_mvvm.py create --app-name "My App" --package-name com.example.myapp
 ```
 
-如果已经安装了 CLI，也可以使用：
-
-```bash
-flutter-mvvm create --app-name "My App" --package-name com.example.myapp
-```
-
-该命令默认在当前目录下创建项目目录，目录名默认从包名最后一段推导。命令会先运行 `flutter create`，再把 `assets/flutter_mvvm_overlay/` 中的 MVVM 模板覆盖到新项目中，并把开发型 skills 安装到生成项目的 `.codex/skills/`。
+已安装命令时也可使用 `flutter-mvvm create` 和相同参数。
 
 ## 工作流程
 
-1. 创建新项目前，如果用户没有明确给出 app 显示名和原生包名，先询问这两个值。包名指 Android `applicationId` / iOS `PRODUCT_BUNDLE_IDENTIFIER`，例如 `com.example.myapp`。
-2. 生成目录默认使用当前工作目录；除非用户明确指定其它输出路径，不传 `--output`。需要指定目录名时才补位置参数 `<project_name>`。
-3. 除非用户明确要求手动复制，否则运行 `scripts/flutter_mvvm.py create --app-name "<App Name>" --package-name <package.name>`。
-4. 只生成新项目或模板文件，不修改已有 Flutter 应用。
-5. 用户要求改造已有 app、审查或重构代码、新增页面/UI/API/mock 或创建功能代码地图时，说明这个 skill 只负责创建新模板项目；对应开发型 skills 只在已生成的 MVVM 项目 `.codex/skills/` 中局部可见。
-6. 生成完成后，报告项目路径和 CLI 输出中的关键结果；如果 `flutter pub get`、`build_runner`、`dart format`、`flutter analyze` 或 smoke test 因本地工具链/网络失败，说明项目文件已经生成。
+1. 用户未提供 app 显示名或原生包名时先询问；包名对应 Android `applicationId` 和 iOS `PRODUCT_BUNDLE_IDENTIFIER`。
+2. 默认在当前目录生成项目，目录名从包名最后一段推导；仅在用户指定输出位置时传 `--output`，需要自定义目录名时传 `<project_name>`。
+3. 运行 CLI；它先执行官方 `flutter create`，再覆盖 MVVM 模板并安装项目局部 skills。
+4. 不修改已有 Flutter 应用；已有项目的页面、API、mock、代码地图或 Inspector 工作使用该项目内的局部 skills。
+5. 完成后报告项目路径和 CLI 关键结果；本地工具链或网络导致最终检查失败时，区分已生成文件和未完成检查。
 
-## 生成内容
+## 可选参数
 
-- 创建项目时先调用官方 `flutter create`，然后只覆盖 Dart/template 文件。
-- app 显示名会同步到 Flutter UI 标题、Android label、iOS display name 和 Web manifest/title。
-- 原生包名会同步到 Android namespace/applicationId/MainActivity package，以及 iOS bundle identifier。
-- 模板内已包含 MVVM 基类、sealed AppPage 导航、AppContainer 全局依赖容器、常用弹窗示例、Flutter l10n、Dio ApiService real/mock 示例、`json_serializable` model 代码生成、Product Preview 入口和一个应用启动 smoke test；这里不要展开后续开发规范。
-- 生成项目内已包含 `.codex/skills/`、`.codex/flutter-mvvm-skills.json` 和 `scripts/update-codex-skills.py`。需要更新局部 skills 时，在生成项目根目录运行 `./scripts/update-codex-skills.py` 获取 `main`，或运行 `./scripts/update-codex-skills.py --version vX.Y.Z` 检出指定 tag；运行环境需要 `python3` 和 `git`。
+- `--platforms`：默认 `ios,android,web`。
+- `--skip-final-checks`：仅在用户明确要求跳过 format、analyze 和 smoke test 时使用。
 
-## CLI 参数
+## 生成结果
 
-- `<project_name>`：可选；不传时从 package name 最后一段推导。
-- `--output`：可选；只在用户指定输出目录时使用。
-- `--platforms`：可选；默认 `ios,android,web`。
-- `--skip-final-checks`：可选；跳过生成后的 format、analyze 和 smoke test。
+- app 显示名与原生包名同步到 Flutter 和原生平台配置。
+- 项目包含 MVVM、sealed AppPage、AppContainer、l10n、real/mock API 示例、Product Preview、smoke test 和 `.codex/skills/`。
+- `scripts/update-codex-skills.py` 用于更新项目局部 skills；无参数跟随 `main`，`--version vX.Y.Z` 固定版本。
 
-## 参考资料
-
-- 需要理解生成项目边界或结构时，阅读 `references/architecture.md`。
-- 需要说明 sealed page 路由模式时，阅读 `references/sealed-page.md`。
-
-## 资源
-
-- `scripts/flutter_mvvm.py`：项目生成 CLI。
-- `scripts/install_cli.sh`：安装 `flutter-mvvm` 命令软链接。
-- `assets/flutter_mvvm_overlay/`：复制到新 Flutter 应用中的模板文件。
-- `<plugin-root>/project-skills/`：复制到生成项目 `.codex/skills/` 的局部开发 skills。
-- `assets/flutter_mvvm_overlay/scripts/update-codex-skills.py`：复制到生成项目 `scripts/` 的 Git sparse-checkout 局部 skills updater。
-- `references/architecture.md`：模板边界和生成项目结构。
-- `references/sealed-page.md`：sealed page 路由模式和示例。
+需要解释生成项目的结构或边界时，读取 `references/architecture.md`。

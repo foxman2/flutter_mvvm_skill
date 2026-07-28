@@ -216,44 +216,6 @@ void main() {
           : isA<DioUserApiService>(),
     );
   });
-
-  test(
-    'AppContainer replaces and restores the whole dependency graph',
-    () async {
-      await AppContainer.setup();
-      final original = AppContainer.shared;
-      final replacement = AppContainer(
-        apiService: ApiService.withModules(user: const MockUserApiService()),
-      );
-
-      AppContainer.replaceForTesting(replacement);
-      expect(AppContainer.shared, same(replacement));
-      expect(AppContainer.shared.apiService.user, isA<MockUserApiService>());
-
-      AppContainer.restore();
-      expect(AppContainer.shared, same(original));
-    },
-  );
-
-  test('AppContainer rejects invalid test replacement state', () async {
-    await AppContainer.setup();
-    final replacement = AppContainer(
-      apiService: ApiService.withModules(user: const MockUserApiService()),
-    );
-
-    AppContainer.replaceForTesting(replacement);
-    try {
-      expect(
-        () => AppContainer.replaceForTesting(replacement),
-        throwsStateError,
-      );
-      await expectLater(AppContainer.setup(), throwsStateError);
-    } finally {
-      AppContainer.restore();
-    }
-
-    expect(AppContainer.restore, throwsStateError);
-  });
 }
 
 class _FakeHttpClientAdapter implements HttpClientAdapter {

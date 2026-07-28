@@ -1,230 +1,42 @@
 # API Service 与 AppContainer 模式
 
-## 目录和入口
+## 先读项目实现
 
-```text
-lib/
-├── app_container.dart
-├── repositories/
-│   └── user_repository.dart
-└── services/
-    └── api/
-        ├── api_service.dart
-        ├── api_service_exception.dart
-        ├── api_service_future.dart
-        ├── user_api_service.dart
-        └── order_api_service.dart
-```
+把当前项目代码作为事实来源，优先读取：
 
-新增业务域时：
+- `lib/services/api/api_service.dart`
+- 最接近的 `lib/services/api/<domain>_api_service.dart`
+- `lib/app_container.dart`
+- 相关 Repository、ViewModel、AppPage 和测试
 
-- 文件：`<domain>_api_service.dart`
-- 正式接口：`<Domain>ApiService`
-- 真实网络实现：`Dio<Domain>ApiService`
-- AppPage 组装入口：`AppContainer.shared.apiService.<domain>`
+模板示例存在时可参考 `user_api_service.dart`；示例已被业务代码替换时，跟随最近的有效 domain 模块。
 
-ApiService、Repository 和其他 Service 都是普通实例，不声明 `shared`。只有
-AppContainer 是全局依赖入口。
+## Domain 模块
 
-## 新增模块
+- 文件命名为 `<domain>_api_service.dart`。
+- contract 命名为 `<Domain>ApiService`，真实实现命名为 `Dio<Domain>ApiService`。
+- contract 和 Dio 实现可放在同一业务文件；方法名表达业务动作，如 `fetchProfile()`、`updateProfile()`。
+- 通过构造函数传入 Dio；GET 参数使用 `queryParameters`，POST/PUT body 优先使用 model 的 `toJson()`。
+- 使用 `.parseData(...)` 解析 `response.data` 并统一转换 `DioException`。
+- 不在 API service 中处理 loading、toast、弹窗、导航或其他 UI 行为。
 
-业务 service 文件同时包含 contract 和 Dio 实现：
+## ApiService 组装
 
-```dart
-import 'package:dio/dio.dart';
+- 为新 domain 增加 final 字段，并同步更新默认 factory 与 `ApiService.withModules(...)`。
+- 默认 factory 为真实模块复用同一个配置好的 Dio，保留现有 baseUrl、headers、timeout 和错误处理。
+- `withModules(...)` 只做显式对象组装，不读取环境或维护可变 setup 状态。
+- 跟随项目已有环境解析，不为单个业务接口另建 client、全局实例或环境开关。
 
-import '../../models/order/order_summary.dart';
-import 'api_service_future.dart';
+## Repository 与页面注入
 
-abstract class OrderApiService {
-  Future<List<OrderSummary>> fetchOrders();
-}
+- 简单调用可让 ViewModel 依赖具体 domain contract；需要缓存、聚合或业务编排时使用普通 Repository。
+- App 生命周期 Repository 在 AppContainer composition root 中创建并注册。
+- ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖并创建 ViewModel。
+- ApiService、Repository 和其他 Service 不声明 `shared`。
 
-class DioOrderApiService implements OrderApiService {
-  DioOrderApiService(this._dio);
+## 测试
 
-  final Dio _dio;
-
-  @override
-  Future<List<OrderSummary>> fetchOrders() {
-    return _dio.get<List<dynamic>>('/orders').parseData((data) {
-      return data
-          .whereType<Map<String, dynamic>>()
-          .map(OrderSummary.fromJson)
-          .toList();
-    });
-  }
-}
-```
-
-在 `api_service.dart` 的默认 factory 中一次性组装所有 final 模块：
-
-```dart
-enum ApiEnvironment { production, test, mock }
-
-extension ApiEnvironmentBaseUrl on ApiEnvironment {
-  String get baseUrl {
-    switch (this) {
-      case ApiEnvironment.production:
-        return 'https://api.example.com';
-      case ApiEnvironment.test:
-        return 'https://test-api.example.com';
-      case ApiEnvironment.mock:
-        return '';
-    }
-  }
-}
-
-const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
-const String _server = String.fromEnvironment('server');
-final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
-  server: _server,
-  isReleaseMode: kReleaseMode,
-);
-
-class ApiService {
-  factory ApiService({ApiEnvironment? environment}) {
-    final selectedEnvironment = environment ?? _apiEnvironment;
-    if (selectedEnvironment == ApiEnvironment.mock) {
-      return ApiService.withModules(
-        user: const MockUserApiService(),
-        order: const MockOrderApiService(),
-      );
-    }
-
-    final client = _createDio(selectedEnvironment);
-    return ApiService.withModules(
-      user: DioUserApiService(client),
-      order: DioOrderApiService(client),
-    );
-  }
-
-  ApiService.withModules({required this.user, required this.order});
-
-  final UserApiService user;
-  final OrderApiService order;
-
-  static Dio _createDio(ApiEnvironment environment) {
-    final client = Dio(
-      BaseOptions(
-        baseUrl: environment.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        sendTimeout: const Duration(seconds: 15),
-      ),
-    );
-    return client;
-  }
-}
-```
-
-通过 `--dart-define=server=production|test|mock` 选择环境。有效显式参数在所有构建
-模式下优先；无效或缺失参数在 Release 回退 production，在 Debug/Profile 回退
-`defaultApiEnvironment`。production 和 test 地址直接配置在
-`ApiEnvironmentBaseUrl` 中。
-
-所有真实业务模块共享默认 factory 创建的同一个 Dio。`withModules(...)` 只做显式
-对象组装，不读取环境，也不维护可变 setup 状态。
-
-## AppContainer 与 Repository
-
-新增需要贯穿 App 生命周期的 Repository 时，把它注册到 AppContainer，并只在这个
-composition root 内传递依赖：
-
-```dart
-class UserRepository {
-  UserRepository({required ApiService apiService})
-    : _apiService = apiService;
-
-  final ApiService _apiService;
-
-  Future<UserProfile> fetchProfile() {
-    return _apiService.user.fetchProfile();
-  }
-}
-
-static Future<void> setup() async {
-  final apiService = ApiService();
-  _shared = AppContainer(
-    apiService: apiService,
-    userRepository: UserRepository(apiService: apiService),
-  );
-}
-```
-
-AppContainer 构造函数和 final 字段要同步加入 `userRepository`。需要该能力的
-ViewModel 通过构造函数接收 `UserRepository`；对应 AppPage provider 使用
-`AppContainer.shared.userRepository` 完成组装。简单场景也可以直接注入具体的
-`UserApiService`。
-
-## ViewModel 调用
-
-```dart
-class ProfileViewModel extends ProfileViewModelType {
-  ProfileViewModel({required UserRepository userRepository})
-    : _userRepository = userRepository;
-
-  final UserRepository _userRepository;
-  UserProfile? _profile;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    _profile = await _userRepository
-        .fetchProfile()
-        .trackLoadingAndConsumeError(this);
-    makeRebuild();
-  }
-
-  @override
-  UserProfile? get profile => _profile;
-}
-```
-
-对应 AppPage 负责组装：
-
-```dart
-@override
-WidgetBuilder generateWidgetBuilder() {
-  return (_) => ProfilePage(
-    viewModelProvider: () => ProfileViewModel(
-      userRepository: AppContainer.shared.userRepository,
-    ),
-  );
-}
-```
-
-## AppContainer wiring 测试
-
-测试 AppContainer wiring 时，可以创建完整替代容器再整体替换：
-
-```dart
-final replacement = AppContainer(
-  apiService: ApiService.withModules(
-    user: const MockUserApiService(),
-    order: const MockOrderApiService(),
-  ),
-);
-
-AppContainer.replaceForTesting(replacement);
-try {
-  // Verify AppContainer wiring.
-} finally {
-  AppContainer.restore();
-}
-```
-
-ViewModel、Service 和 Repository 的单元测试直接传入 fake 或显式构造的依赖，不需要
-替换全局容器。
-
-## 方法规则
-
-- GET 查询参数使用 Dio 的 `queryParameters`，不要手拼 query string。
-- POST/PUT body 优先使用 model 的 `toJson()`；推荐由 `json_serializable` 生成，也可遵循项目已有序列化方案。没有对应 model 的简单场景可使用 `Map<String, dynamic>`。
-- 使用 `.parseData(...)` 解析 `response.data` 并转换 `DioException`。
-- 不在 API service 中处理 UI loading、toast、弹窗或页面跳转。
-- 未确认的 mock-only model 不进入 `lib/models/`；改用 `$flutter-mvvm-mock-api-dev`。
+- Service、Repository 和 ViewModel 测试直接传入 fake 或显式构造的依赖。
+- 一个代表性 contract 测试可同时覆盖 method、path、query/body 和 response parsing。
+- 仅测试 AppContainer wiring 时整体替换容器，并在测试结束后恢复。
+- 后台协议未确认时停止正式实现，改用 `$flutter-mvvm-mock-api-dev`。

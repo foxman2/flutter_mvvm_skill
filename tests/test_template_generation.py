@@ -53,6 +53,9 @@ REMOVED_ARCHITECTURE_REFERENCES = (
     "app_" + "services.dart",
     "ApiService." + "shared",
     "AuthRepository." + "shared",
+    "_replaced" + "Container",
+    "replace" + "ForTesting",
+    "AppContainer." + "restore",
 )
 LEGACY_APP_SERVICES_FILE = "app_" + "services.dart"
 
@@ -101,7 +104,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
 
         self.assertIn("推荐使用 `json_serializable`", skill_text)
         self.assertIn(
-            "dart run build_runner build --delete-conflicting-outputs",
+            "dart run build_runner build`，再格式化",
             skill_text,
         )
         self.assertNotIn("JSON model 必须使用", skill_text)
@@ -227,7 +230,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                         "run",
                         "build_runner",
                         "build",
-                        "--delete-conflicting-outputs",
                     ],
                     cwd=target,
                     allow_failure=True,
@@ -319,7 +321,6 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                     "run",
                     "build_runner",
                     "build",
-                    "--delete-conflicting-outputs",
                 ],
                 cwd=project,
             )
