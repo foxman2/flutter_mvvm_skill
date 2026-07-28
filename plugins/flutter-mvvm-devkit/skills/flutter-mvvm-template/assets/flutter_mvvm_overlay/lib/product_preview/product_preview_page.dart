@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../navigation/app_navigator.dart';
 import 'product_preview_registry.dart';
 
 class ProductPreviewPage extends StatelessWidget {
@@ -33,11 +34,6 @@ class ProductPreviewPage extends StatelessWidget {
   }
 
   void _openPreview(BuildContext context, ProductPreviewItem item) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: item.builder,
-        settings: RouteSettings(name: '/product-preview/${item.id}'),
-      ),
-    );
+    AppNavigator.shared.show(context, item.appPage);
   }
 }

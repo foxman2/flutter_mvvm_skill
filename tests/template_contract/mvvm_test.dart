@@ -75,15 +75,7 @@ void main() {
     viewModel.dispose();
   });
 
-  test('page uses its default view model when provider is explicitly null', () {
-    const page = _StrictPage(viewModelProvider: null);
-    final viewModel = page.createViewModel();
-
-    expect(viewModel, isA<_StrictViewModelType>());
-    expect(viewModel.title, 'Strict MVVM');
-  });
-
-  test('page provider lazily creates a non-null injected view model', () {
+  test('page provider lazily creates its injected view model', () {
     var createCount = 0;
     final page = _StrictPage(
       viewModelProvider: () {
@@ -124,7 +116,7 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const _LocalizedPage(viewModelProvider: null),
+        home: _LocalizedPage(viewModelProvider: () => _LocalizedViewModel()),
       ),
     );
 
@@ -162,9 +154,6 @@ class _StrictPage extends AppBaseStatefulPage<_StrictViewModelType> {
   const _StrictPage({required super.viewModelProvider});
 
   @override
-  _StrictViewModelType defaultViewModel() => _StrictViewModel();
-
-  @override
   State<_StrictPage> createState() => _StrictPageState();
 }
 
@@ -190,9 +179,6 @@ class _LocalizedViewModel extends _LocalizedViewModelType {
 
 class _LocalizedPage extends AppBaseStatefulPage<_LocalizedViewModelType> {
   const _LocalizedPage({required super.viewModelProvider});
-
-  @override
-  _LocalizedViewModelType defaultViewModel() => _LocalizedViewModel();
 
   @override
   State<_LocalizedPage> createState() => _LocalizedPageState();

@@ -33,17 +33,19 @@ final class ProfileAppPage extends AppPage {
   WidgetBuilder generateWidgetBuilder() {
     return (_) => ProfilePage(
       userId: userId,
-      viewModelProvider: () => ProfileViewModel(userId: userId),
+      viewModelProvider: () => ProfileViewModel(
+        userId: userId,
+        profileRepository: AppContainer.shared.profileRepository,
+      ),
     );
   }
 }
 ```
 
-provider 闭包只在 Page 初始化 ViewModel 时执行。带路由或页面运行参数的普通页面应在
-这里延迟组装，不要在 `generateWidgetBuilder()` 外提前创建实例再传给 Page。无页面
-运行参数且覆盖了 `defaultViewModel()` 的页面则显式传 `viewModelProvider: null`。
-所有由 `AppContainer` 持有的 App 生命周期依赖统一从 `AppContainer.shared` 获取，
-不要作为页面运行参数放进 AppPage、Page 或 ViewModel 构造函数。
+provider 闭包只在 Page 初始化 ViewModel 时执行。普通页面无论是否包含路由或页面
+运行参数，都在这里延迟组装。ViewModel 通过构造函数接收依赖，AppPage provider
+从 `AppContainer.shared` 取得具体 Service 或 Repository。不要在
+`generateWidgetBuilder()` 外提前创建普通页面的 ViewModel 实例再传给 Page。
 
 ViewModel 中调用：
 

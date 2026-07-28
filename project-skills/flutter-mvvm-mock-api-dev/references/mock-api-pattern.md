@@ -103,15 +103,42 @@ final OrderApiService order;
 ```
 
 这样 mock 阶段和真实接入阶段共享 `OrderApiService` contract 与
-`ApiService.order` 入口。页面/ViewModel 不依赖具体实现，后续迁移无需修改调用方式。
+`ApiService.order` 入口。ViewModel 只依赖 contract，后续迁移无需修改业务调用。
 
 开发时使用 `flutter run --dart-define=server=mock`。不要为了预览修改默认环境，也不要
 在 ViewModel 中判断 mock/real：
 
 ```dart
-final orders = await AppContainer.shared.apiService.order
-    .fetchOrders()
-    .trackLoadingAndConsumeError(this);
+class OrdersViewModel extends OrdersViewModelType {
+  OrdersViewModel({required OrderApiService orderApiService})
+    : _orderApiService = orderApiService;
+
+  final OrderApiService _orderApiService;
+  List<MockOrderSummary> _orders = [];
+
+  Future<void> _loadOrders() async {
+    _orders = await _orderApiService
+        .fetchOrders()
+        .trackLoadingAndConsumeError(this);
+    makeRebuild();
+  }
+
+  @override
+  List<MockOrderSummary> get orders => _orders;
+}
+```
+
+对应 AppPage provider 完成依赖组装：
+
+```dart
+@override
+WidgetBuilder generateWidgetBuilder() {
+  return (_) => OrdersPage(
+    viewModelProvider: () => OrdersViewModel(
+      orderApiService: AppContainer.shared.apiService.order,
+    ),
+  );
+}
 ```
 
 ## 测试
@@ -144,4 +171,4 @@ try {
 使用 `$flutter-mvvm-api-dev` 对齐已有 contract，把 mock-only model 迁移为正式 model，
 新增 `Dio<Domain>ApiService`，并在非 mock 分支用它替换
 `Unimplemented<Domain>ApiService`。`Mock<Domain>ApiService` 可以继续用于本地预览和
-测试；聚合 `ApiService.<domain>` 及页面/ViewModel 的调用方式保持不变。
+测试；聚合 `ApiService.<domain>` 及注入 ViewModel 的 contract 保持不变。

@@ -9,9 +9,6 @@ class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
   const HomePage({super.key, required super.viewModelProvider});
 
   @override
-  HomeViewModelType defaultViewModel() => HomeViewModel();
-
-  @override
   State<HomePage> createState() => _HomePageState();
 }
 

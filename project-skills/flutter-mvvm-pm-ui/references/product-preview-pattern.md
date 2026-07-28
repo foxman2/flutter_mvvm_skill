@@ -5,14 +5,17 @@ PM 新增页面只放在 `lib/product_preview/`，用于演示 UI 和交互草�
 ## 目录
 
 ```text
-lib/product_preview/
-├── pages/
-│   └── checkout/
-│       ├── checkout_page.dart
-│       └── checkout_view_model.dart
-├── product_preview_entry_button.dart
-├── product_preview_page.dart
-└── product_preview_registry.dart
+lib/
+├── navigation/
+│   └── app_page.dart
+└── product_preview/
+    ├── pages/
+    │   └── checkout/
+    │       ├── checkout_page.dart
+    │       └── checkout_view_model.dart
+    ├── product_preview_entry_button.dart
+    ├── product_preview_page.dart
+    └── product_preview_registry.dart
 ```
 
 ## 新增页面
@@ -67,9 +70,6 @@ class CheckoutPage extends AppBaseStatefulPage<CheckoutViewModelType> {
   const CheckoutPage({super.key, required super.viewModelProvider});
 
   @override
-  CheckoutViewModelType defaultViewModel() => CheckoutViewModel();
-
-  @override
   State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
@@ -86,9 +86,39 @@ class _CheckoutPageState
 }
 ```
 
-页面使用同目录 ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，优先通过 `AppContainer.shared.apiService.<domain>` 读取 mock API 返回的数据，并用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。本文件或 ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。ViewModel 遵守正式 input/output/type 结构；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。不要把 App 级依赖加入预览 Page 或 ViewModel 构造函数，也不要创建正式 AppPage case、route parser 分支或真实 API 接入。
+页面使用同目录 ViewModel 管理展示状态和临时交互。需要列表、卡片、详情、状态等业务形态数据时，用 `$flutter-mvvm-mock-api-dev` 的目录和审核规则新增或复用 mock service。ViewModel 通过构造函数接收具体 domain service，AppPage provider 从 `AppContainer.shared` 取得并传入。本文件或 ViewModel 中的本地常量只用于纯布局占位、tab/选中态、筛选项等没有 service 层价值的小型 UI 状态。ViewModel 遵守正式 input/output/type 结构；默认 output 使用 getter + `makeRebuild()`，只有频繁或局部刷新才用 `ValueStream<T>`。
 
-## 注册预览入口
+## AppPage 与预览注册
+
+在 `app_page.dart` 添加普通 AppPage。没有外部依赖时直接构造 ViewModel：
+
+```dart
+final class CheckoutAppPage extends AppPage {
+  const CheckoutAppPage();
+
+  @override
+  String get routeName => '/product-preview/checkout';
+
+  @override
+  AppPageTransition get defaultTransition => AppPageTransition.push;
+
+  @override
+  WidgetBuilder generateWidgetBuilder() {
+    return (_) => CheckoutPage(
+      viewModelProvider: () => CheckoutViewModel(),
+    );
+  }
+}
+```
+
+需要 mock domain service 时，先让 ViewModel 构造函数接收对应 contract，再在同一个
+provider 中注入：
+
+```dart
+viewModelProvider: () => CheckoutViewModel(
+  orderApiService: AppContainer.shared.apiService.order,
+),
+```
 
 在 `product_preview_registry.dart` 添加条目：
 
@@ -97,12 +127,17 @@ ProductPreviewItem(
   id: 'checkout',
   title: (strings) => strings.productPreviewCheckoutTitle,
   description: (strings) => strings.productPreviewCheckoutDescription,
-  builder: (_) => const CheckoutPage(viewModelProvider: null),
+  appPage: const CheckoutAppPage(),
 )
 ```
 
-允许 PM 修改 registry 的 import、标题、描述和 builder。不要在 registry 中写业务判断、权限判断或 API 调用。
+`ProductPreviewItem` 保存 AppPage，列表通过 `AppNavigator` 打开它。允许 PM 修改
+registry 的 import、标题、描述和 appPage。registry 不负责创建 ViewModel，也不写
+业务判断、权限判断或 API 调用。预览 AppPage 与其他 AppPage 使用相同导航能力。
 
 ## 审核迁移
 
-开发审核通过后，用 `$flutter-mvvm-feature-dev` 把页面迁移到正式 `lib/pages/<feature>/`，补正式 AppPage 和真实导航，按行为风险决定是否需要针对性测试，并把临时展示状态替换成正式业务状态。不要直接把临时 mock 或 demo 逻辑当成最终实现。
+开发审核通过后，用 `$flutter-mvvm-feature-dev` 把页面迁移到正式
+`lib/pages/<feature>/`，把对应 AppPage 调整为正式业务页面定义，按行为风险决定是否
+需要针对性测试，并把临时展示状态替换成正式业务状态。不要直接把临时 mock 或 demo
+逻辑当成最终实现。

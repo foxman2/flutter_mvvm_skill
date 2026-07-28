@@ -5,6 +5,9 @@ import 'package:{{project_name}}/navigation/app_page_transition.dart';
 import 'package:{{project_name}}/pages/alert/alert_page.dart';
 import 'package:{{project_name}}/pages/alert/alert_view_model.dart';
 import 'package:{{project_name}}/pages/home/home_page.dart';
+import 'package:{{project_name}}/pages/home/home_view_model.dart';
+import 'package:{{project_name}}/product_preview/pages/sample_product/sample_product_page.dart';
+import 'package:{{project_name}}/product_preview/pages/sample_product/sample_product_view_model.dart';
 
 void main() {
   test('parameterized AppPage owns route metadata', () {
@@ -22,16 +25,14 @@ void main() {
     expect(page.defaultTransition, AppPageTransition.push);
   });
 
-  testWidgets('home AppPage explicitly selects the default view model', (
-    tester,
-  ) async {
+  testWidgets('home AppPage assembles its view model', (tester) async {
     await tester.pumpWidget(const SizedBox());
     final context = tester.element(find.byType(SizedBox));
 
     final widget = const HomeAppPage().generateWidgetBuilder()(context);
 
     expect(widget, isA<HomePage>());
-    expect((widget as HomePage).viewModelProvider, isNull);
+    expect((widget as HomePage).viewModelProvider(), isA<HomeViewModel>());
   });
 
   testWidgets('alert AppPage preserves its configured view model instance', (
@@ -45,13 +46,30 @@ void main() {
     final widget =
         AlertAppPage(viewModel).generateWidgetBuilder()(context) as AlertPage;
 
-    expect(widget.viewModelProvider!(), same(viewModel));
+    expect(widget.viewModelProvider(), same(viewModel));
   });
 
-  test('product preview route is isolated from business routes', () {
+  test('product preview route uses normal page transition', () {
     const page = ProductPreviewAppPage();
 
     expect(page.routeName, '/product-preview');
     expect(page.defaultTransition, AppPageTransition.push);
+  });
+
+  testWidgets('sample product AppPage assembles its view model', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const SizedBox());
+    final context = tester.element(find.byType(SizedBox));
+
+    final widget = const SampleProductAppPage().generateWidgetBuilder()(
+      context,
+    );
+
+    expect(widget, isA<SampleProductPage>());
+    expect(
+      (widget as SampleProductPage).viewModelProvider(),
+      isA<SampleProductViewModel>(),
+    );
   });
 }

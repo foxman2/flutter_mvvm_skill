@@ -36,17 +36,31 @@ final class ProfileAppPage extends AppPage {
   WidgetBuilder generateWidgetBuilder() {
     return (_) => ProfilePage(
       userId: userId,
-      viewModelProvider: () => ProfileViewModel(userId: userId),
+      viewModelProvider: () => ProfileViewModel(
+        userId: userId,
+        userRepository: AppContainer.shared.userRepository,
+      ),
     );
   }
 }
 ```
 
-provider 在 Page 初始化时才执行。不要先创建普通页面的 ViewModel 实例再传给
-Page；无页面运行参数并由 `defaultViewModel()` 创建的页面显式传
-`viewModelProvider: null`。App 级依赖从 `AppContainer.shared` 获取，不作为路由、
-Page 或 ViewModel 构造参数传递。Alert、ActionSheet、child ViewModel 等需要预配置或
-共享实例的特殊所有权场景应单独判断生命周期。
+provider 在 Page 初始化时才执行。普通页面无论是否包含路由参数，都在对应
+`AppPage` 中组合并传入非空 provider。ViewModel 使用 App 级依赖时，通过构造函数
+接收 AppPage 从 `AppContainer.shared` 取得的具体 Service 或 Repository。不要先创建
+普通页面的 ViewModel 实例再传给 Page；Alert、ActionSheet、child ViewModel 等需要
+预配置或共享实例的特殊所有权场景应单独判断生命周期。
+
+没有页面运行参数时也由 AppPage 组装：
+
+```dart
+@override
+WidgetBuilder generateWidgetBuilder() {
+  return (_) => HomePage(
+    viewModelProvider: () => HomeViewModel(),
+  );
+}
+```
 
 ## 调用方式
 

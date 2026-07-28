@@ -31,5 +31,11 @@ void main() {
 
     expect(find.text('Product Preview'), findsOneWidget);
     expect(find.text('Sample UI'), findsOneWidget);
+
+    await tester.tap(find.text('Sample UI'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Product Preview Area'), findsOneWidget);
+    expect(find.text('Mock content'), findsOneWidget);
   });
 }

@@ -9,11 +9,6 @@ class SampleProductPage
   const SampleProductPage({super.key, required super.viewModelProvider});
 
   @override
-  SampleProductViewModelType defaultViewModel() {
-    return SampleProductViewModel();
-  }
-
-  @override
   State<SampleProductPage> createState() => _SampleProductPageState();
 }
 

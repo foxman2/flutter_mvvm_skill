@@ -42,9 +42,13 @@ abstract class ProfileViewModelType extends AppBaseViewModel
     implements ProfileViewModelInput, ProfileViewModelOutput {}
 
 class ProfileViewModel extends ProfileViewModelType {
-  ProfileViewModel({required this.userId});
+  ProfileViewModel({
+    required this.userId,
+    required ProfileRepository profileRepository,
+  }) : _profileRepository = profileRepository;
 
   final String userId;
+  final ProfileRepository _profileRepository;
   String? _profileName;
 
   @override
@@ -64,9 +68,10 @@ class ProfileViewModel extends ProfileViewModelType {
   }
 
   Future<void> _loadProfile() async {
-    await Future<void>.delayed(Duration.zero)
+    final profile = await _profileRepository
+        .fetchProfile(userId)
         .trackLoadingAndConsumeError(this);
-    _profileName = 'Ada';
+    _profileName = profile.name;
     makeRebuild();
   }
 
@@ -93,11 +98,10 @@ class ProfileViewModel extends ProfileViewModelType {
 
 ## Page 写法
 
-`ViewModelProvider<T>` 是返回非空 ViewModel 的工厂，但 provider 本身可以为
-`null`。每个 ViewModel Page 都要显式接收 `required super.viewModelProvider`，
-让调用点明确选择默认实现或注入工厂。
+`ViewModelProvider<T>` 是返回非空 ViewModel 的工厂。每个 ViewModel Page 都要
+显式接收 `required super.viewModelProvider`，由对应 AppPage 提供创建工厂。
 
-ViewModel 需要路由或页面运行参数时，Page 不提供默认实现，也不接收已创建的 ViewModel 实例：
+Page 不负责创建 ViewModel，也不接收已创建的普通页面 ViewModel 实例：
 
 ```dart
 import '../../l10n/app_localizations.dart';
@@ -136,32 +140,41 @@ class _ProfilePageState
 WidgetBuilder generateWidgetBuilder() {
   return (_) => ProfilePage(
     userId: userId,
-    viewModelProvider: () => ProfileViewModel(userId: userId),
+    viewModelProvider: () => ProfileViewModel(
+      userId: userId,
+      profileRepository: AppContainer.shared.profileRepository,
+    ),
   );
 }
 ```
 
-只有 ViewModel 无路由或页面运行参数时才覆盖 `defaultViewModel()`：
+没有路由或页面运行参数时，同样由 AppPage 提供工厂：
 
 ```dart
 class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
   const HomePage({super.key, required super.viewModelProvider});
 
   @override
-  HomeViewModelType defaultViewModel() => HomeViewModel();
-
-  @override
   State<HomePage> createState() => _HomePageState();
 }
+
+final class HomeAppPage extends AppPage {
+  const HomeAppPage();
+
+  @override
+  String get routeName => Navigator.defaultRouteName;
+
+  @override
+  AppPageTransition get defaultTransition => AppPageTransition.push;
+
+  @override
+  WidgetBuilder generateWidgetBuilder() {
+    return (_) => HomePage(
+      viewModelProvider: () => HomeViewModel(),
+    );
+  }
+}
 ```
-
-调用方必须写出 `HomePage(viewModelProvider: null)`。不要用返回 `null` 的
-`_defaultProvider()` 占位，也不要让非空 provider 返回 nullable ViewModel。
-
-所有由 `AppContainer` 持有的 App 生命周期依赖都不属于页面运行参数。ViewModel
-直接从 `AppContainer.shared` 获取，不要把这些依赖加入 AppPage、Page 或 ViewModel
-构造函数。测试通过 `AppContainer.replaceForTesting()` 整体替换依赖图，并在 tearDown
-中调用 `AppContainer.restore()`；不要逐个替换或重配置具体依赖。
 
 Alert、ActionSheet、child ViewModel 等特殊场景可能需要先配置动作、回调或父子关系。
 修改前先确认谁创建、谁绑定、谁释放；不要仅为了统一写法改变现有所有权。

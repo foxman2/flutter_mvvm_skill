@@ -16,14 +16,9 @@ abstract class BaseStatefulView<ViewModel extends BaseViewModel>
     extends StatefulWidget {
   const BaseStatefulView({super.key, required this.viewModelProvider});
 
-  final ViewModelProvider<ViewModel>? viewModelProvider;
+  final ViewModelProvider<ViewModel> viewModelProvider;
 
-  ViewModel defaultViewModel() {
-    throw StateError('Provide a view model or override defaultViewModel().');
-  }
-
-  ViewModel createViewModel() =>
-      viewModelProvider?.call() ?? defaultViewModel();
+  ViewModel createViewModel() => viewModelProvider();
 }
 
 abstract class BaseStatefulViewState<

@@ -8,7 +8,7 @@
 - 跨项目可复用的生命周期代码放到 `mvvm/`：view model 绑定、dispose 管理、loading/error 跟踪和基础 page widget。
 - 模板默认启用 Flutter 官方 l10n，当前只提供 `en`。用户可见文案放在 `lib/l10n/app_en.arb`；Page/Widget 直接用 `AppLocalizations.of(context)!`，ViewModel 通过 `BaseViewModel.localStrings` callback 现用现取。
 - `localStrings` 只能在页面绑定后使用；不要在 ViewModel 构造函数或 `initState()` 里读取本地化文案。
-- 页面级 ViewModel 必须按 input/output/type 拆分：Page 泛型只依赖 `<Feature>ViewModelType`，并显式接收 nullable `viewModelProvider`。无页面运行参数的实现类可由 `defaultViewModel()` 创建；需要路由或页面运行参数的实现类由 `AppPage` 中的非空 provider 延迟创建。App 级依赖统一从 `AppContainer.shared` 获取，不通过 Page、AppPage 或 ViewModel 构造函数层层传递。
+- 页面级 ViewModel 必须按 input/output/type 拆分：Page 泛型只依赖 `<Feature>ViewModelType`，并显式接收非空 `viewModelProvider`。对应 `AppPage` 在 provider 闭包中延迟创建 ViewModel；需要 App 级依赖时，从 `AppContainer.shared` 取得具体 Service 或 Repository，并通过 ViewModel 构造函数传入。
 - input 方法只描述用户事件：点击用简短 `onClickXxx`，输入用 `onInputXxx`；业务目的放在实现类私有方法里。
 - output 默认用 getter + `makeRebuild()`。只有输入联动、进度、倒计时、刷新状态和一次性 UI 事件等高频或局部刷新场景使用 `ValueStream<T>`/`Stream<T>` 与 `ValueStreamBuilder<T>`。
 - 导航基础能力放到 `navigation/`：page model、navigator、route parser、transition enum 和 observer。
@@ -58,9 +58,9 @@ abstract class ProfileViewModelType extends AppBaseViewModel
 class ProfileViewModel extends ProfileViewModelType {}
 ```
 
-`main.dart` 负责初始化 `AppContainer` 并启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。业务代码通过 `AppContainer.shared.<dependency>` 获取 App 级依赖；测试通过整体替换并恢复 AppContainer 隔离依赖图。
+`main.dart` 负责初始化 `AppContainer` 并启动应用。`app.dart` 负责 `MaterialApp`、navigator observers、主题和 EasyLoading builder。`AppPage` 负责从 `AppContainer.shared` 取得页面 ViewModel 所需依赖并完成构造组装。
 
-`product_preview/` 是 UI 预览隔离区。首页通过悬浮按钮进入 `ProductPreviewAppPage`，新增预览页面放在 `product_preview/pages/` 并通过 `product_preview_registry.dart` 注册；审核通过后再迁移到正式 `pages/`、ViewModel 和 AppPage 导航。
+`product_preview/` 是 UI 预览隔离区。首页通过悬浮按钮进入 `ProductPreviewAppPage`，新增预览页面放在 `product_preview/pages/`，为它创建普通 AppPage，并通过 `product_preview_registry.dart` 注册；审核通过后再迁移到正式 `pages/` 和业务实现。
 
 ## 测试责任边界
 

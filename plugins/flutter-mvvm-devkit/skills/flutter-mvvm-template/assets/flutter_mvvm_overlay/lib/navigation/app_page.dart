@@ -5,8 +5,11 @@ import '../pages/action_sheet/action_sheet_view_model.dart';
 import '../pages/alert/alert_page.dart';
 import '../pages/alert/alert_view_model.dart';
 import '../pages/home/home_page.dart';
+import '../pages/home/home_view_model.dart';
 import '../pages/input_alert/input_alert_page.dart';
 import '../pages/input_alert/input_alert_view_model.dart';
+import '../product_preview/pages/sample_product/sample_product_page.dart';
+import '../product_preview/pages/sample_product/sample_product_view_model.dart';
 import '../product_preview/product_preview_page.dart';
 import '../widgets/common_bottom_sheet_container.dart';
 import 'app_page_transition.dart';
@@ -41,7 +44,7 @@ final class HomeAppPage extends AppPage {
 
   @override
   WidgetBuilder generateWidgetBuilder() {
-    return (_) => const HomePage(viewModelProvider: null);
+    return (_) => HomePage(viewModelProvider: () => HomeViewModel());
   }
 }
 
@@ -57,6 +60,22 @@ final class ProductPreviewAppPage extends AppPage {
   @override
   WidgetBuilder generateWidgetBuilder() {
     return (_) => const ProductPreviewPage();
+  }
+}
+
+final class SampleProductAppPage extends AppPage {
+  const SampleProductAppPage();
+
+  @override
+  String get routeName => '/product-preview/sample-ui';
+
+  @override
+  AppPageTransition get defaultTransition => AppPageTransition.push;
+
+  @override
+  WidgetBuilder generateWidgetBuilder() {
+    return (_) =>
+        SampleProductPage(viewModelProvider: () => SampleProductViewModel());
   }
 }
 

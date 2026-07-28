@@ -21,7 +21,7 @@ lib/
 - 文件：`<domain>_api_service.dart`
 - 正式接口：`<Domain>ApiService`
 - 真实网络实现：`Dio<Domain>ApiService`
-- 业务入口：`AppContainer.shared.apiService.<domain>`
+- AppPage 组装入口：`AppContainer.shared.apiService.<domain>`
 
 ApiService、Repository 和其他 Service 都是普通实例，不声明 `shared`。只有
 AppContainer 是全局依赖入口。
@@ -152,15 +152,19 @@ static Future<void> setup() async {
 }
 ```
 
-AppContainer 构造函数和 final 字段要同步加入 `userRepository`。ViewModel 不接收
-ApiService 或 Repository 构造参数，直接读取
-`AppContainer.shared.userRepository`；简单调用可读取
-`AppContainer.shared.apiService.user`。
+AppContainer 构造函数和 final 字段要同步加入 `userRepository`。需要该能力的
+ViewModel 通过构造函数接收 `UserRepository`；对应 AppPage provider 使用
+`AppContainer.shared.userRepository` 完成组装。简单场景也可以直接注入具体的
+`UserApiService`。
 
 ## ViewModel 调用
 
 ```dart
 class ProfileViewModel extends ProfileViewModelType {
+  ProfileViewModel({required UserRepository userRepository})
+    : _userRepository = userRepository;
+
+  final UserRepository _userRepository;
   UserProfile? _profile;
 
   @override
@@ -170,7 +174,7 @@ class ProfileViewModel extends ProfileViewModelType {
   }
 
   Future<void> _loadProfile() async {
-    _profile = await AppContainer.shared.apiService.user
+    _profile = await _userRepository
         .fetchProfile()
         .trackLoadingAndConsumeError(this);
     makeRebuild();
@@ -181,9 +185,22 @@ class ProfileViewModel extends ProfileViewModelType {
 }
 ```
 
-## 测试替换
+对应 AppPage 负责组装：
 
-测试不要修改独立 Service 或 Repository 的静态状态。先创建完整替代容器，再整体替换：
+```dart
+@override
+WidgetBuilder generateWidgetBuilder() {
+  return (_) => ProfilePage(
+    viewModelProvider: () => ProfileViewModel(
+      userRepository: AppContainer.shared.userRepository,
+    ),
+  );
+}
+```
+
+## AppContainer wiring 测试
+
+测试 AppContainer wiring 时，可以创建完整替代容器再整体替换：
 
 ```dart
 final replacement = AppContainer(
@@ -195,11 +212,14 @@ final replacement = AppContainer(
 
 AppContainer.replaceForTesting(replacement);
 try {
-  // Exercise business behavior through AppContainer.shared.
+  // Verify AppContainer wiring.
 } finally {
   AppContainer.restore();
 }
 ```
+
+ViewModel、Service 和 Repository 的单元测试直接传入 fake 或显式构造的依赖，不需要
+替换全局容器。
 
 ## 方法规则
 

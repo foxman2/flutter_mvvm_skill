@@ -9,9 +9,9 @@ PM skill 可以同时使用 `$flutter-mvvm-mock-api-dev` 并按其规则修改�
 - 遵循 `$flutter-mvvm-mock-api-dev` 的目录和命名规则。
 - mock service 放在 `lib/services/mock_api/`。
 - 后台未确认的数据结构放在 `lib/services/mock_api/models/`。
-- 外部调用仍走 `AppContainer.shared.apiService.<domain>.<method>()`；不要为 ApiService、mock service 或 Repository 新增全局单例。
+- 不要为 ApiService、mock service 或 Repository 新增全局单例；预览 AppPage provider 从 `AppContainer.shared.apiService.<domain>` 取得 contract 并通过构造函数传给 ViewModel。
 - 只有项目已经提供 `server=mock` 开关时，才原样使用 `--dart-define=server=mock` 运行本地 mock；缺少该开关时停止 PM 修改并交由开发处理。
-- 如果项目已有对应 mock service，`product_preview` 页面 ViewModel 应优先调用它，不要再硬编码一份业务形态列表或详情数据。
+- 如果项目已有对应 mock service，`product_preview` 页面 ViewModel 应优先通过构造参数使用它，不要再硬编码一份业务形态列表或详情数据。
 
 ## 必须标记待审核
 

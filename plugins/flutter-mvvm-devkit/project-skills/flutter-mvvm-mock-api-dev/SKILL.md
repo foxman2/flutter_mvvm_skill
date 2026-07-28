@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-mock-api-dev
 description: >-
-  用于已有 flutter-mvvm-template 架构项目中的后端未确认或前端先行 mock API 开发：新增或修改临时 service contract、mock service、mock-only model、Unimplemented real 占位实现、ApiService mock 实例组装和预览/原型临时数据，并保持外部调用统一走 AppContainer。占位 real 分支不依赖 Dio，也不猜 URL、字段或响应协议。不用于已确认真实后端 API；使用 flutter-mvvm-api-dev。不用于纯页面/UI/导航/组件工作；隔离预览 UI 使用 flutter-mvvm-pm-ui，正式功能 UI 使用 flutter-mvvm-feature-dev。
+  用于已有 flutter-mvvm-template 架构项目中的后端未确认或前端先行 mock API 开发：新增或修改临时 service contract、mock service、mock-only model、Unimplemented real 占位实现、ApiService mock 实例组装和预览/原型临时数据，并由 AppContainer 持有依赖、AppPage 注入页面 ViewModel。占位 real 分支不依赖 Dio，也不猜 URL、字段或响应协议。不用于已确认真实后端 API；使用 flutter-mvvm-api-dev。不用于纯页面/UI/导航/组件工作；隔离预览 UI 使用 flutter-mvvm-pm-ui，正式功能 UI 使用 flutter-mvvm-feature-dev。
 ---
 
 # Flutter MVVM Mock API Dev
@@ -12,7 +12,7 @@ description: >-
 
 - 为后台未确认的 domain 提供可供调用方使用的临时 `<Domain>ApiService` contract、`Mock<Domain>ApiService`、mock-only model、非 mock 分支的 `Unimplemented<Domain>ApiService` 占位实现和聚合 `ApiService` 实例组装。
 - 支持隔离预览或前端先行开发所需的临时 mock 数据，但新增 contract、wiring 和 mock-only model 必须在输出中标记待开发审核。
-- 当前项目应包含 `lib/app_container.dart` 和 `lib/services/api/api_service.dart`，并通过 `AppContainer.shared.apiService` 统一访问 API。
+- 当前项目应包含 `lib/app_container.dart` 和 `lib/services/api/api_service.dart`；页面 ViewModel 所需的 domain service 由 AppPage 从 AppContainer 取得并注入。
 - 项目应使用模板里的 `ApiEnvironment.mock` 或类似代码级环境开关切换 mock/real。
 
 ## 工作流程
@@ -32,14 +32,14 @@ description: >-
 
 ## 开发约定
 
-- 外部调用保持 `AppContainer.shared.apiService.<domain>.<method>()`；ApiService、mock service 和 Repository 都不声明 `shared` 或其他全局实例。
+- ApiService、mock service 和 Repository 都不声明 `shared` 或其他全局实例；AppPage provider 从 `AppContainer.shared.apiService.<domain>` 取得具体 contract 并传入 ViewModel。
 - mock service 类命名为 `Mock<Domain>ApiService`，文件命名为 `mock_<domain>_api_service.dart`，直接放在 `lib/services/mock_api/`。
 - mock 阶段就创建 `<Domain>ApiService` contract，并把 `Mock<Domain>ApiService` 接入聚合 `ApiService`；禁止的是在协议未确认时编造 `Dio<Domain>ApiService` 的 URL、字段和解析，不是禁止提供 ApiService。
 - 未确认 domain 的非 mock 占位类命名为 `Unimplemented<Domain>ApiService`；不要让它持有 Dio，也不要用 `Dio<Domain>ApiService` 名称伪装成真实网络实现。
 - mock 数据只模拟接口返回，不处理 UI loading、toast、弹窗或导航。
 - 不猜测后台 URL、字段名或统一响应 envelope；未确认内容用 mock-only model 明确隔离。
 - mock 只在 `ApiService` 组装层切换，ViewModel 和 Widget 不感知 mock/real。
-- 修改 wiring 测试时，用 mock ApiService 构造完整 AppContainer，通过 `replaceForTesting()` 整体替换并在 tearDown/finally 中 `restore()`；不要逐个重配置 service。
+- 修改 AppContainer wiring 测试时，可以用 mock ApiService 构造完整容器并整体替换；ViewModel 和 service 单元测试直接显式传入 mock。
 - 本地预览优先使用 `flutter run --dart-define=server=mock` 切换 mock，不为了预览直接改正式逻辑分支。
 
 ## 输出标准
