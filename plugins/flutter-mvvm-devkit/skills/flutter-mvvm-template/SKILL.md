@@ -21,7 +21,7 @@ python3 <skill-dir>/scripts/flutter_mvvm.py create --app-name "My App" --package
 1. 用户未提供 app 显示名或原生包名时先询问；包名对应 Android `applicationId` 和 iOS `PRODUCT_BUNDLE_IDENTIFIER`。
 2. 默认在当前目录生成项目，目录名从包名最后一段推导；仅在用户指定输出位置时传 `--output`，需要自定义目录名时传 `<project_name>`。
 3. 运行 CLI；它先执行官方 `flutter create`，再覆盖 MVVM 模板并安装项目局部 skills。
-4. 不修改已有 Flutter 应用；已有项目的页面、API、mock、代码地图或 Inspector 工作使用该项目内的局部 skills。
+4. 不修改已有 Flutter 应用；目标目录已有业务代码时停止并报告，不在创建流程中开发页面、API、mock、代码地图或 Inspector 功能。
 5. 完成后报告项目路径和 CLI 关键结果；本地工具链或网络导致最终检查失败时，区分已生成文件和未完成检查。
 
 ## 可选参数

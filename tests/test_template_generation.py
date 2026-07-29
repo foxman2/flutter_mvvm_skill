@@ -48,6 +48,10 @@ PROJECT_SKILLS = (
     "flutter-mvvm-test",
 )
 ALL_SKILL_NAMES = ("flutter-mvvm-template", *PROJECT_SKILLS)
+CROSS_SKILL_ROUTING_PHRASES = (
+    "对应开发 skill",
+    "使用该项目内的局部 skills",
+)
 ARCHITECTURE_PROJECT_SKILLS = tuple(
     skill_name
     for skill_name in PROJECT_SKILLS
@@ -184,6 +188,12 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                     other_skill_name,
                     skill_text,
                     f"{skill_name} references {other_skill_name}",
+                )
+            for routing_phrase in CROSS_SKILL_ROUTING_PHRASES:
+                self.assertNotIn(
+                    routing_phrase,
+                    skill_text,
+                    f"{skill_name} contains cross-skill routing",
                 )
 
     def test_all_marketplace_project_skills_match_source(self) -> None:

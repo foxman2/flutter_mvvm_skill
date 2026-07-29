@@ -16,7 +16,9 @@ RUNTIME="$SKILL_DIR/scripts/flutter_runtime.py"
 
 ```bash
 # 启动或复用应用
-python3 "$RUNTIME" start -- -d macos -t lib/main.dart
+# 先把 FLUTTER_TARGET_DEVICE 替换为项目支持且当前可用的设备 ID
+FLUTTER_TARGET_DEVICE="<device-id>"
+python3 "$RUNTIME" start -- -d "$FLUTTER_TARGET_DEVICE" -t lib/main.dart
 
 # 开启 Widget 选择并读取选中结果
 python3 "$RUNTIME" selected-summary
@@ -30,6 +32,7 @@ python3 "$RUNTIME" stop
 
 - 直接执行目标命令，不先搜索进程、解析 endpoint 或运行 `status`。
 - `start` 自动复用受管实例；只在 `--` 后传项目实际需要的 device、flavor、target 或 dart-define，helper 会固定添加 debug、Widget tracking 和受管参数。
+- 选择项目已包含平台目录且当前可用的设备；优先使用能提供原生 Dart VM Service 的 iOS、Android 或 macOS 目标，不假设项目支持某个固定平台。
 - 若环境限制 localhost，在执行 `selected-summary` 前申请只读访问当前项目受管 VM Service；保持命令完整，不打印或传递 URI、token 与 isolate id。
 - 只通过 helper 查看日志和异常，不直接读取 `.dart_tool/flutter-mvvm-inspector/`。
 
@@ -37,7 +40,9 @@ python3 "$RUNTIME" stop
 
 1. 每次新的“当前选中”请求都重新执行 `selected-summary`，只使用本次返回的 `creationLocation` 定位源码。
 2. 没有选中 Widget 时请用户重新选择；新结果成功前不复用上一次目标。
-3. 定位后读取源码；实际修改按对应开发 skill 的规则执行。
+3. 用户只要求定位时，读取并报告本次 `creationLocation` 对应的源码，不修改文件。
+4. 用户明确要求修改时，只调整本次选中 Widget 及直接相关的展示代码，遵循相邻实现、l10n、主题和现有状态绑定，不扩大到新的业务状态、数据层、API 或导航流程。
+5. 修改后格式化受影响文件，运行 `flutter analyze` 和受影响的已有测试；不在本工作流中新增或修改测试。
 
 ## 失败恢复
 
