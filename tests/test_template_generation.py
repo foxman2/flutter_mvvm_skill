@@ -33,6 +33,9 @@ CODE_QUALITY_SKILL_PATH = ROOT / "project-skills/code-quality"
 MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/code-quality"
 )
+MARKETPLACE_PROJECT_SKILLS_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills"
+)
 ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 PROJECT_SKILLS = (
     "code-quality",
@@ -42,7 +45,9 @@ PROJECT_SKILLS = (
     "flutter-mvvm-inspector",
     "flutter-mvvm-mock-api-dev",
     "flutter-mvvm-pm-ui",
+    "flutter-mvvm-test",
 )
+ALL_SKILL_NAMES = ("flutter-mvvm-template", *PROJECT_SKILLS)
 ARCHITECTURE_PROJECT_SKILLS = tuple(
     skill_name
     for skill_name in PROJECT_SKILLS
@@ -160,6 +165,33 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             directory_snapshot(CODE_QUALITY_SKILL_PATH),
             directory_snapshot(MARKETPLACE_CODE_QUALITY_SKILL_PATH),
         )
+
+    def test_skills_do_not_reference_other_skills(self) -> None:
+        skill_paths = {
+            "flutter-mvvm-template": ROOT / "skills/flutter-mvvm-template",
+            **{
+                skill_name: ROOT / "project-skills" / skill_name
+                for skill_name in PROJECT_SKILLS
+            },
+        }
+
+        for skill_name, skill_path in skill_paths.items():
+            skill_text = searchable_text(skill_path)
+            for other_skill_name in ALL_SKILL_NAMES:
+                if other_skill_name == skill_name:
+                    continue
+                self.assertNotIn(
+                    other_skill_name,
+                    skill_text,
+                    f"{skill_name} references {other_skill_name}",
+                )
+
+    def test_all_marketplace_project_skills_match_source(self) -> None:
+        for skill_name in PROJECT_SKILLS:
+            self.assertEqual(
+                directory_snapshot(ROOT / "project-skills" / skill_name),
+                directory_snapshot(MARKETPLACE_PROJECT_SKILLS_PATH / skill_name),
+            )
 
     def test_copy_project_skills_installs_all_managed_skills(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flutter-mvvm-project-skills-") as temporary:

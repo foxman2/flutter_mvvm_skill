@@ -7,7 +7,7 @@
 - `lib/product_preview/pages/` 中最接近的页面；模板示例存在时参考 `sample_product/`
 - `lib/product_preview/product_preview_registry.dart`
 - `lib/navigation/app_page.dart` 中现有预览 page case
-- 相关 l10n key 和 mock API
+- 相关 l10n key 和预览局部样例数据
 
 ## 目录与命名
 
@@ -20,8 +20,8 @@
 
 - 同目录 ViewModel 管理展示状态和临时交互。
 - 纯布局占位、tab、选中态和筛选项等小型 UI 状态可以本地保存。
-- 列表、卡片、详情或业务状态优先使用 `$flutter-mvvm-mock-api-dev` 的 contract 与 mock service。
-- ViewModel 通过构造函数接收 contract；AppPage provider 从 `AppContainer.shared` 取得依赖。
+- 列表、卡片、详情或业务状态使用预览目录内的局部 fixture，由同目录 ViewModel 暴露。
+- 不为预览数据新增 domain contract、ApiService wiring、mock service 或正式 model。
 - 用户可见文案走项目 l10n。
 
 ## AppPage 与注册
@@ -32,4 +32,4 @@
 
 ## 审核迁移
 
-在交付说明中标记预览页面和临时 mock/API 文件。审核通过后使用 `$flutter-mvvm-feature-dev` 迁移到 `lib/pages/<feature>/`，并用正式状态和 API 接入替换临时实现；不要直接发布 demo 逻辑。
+在交付说明中标记预览页面和局部样例数据。审核通过后保留预览作为正式开发参考，但不在本工作流中迁移到 `lib/pages/<feature>/`、接入正式状态或发布 demo 逻辑。

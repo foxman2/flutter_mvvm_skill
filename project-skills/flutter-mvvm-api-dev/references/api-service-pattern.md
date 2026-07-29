@@ -34,9 +34,6 @@
 - ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖并创建 ViewModel。
 - ApiService、Repository 和其他 Service 不声明 `shared`。
 
-## 测试
+## 协议边界
 
-- Service、Repository 和 ViewModel 测试直接传入 fake 或显式构造的依赖。
-- 一个代表性 contract 测试可同时覆盖 method、path、query/body 和 response parsing。
-- 仅测试 AppContainer wiring 时整体替换容器，并在测试结束后恢复。
-- 后台协议未确认时停止正式实现，改用 `$flutter-mvvm-mock-api-dev`。
+后台协议未确认时停止正式实现并报告缺失的路径、字段或响应结构，不创建真实 Dio 模块。

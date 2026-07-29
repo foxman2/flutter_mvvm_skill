@@ -6,7 +6,7 @@
 
 - `<feature>_page.dart` 与 `<feature>_view_model.dart`
 - 对应 AppPage case
-- 相关 Widget、l10n key 和测试
+- 相关 Widget、l10n key 和已有测试
 
 项目代码优先于本参考。保持相邻页面的基类、命名、import 和状态管理方式。
 
@@ -36,7 +36,3 @@
 - 用户可见文案写入项目现有 ARB，并遵循当前 key 命名。
 - Page 或纯 Widget 用 `AppLocalizations.of(context)!` 读取展示文案。
 - ViewModel 用 `localStrings` 读取状态、toast、弹窗和导航结果文案，但不能在构造函数或 `initState()` 中读取，因为 callback 尚未绑定。
-
-## 测试
-
-先运行受影响的已有测试。只为非平凡状态转换、异步竞争、错误恢复、关键交互或回归新增测试；纯布局、文案和可由编译器或 analyzer 约束的结构默认不单独测试。

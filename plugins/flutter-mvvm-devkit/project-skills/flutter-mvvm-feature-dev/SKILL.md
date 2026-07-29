@@ -1,19 +1,19 @@
 ---
 name: flutter-mvvm-feature-dev
 description: >-
-  在已有 flutter-mvvm-template 项目中开发正式页面、UI、共用组件、ViewModel、sealed AppPage 导航和弹层，或把已审核的 lib/product_preview/ 原型迁移为正式功能。隔离预览原型使用 flutter-mvvm-pm-ui；新增数据层按协议状态使用 flutter-mvvm-api-dev 或 flutter-mvvm-mock-api-dev；新项目使用 flutter-mvvm-template。
+  在已有 Flutter MVVM 项目中开发正式页面、UI、共用组件、ViewModel、sealed AppPage 导航和弹层，或把已审核的 lib/product_preview/ 原型迁移为正式功能。用于修改可发布的页面行为和导航；不用于创建新项目、隔离预览原型、开发数据层、API、mock service、model，或新增和修改测试。
 ---
 
 # Flutter MVVM Feature Dev
 
 ## 工作流程
 
-1. 确认项目包含 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/` 和 `lib/pages/`，并读取最相似的页面、ViewModel、AppPage 和 l10n 写法。
+1. 确认当前项目包含 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/` 和 `lib/pages/`，并读取最相似的页面、ViewModel、AppPage 和 l10n 写法；当前目录不满足时停止并要求真实项目路径，不猜测或虚构目录。
 2. 迁移预览原型时先读 `lib/product_preview/`，再按正式业务边界实现，不直接提升临时 mock 或 demo 逻辑。
 3. 让 Widget 负责展示和事件绑定，让 ViewModel 负责状态、异步、导航、弹窗和业务动作。
 4. 为可导航页面新增强类型 AppPage case；由 AppPage provider 延迟创建 ViewModel，并从 `AppContainer.shared` 取得 Service 或 Repository 后构造注入。
 5. 复用项目已有组件、主题、间距、导航、loading/error 和弹层封装。
-6. 格式化改动文件，运行 `flutter analyze` 和受影响的已有测试；只为非平凡状态转换、关键交互或回归风险新增测试。
+6. 格式化改动文件，运行 `flutter analyze` 和受影响的已有测试；不在本工作流中新增或修改测试。
 
 ## 关键边界
 

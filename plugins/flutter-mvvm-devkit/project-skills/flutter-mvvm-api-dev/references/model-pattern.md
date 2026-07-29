@@ -28,8 +28,4 @@ dart run build_runner build
 
 项目已有稳定手写解析方案时可继续使用，但同样把解析限制在 model 内。
 
-## 测试边界
-
-只为缺失值、可空兼容、嵌套集合、自定义转换、复杂序列化或已发生的解析回归新增测试。简单必填字段的生成映射由代码生成、analyzer 和代表性 API contract 覆盖。
-
 后台未确认的临时结构放入 `lib/services/mock_api/models/`，不要提前进入 `lib/models/`。

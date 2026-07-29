@@ -32,9 +32,8 @@
 - ViewModel 依赖 contract；AppPage provider 从 `AppContainer.shared.apiService.<domain>` 取得并构造注入。
 - 不在 Widget 或 ViewModel 中判断 mock/real，也不为预览改变默认环境。
 
-## 测试与迁移
+## 协议确认后的边界
 
-- 环境 wiring 变化时验证 mock 分支不会创建 Dio adapter。
-- 静态 fixture、简单字段和无分支 mock-only model 默认不测试；只覆盖延迟、错误、分页、状态切换、复杂解析或回归。
-- 后台确认后使用 `$flutter-mvvm-api-dev` 对齐 contract，把 mock-only model 迁移到正式目录，新增 Dio 实现，并只替换非 mock 分支的 Unimplemented。
-- 保持 `ApiService.<domain>` 和 ViewModel 的 contract 不变，避免重写调用方。
+- 后台确认后停止扩展临时 contract 和 mock-only model，列出路径、字段、解析和错误处理的对齐需求。
+- 保持 `ApiService.<domain>` 和调用方依赖的 contract 稳定，避免因临时实现重写调用方。
+- 不在本工作流中迁移正式 model、创建 Dio 实现或替换非 mock 分支的 Unimplemented。
