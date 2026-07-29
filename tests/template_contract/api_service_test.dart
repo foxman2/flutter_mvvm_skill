@@ -12,7 +12,7 @@ import 'package:{{project_name}}/services/api/user_api_service.dart';
 import 'package:{{project_name}}/services/mock_api/mock_user_api_service.dart';
 
 void main() {
-  test('AppContainer shared requires setup', () {
+  test('AppContainer requires setup then installs ApiService', () async {
     expect(
       () => AppContainer.shared,
       throwsA(
@@ -22,6 +22,20 @@ void main() {
           'AppContainer.setup() must be called before use.',
         ),
       ),
+    );
+
+    await AppContainer.setup();
+
+    const server = String.fromEnvironment('server');
+    final environment = resolveApiEnvironment(
+      server: server,
+      isReleaseMode: kReleaseMode,
+    );
+    expect(
+      AppContainer.shared.apiService.user,
+      environment == ApiEnvironment.mock
+          ? isA<MockUserApiService>()
+          : isA<DioUserApiService>(),
     );
   });
 
@@ -199,22 +213,6 @@ void main() {
     expect(profile.id, '42');
     expect(profile.name, 'Ada');
     expect(profile.toJson(), {'id': '42', 'name': 'Ada'});
-  });
-
-  test('AppContainer setup installs the configured ApiService', () async {
-    await AppContainer.setup();
-
-    const server = String.fromEnvironment('server');
-    final environment = resolveApiEnvironment(
-      server: server,
-      isReleaseMode: kReleaseMode,
-    );
-    expect(
-      AppContainer.shared.apiService.user,
-      environment == ApiEnvironment.mock
-          ? isA<MockUserApiService>()
-          : isA<DioUserApiService>(),
-    );
   });
 }
 

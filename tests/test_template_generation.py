@@ -33,10 +33,15 @@ CODE_QUALITY_SKILL_PATH = ROOT / "project-skills/code-quality"
 MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/code-quality"
 )
+TEST_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-test"
+MARKETPLACE_TEST_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-test"
+)
 MARKETPLACE_PROJECT_SKILLS_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills"
 )
 ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
+CONTRACT_TEST_RANDOMIZATION_SEED = 2
 PROJECT_SKILLS = (
     "code-quality",
     "flutter-mvvm-api-dev",
@@ -168,6 +173,24 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertEqual(
             directory_snapshot(CODE_QUALITY_SKILL_PATH),
             directory_snapshot(MARKETPLACE_CODE_QUALITY_SKILL_PATH),
+        )
+
+    def test_test_skill_guards_lifecycle_ordering_and_coverage(self) -> None:
+        skill_text = searchable_text(TEST_SKILL_PATH)
+
+        for guidance in (
+            "评审或仅运行时保持代码只读",
+            "`addTearDown`",
+            "--test-randomize-ordering-seed",
+            "flutter test <scope> --coverage",
+            "不为测试擅自新增全局替换或重置入口",
+        ):
+            self.assertIn(guidance, skill_text)
+        self.assertNotIn("整体替换或初始化 `AppContainer`", skill_text)
+        self.assertNotIn("在 `tearDown` 中恢复容器", skill_text)
+        self.assertEqual(
+            directory_snapshot(TEST_SKILL_PATH),
+            directory_snapshot(MARKETPLACE_TEST_SKILL_PATH),
         )
 
     def test_skills_do_not_reference_other_skills(self) -> None:
@@ -378,7 +401,14 @@ class TemplateGenerationIntegrationTests(unittest.TestCase):
                 cwd=project,
             )
             self.run_command(["flutter", "analyze"], cwd=project)
-            self.run_command(["flutter", "test"], cwd=project)
+            self.run_command(
+                [
+                    "flutter",
+                    "test",
+                    f"--test-randomize-ordering-seed={CONTRACT_TEST_RANDOMIZATION_SEED}",
+                ],
+                cwd=project,
+            )
 
             generated_architecture = "\n".join(
                 [
