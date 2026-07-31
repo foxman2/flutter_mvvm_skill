@@ -53,6 +53,7 @@ INSPECTOR_SHOW = "ext.flutter.inspector.show"
 INSPECTOR_SUMMARY = "ext.flutter.inspector.getSelectedSummaryWidget"
 INSPECTOR_EXTENSIONS = {INSPECTOR_SHOW, INSPECTOR_SUMMARY}
 INSPECTOR_OBJECT_GROUP = "flutter-mvvm-inspector"
+HOT_RESTART_TIMEOUT_SECONDS = 15.0
 
 
 class RuntimeCommandError(Exception):
@@ -315,6 +316,45 @@ def start(flutter_args: list[str]) -> int:
     print("starting")
     return 0
 
+def log_text_after(offset: int) -> str:
+    try:
+        with LOG.open("rb") as stream:
+            stream.seek(offset)
+            return stream.read().decode("utf-8", errors="replace")
+    except OSError:
+        return ""
+
+def hot_restart() -> int:
+    pid = verified_flutter_pid()
+    if pid is None:
+        print("managed Flutter instance is not running", file=sys.stderr)
+        return 1
+    try:
+        log_offset = LOG.stat().st_size
+    except OSError:
+        log_offset = 0
+    try:
+        os.kill(pid, signal.SIGUSR2)
+    except (ProcessLookupError, PermissionError, OSError) as error:
+        print(f"could not signal the managed Flutter instance: {error}", file=sys.stderr)
+        return 1
+
+    deadline = time.monotonic() + HOT_RESTART_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        output = log_text_after(log_offset)
+        if "Restarted application in" in output:
+            print("restarted")
+            return 0
+        if "hot restart failed" in output.lower() or "hot restart is not supported" in output.lower():
+            print("Flutter hot restart failed; inspect logs for details", file=sys.stderr)
+            return 1
+        if not pid_alive(pid):
+            print("managed Flutter instance stopped during hot restart", file=sys.stderr)
+            return 1
+        time.sleep(0.05)
+    print("timed out waiting for Flutter hot restart", file=sys.stderr)
+    return 1
+
 def tail_lines(limit: int) -> list[str]:
     lines: deque[str] = deque(maxlen=max(0, limit))
     for path in (OLD_LOG, LOG):
@@ -481,6 +521,7 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="command", required=True)
     start_parser = commands.add_parser("start")
     start_parser.add_argument("flutter_args", nargs=argparse.REMAINDER)
+    commands.add_parser("restart")
     commands.add_parser("status")
     for name, default in (("logs", 200), ("errors", 400)):
         command = commands.add_parser(name)
@@ -495,6 +536,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "start":
         values = args.flutter_args[1:] if args.flutter_args[:1] == ["--"] else args.flutter_args
         return start(values)
+    if args.command == "restart":
+        return hot_restart()
     if args.command == "status":
         print(status())
     elif args.command in {"logs", "errors"}:

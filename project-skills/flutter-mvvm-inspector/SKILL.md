@@ -20,6 +20,9 @@ RUNTIME="$SKILL_DIR/scripts/flutter_runtime.py"
 FLUTTER_TARGET_DEVICE="<device-id>"
 python3 "$RUNTIME" start -- -d "$FLUTTER_TARGET_DEVICE" -t lib/main.dart
 
+# 热重启当前受管实例
+python3 "$RUNTIME" restart
+
 # 开启 Widget 选择并读取选中结果
 python3 "$RUNTIME" selected-summary
 
@@ -32,6 +35,7 @@ python3 "$RUNTIME" stop
 
 - 直接执行目标命令，不先搜索进程、解析 endpoint 或运行 `status`。
 - `start` 自动复用受管实例；只在 `--` 后传项目实际需要的 device、flavor、target 或 dart-define，helper 会固定添加 debug、Widget tracking 和受管参数。
+- `restart` 只向验证过的当前项目受管进程发送 Flutter 热重启信号，并等待日志确认完成；不要在调用前搜索进程、读取 PID 或解析 endpoint。
 - 选择项目已包含平台目录且当前可用的设备；优先使用能提供原生 Dart VM Service 的 iOS、Android 或 macOS 目标，不假设项目支持某个固定平台。
 - 若环境限制 localhost，在执行 `selected-summary` 前申请只读访问当前项目受管 VM Service；保持命令完整，不打印或传递 URI、token 与 isolate id。
 - 只通过 helper 查看日志和异常，不直接读取 `.dart_tool/flutter-mvvm-inspector/`。

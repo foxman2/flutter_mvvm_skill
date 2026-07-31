@@ -31,8 +31,12 @@ running = True
 def stop(*_):
     global running
     running = False
+def restart(*_):
+    print("Performing hot restart...", flush=True)
+    print("Restarted application in 1ms.", flush=True)
 signal.signal(signal.SIGTERM, stop)
 signal.signal(signal.SIGINT, stop)
+signal.signal(signal.SIGUSR2, restart)
 if hasattr(signal, "SIGHUP"):
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 print("launch " + os.environ.get("FAKE_LABEL", "fixture"), flush=True)
@@ -252,6 +256,20 @@ class FlutterRuntimeTest(unittest.TestCase):
         (self.runtime / "flutter.log.1").write_text("\n".join(lines[:30]) + "\n")
         (self.runtime / "flutter.log").write_text("\n".join(lines[30:]) + "\n")
         self.assertEqual(lines[-200:], self.cli("logs").stdout.splitlines())
+
+    def test_hot_restart_only_signals_the_verified_managed_process(self):
+        not_running = self.cli("restart", check=False)
+        self.assertEqual(1, not_running.returncode)
+        self.assertIn("managed Flutter instance is not running", not_running.stderr)
+
+        self.start()
+        self.wait_running()
+        pid = self.records()[0]["pid"]
+
+        self.assertEqual("restarted", self.cli("restart").stdout.strip())
+        self.assertEqual(pid, self.records()[0]["pid"])
+        self.assertEqual(1, len(self.records()))
+        self.assertIn("Restarted application in 1ms.", self.cli("logs").stdout)
 
     def test_recent_flutter_and_dart_error_blocks(self):
         self.runtime.mkdir(parents=True)
