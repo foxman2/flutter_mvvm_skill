@@ -53,6 +53,11 @@ INSPECTOR_SHOW = "ext.flutter.inspector.show"
 INSPECTOR_SUMMARY = "ext.flutter.inspector.getSelectedSummaryWidget"
 INSPECTOR_EXTENSIONS = {INSPECTOR_SHOW, INSPECTOR_SUMMARY}
 INSPECTOR_OBJECT_GROUP = "flutter-mvvm-inspector"
+HTTP_TIMELINE_LOGGING = "ext.dart.io.httpEnableTimelineLogging"
+HTTP_PROFILE = "ext.dart.io.getHttpProfile"
+HTTP_CLEAR_PROFILE = "ext.dart.io.clearHttpProfile"
+HTTP_PROFILE_EXTENSIONS = {HTTP_TIMELINE_LOGGING, HTTP_PROFILE, HTTP_CLEAR_PROFILE}
+HOT_RESTART_TIMEOUT_SECONDS = 15.0
 
 
 class RuntimeCommandError(Exception):
@@ -315,6 +320,45 @@ def start(flutter_args: list[str]) -> int:
     print("starting")
     return 0
 
+def log_text_after(offset: int) -> str:
+    try:
+        with LOG.open("rb") as stream:
+            stream.seek(offset)
+            return stream.read().decode("utf-8", errors="replace")
+    except OSError:
+        return ""
+
+def hot_restart() -> int:
+    pid = verified_flutter_pid()
+    if pid is None:
+        print("managed Flutter instance is not running", file=sys.stderr)
+        return 1
+    try:
+        log_offset = LOG.stat().st_size
+    except OSError:
+        log_offset = 0
+    try:
+        os.kill(pid, signal.SIGUSR2)
+    except (ProcessLookupError, PermissionError, OSError) as error:
+        print(f"could not signal the managed Flutter instance: {error}", file=sys.stderr)
+        return 1
+
+    deadline = time.monotonic() + HOT_RESTART_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        output = log_text_after(log_offset)
+        if "Restarted application in" in output:
+            print("restarted")
+            return 0
+        if "hot restart failed" in output.lower() or "hot restart is not supported" in output.lower():
+            print("Flutter hot restart failed; inspect logs for details", file=sys.stderr)
+            return 1
+        if not pid_alive(pid):
+            print("managed Flutter instance stopped during hot restart", file=sys.stderr)
+            return 1
+        time.sleep(0.05)
+    print("timed out waiting for Flutter hot restart", file=sys.stderr)
+    return 1
+
 def tail_lines(limit: int) -> list[str]:
     lines: deque[str] = deque(maxlen=max(0, limit))
     for path in (OLD_LOG, LOG):
@@ -355,7 +399,12 @@ def error_blocks(lines: Iterable[str]) -> list[str]:
     return [block for block in blocks if block]
 
 
-def inspector_isolate(base: str, vm: dict[str, Any]) -> str:
+def extension_isolates(
+    base: str,
+    vm: dict[str, Any],
+    required_extensions: set[str],
+    purpose: str,
+) -> list[str]:
     isolate_refs = vm.get("isolates")
     if not isinstance(isolate_refs, list):
         raise RuntimeCommandError("getVM returned no isolate list")
@@ -373,19 +422,161 @@ def inspector_isolate(base: str, vm: dict[str, Any]) -> str:
         if not isinstance(isolate, dict) or isolate.get("isSystemIsolate") is True:
             continue
         extensions = isolate.get("extensionRPCs")
-        if isinstance(extensions, list) and INSPECTOR_EXTENSIONS.issubset(
+        if isinstance(extensions, list) and required_extensions.issubset(
             value for value in extensions if isinstance(value, str)
         ):
             matches.append(isolate_id)
     if not matches:
         raise RuntimeCommandError(
-            "no Flutter isolate with the required Inspector extensions is ready"
+            f"no Flutter isolate with the required {purpose} extensions is ready"
         )
+    return matches
+
+
+def extension_isolate(
+    base: str,
+    vm: dict[str, Any],
+    required_extensions: set[str],
+    purpose: str,
+) -> str:
+    matches = extension_isolates(base, vm, required_extensions, purpose)
     if len(matches) > 1:
         raise RuntimeCommandError(
-            "multiple Flutter isolates expose the required Inspector extensions"
+            f"multiple Flutter isolates expose the required {purpose} extensions"
         )
     return matches[0]
+
+
+def inspector_isolate(base: str, vm: dict[str, Any]) -> str:
+    return extension_isolate(base, vm, INSPECTOR_EXTENSIONS, "Inspector")
+
+
+def managed_vm_context(command: str) -> tuple[str, dict[str, Any]]:
+    base = managed_vm_base()
+    if base is None:
+        raise RuntimeCommandError("Flutter VM Service is not ready")
+    try:
+        vm = vm_service_result(base, "getVM")
+    except RuntimeCommandError as error:
+        raise RuntimeCommandError(
+            "Flutter VM Service endpoint exists but is unreachable; "
+            f"rerun {command} with localhost network access"
+        ) from error
+    if not isinstance(vm, dict) or not (
+        vm.get("type") == "VM" or isinstance(vm.get("isolates"), list)
+    ):
+        raise RuntimeCommandError("getVM returned an invalid VM response")
+    update_state(status="running", vm_service_discovered_at=time.time())
+    return base, vm
+
+
+def safe_network_uri(value: Any) -> str | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parts = urllib.parse.urlsplit(value)
+        port = parts.port
+    except ValueError:
+        return "<redacted-invalid-uri>"
+    if parts.scheme.lower() not in {"http", "https", "ws", "wss"} or not parts.hostname:
+        return "<redacted-uri>"
+    host = parts.hostname
+    if ":" in host:
+        host = f"[{host}]"
+    netloc = f"{host}:{port}" if port is not None else host
+    query = urllib.parse.urlencode([
+        (key, "<redacted>")
+        for key, _ in urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+    ]).replace("%3Credacted%3E", "<redacted>")
+    return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, query, ""))
+
+
+def network_request_summary(request: Any) -> dict[str, Any] | None:
+    if not isinstance(request, dict):
+        return None
+    response = request.get("response")
+    if not isinstance(response, dict):
+        response = {}
+    request_data = request.get("request")
+    if not isinstance(request_data, dict):
+        request_data = {}
+    start = request.get("startTime")
+    end = response.get("endTime", request.get("endTime"))
+    duration_ms = None
+    if isinstance(start, int) and isinstance(end, int) and end >= start:
+        duration_ms = round((end - start) / 1000, 3)
+    if response.get("error") is not None or request_data.get("error") is not None:
+        state = "error"
+    elif response.get("endTime") is not None:
+        state = "complete"
+    else:
+        state = "pending"
+    return {
+        "id": request.get("id"),
+        "method": request.get("method"),
+        "uri": safe_network_uri(request.get("uri")),
+        "state": state,
+        "statusCode": response.get("statusCode"),
+        "reasonPhrase": response.get("reasonPhrase"),
+        "startTimeMicros": start,
+        "endTimeMicros": end,
+        "durationMs": duration_ms,
+        "requestError": request_data.get("error"),
+        "responseError": response.get("error"),
+    }
+
+
+def network_start() -> None:
+    base, vm = managed_vm_context("network-start")
+    isolate_ids = extension_isolates(base, vm, HTTP_PROFILE_EXTENSIONS, "DevTools Network")
+    for isolate_id in isolate_ids:
+        vm_service_result(base, HTTP_CLEAR_PROFILE, {"isolateId": isolate_id})
+        state = vm_service_result(
+            base,
+            HTTP_TIMELINE_LOGGING,
+            {"isolateId": isolate_id, "enabled": "true"},
+        )
+        enabled = state.get("enabled") if isinstance(state, dict) else None
+        if enabled not in (True, "true"):
+            raise RuntimeCommandError("DevTools Network recording could not be enabled")
+
+
+def network_profile(limit: int) -> dict[str, Any]:
+    base, vm = managed_vm_context("network-logs")
+    isolate_ids = extension_isolates(base, vm, HTTP_PROFILE_EXTENSIONS, "DevTools Network")
+    profiles: list[dict[str, Any]] = []
+    for isolate_id in isolate_ids:
+        state = vm_service_result(base, HTTP_TIMELINE_LOGGING, {"isolateId": isolate_id})
+        enabled = state.get("enabled") if isinstance(state, dict) else None
+        if enabled not in (True, "true"):
+            raise RuntimeCommandError("DevTools Network is not recording; run network-start first")
+        profile = vm_service_result(base, HTTP_PROFILE, {"isolateId": isolate_id})
+        if not isinstance(profile, dict) or not isinstance(profile.get("requests"), list):
+            raise RuntimeCommandError("DevTools Network profile response has an invalid format")
+        profiles.append(profile)
+    requests = [
+        summary
+        for profile in profiles
+        for value in profile["requests"]
+        if (summary := network_request_summary(value)) is not None
+    ]
+    requests.sort(
+        key=lambda value: value["startTimeMicros"]
+        if isinstance(value.get("startTimeMicros"), int)
+        else -1
+    )
+    return {
+        "recording": True,
+        "timestampMicros": max(
+            (
+                profile["timestamp"]
+                for profile in profiles
+                if isinstance(profile.get("timestamp"), int)
+            ),
+            default=None,
+        ),
+        "requests": requests[-limit:] if limit else [],
+    }
 
 
 def inspector_summary_value(response: Any) -> Any:
@@ -403,21 +594,7 @@ def inspector_summary_value(response: Any) -> Any:
 
 
 def selected_summary() -> dict[str, Any]:
-    base = managed_vm_base()
-    if base is None:
-        raise RuntimeCommandError("Flutter VM Service is not ready")
-    try:
-        vm = vm_service_result(base, "getVM")
-    except RuntimeCommandError as error:
-        raise RuntimeCommandError(
-            "Flutter VM Service endpoint exists but is unreachable; "
-            "rerun selected-summary with localhost network access"
-        ) from error
-    if not isinstance(vm, dict) or not (
-        vm.get("type") == "VM" or isinstance(vm.get("isolates"), list)
-    ):
-        raise RuntimeCommandError("getVM returned an invalid VM response")
-    update_state(status="running", vm_service_discovered_at=time.time())
+    base, vm = managed_vm_context("selected-summary")
     isolate_id = inspector_isolate(base, vm)
     show = vm_service_result(
         base,
@@ -481,10 +658,14 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="command", required=True)
     start_parser = commands.add_parser("start")
     start_parser.add_argument("flutter_args", nargs=argparse.REMAINDER)
+    commands.add_parser("restart")
     commands.add_parser("status")
     for name, default in (("logs", 200), ("errors", 400)):
         command = commands.add_parser(name)
         command.add_argument("--lines", type=int, default=default)
+    commands.add_parser("network-start")
+    network_logs = commands.add_parser("network-logs")
+    network_logs.add_argument("--limit", type=int, default=100)
     commands.add_parser("endpoint")
     commands.add_parser("selected-summary")
     commands.add_parser("stop")
@@ -495,15 +676,34 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "start":
         values = args.flutter_args[1:] if args.flutter_args[:1] == ["--"] else args.flutter_args
         return start(values)
+    if args.command == "restart":
+        return hot_restart()
     if args.command == "status":
         print(status())
     elif args.command in {"logs", "errors"}:
         if args.lines < 0:
             parser().error("--lines must be non-negative")
         lines = tail_lines(args.lines)
-        text = "\n".join(lines if args.command == "logs" else error_blocks(lines))
+        output = lines if args.command == "logs" else error_blocks(lines)
+        text = "\n".join(output)
         if text:
             print(redact(text))
+    elif args.command == "network-start":
+        try:
+            network_start()
+        except RuntimeCommandError as error:
+            print(redact(str(error)), file=sys.stderr)
+            return 1
+        print("network recording started")
+    elif args.command == "network-logs":
+        if args.limit < 0:
+            parser().error("--limit must be non-negative")
+        try:
+            profile = network_profile(args.limit)
+        except RuntimeCommandError as error:
+            print(redact(str(error)), file=sys.stderr)
+            return 1
+        print(redact(json.dumps(profile, ensure_ascii=False, indent=2)))
     elif args.command == "endpoint":
         endpoint = live_endpoint()
         if endpoint is None:

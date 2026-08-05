@@ -31,8 +31,12 @@ running = True
 def stop(*_):
     global running
     running = False
+def restart(*_):
+    print("Performing hot restart...", flush=True)
+    print("Restarted application in 1ms.", flush=True)
 signal.signal(signal.SIGTERM, stop)
 signal.signal(signal.SIGINT, stop)
+signal.signal(signal.SIGUSR2, restart)
 if hasattr(signal, "SIGHUP"):
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 print("launch " + os.environ.get("FAKE_LABEL", "fixture"), flush=True)
@@ -53,6 +57,8 @@ class VMHandler(BaseHTTPRequestHandler):
     summary = None
     summary_as_json = False
     show_enabled = "true"
+    http_logging_enabled = {}
+    http_profiles = {}
 
     def send_json(self, payload):
         body = json.dumps(payload).encode()
@@ -94,6 +100,28 @@ class VMHandler(BaseHTTPRequestHandler):
             if handler.summary_as_json:
                 value = json.dumps(value)
             result = {"type": "_extensionType", "method": method, "result": value}
+        elif method == "ext.dart.io.httpEnableTimelineLogging":
+            isolate_id = query.get("isolateId")
+            if "enabled" in query:
+                handler.http_logging_enabled[isolate_id] = query["enabled"].lower() == "true"
+            result = {
+                "type": "HttpTimelineLoggingState",
+                "enabled": handler.http_logging_enabled.get(isolate_id, False),
+            }
+        elif method == "ext.dart.io.clearHttpProfile":
+            isolate_id = query.get("isolateId")
+            current = handler.http_profiles.get(isolate_id, {})
+            handler.http_profiles[isolate_id] = {
+                "type": "HttpProfile",
+                "timestamp": current.get("timestamp", 0),
+                "requests": [],
+            }
+            result = {"type": "Success"}
+        elif method == "ext.dart.io.getHttpProfile":
+            result = handler.http_profiles.get(
+                query.get("isolateId"),
+                {"type": "HttpProfile", "timestamp": 0, "requests": []},
+            )
         else:
             self.send_json({
                 "jsonrpc": "2.0",
@@ -127,6 +155,8 @@ class FlutterRuntimeTest(unittest.TestCase):
         VMHandler.summary = None
         VMHandler.summary_as_json = False
         VMHandler.show_enabled = "true"
+        VMHandler.http_logging_enabled = {}
+        VMHandler.http_profiles = {}
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), VMHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -253,6 +283,20 @@ class FlutterRuntimeTest(unittest.TestCase):
         (self.runtime / "flutter.log").write_text("\n".join(lines[30:]) + "\n")
         self.assertEqual(lines[-200:], self.cli("logs").stdout.splitlines())
 
+    def test_hot_restart_only_signals_the_verified_managed_process(self):
+        not_running = self.cli("restart", check=False)
+        self.assertEqual(1, not_running.returncode)
+        self.assertIn("managed Flutter instance is not running", not_running.stderr)
+
+        self.start()
+        self.wait_running()
+        pid = self.records()[0]["pid"]
+
+        self.assertEqual("restarted", self.cli("restart").stdout.strip())
+        self.assertEqual(pid, self.records()[0]["pid"])
+        self.assertEqual(1, len(self.records()))
+        self.assertIn("Restarted application in 1ms.", self.cli("logs").stdout)
+
     def test_recent_flutter_and_dart_error_blocks(self):
         self.runtime.mkdir(parents=True)
         lines = ["Unhandled exception:", "old failure", "#0 oldFrame (old.dart:1)"]
@@ -274,6 +318,116 @@ class FlutterRuntimeTest(unittest.TestCase):
             self.assertIn(value, errors)
         self.assertNotIn("old failure", errors)
         self.assertNotIn(SECRET, errors)
+
+    def test_devtools_network_recording_and_redacted_profile_summary(self):
+        self.start()
+        self.wait_running()
+        extensions = [
+            "ext.dart.io.httpEnableTimelineLogging",
+            "ext.dart.io.getHttpProfile",
+            "ext.dart.io.clearHttpProfile",
+        ]
+        VMHandler.vm_isolates = [
+            {"id": "isolates/background", "isSystemIsolate": False},
+            {"id": "isolates/flutter", "isSystemIsolate": False},
+        ]
+        VMHandler.isolates = {
+            "isolates/background": {
+                "type": "Isolate",
+                "id": "isolates/background",
+                "extensionRPCs": extensions,
+            },
+            "isolates/flutter": {
+                "type": "Isolate",
+                "id": "isolates/flutter",
+                "extensionRPCs": extensions,
+            },
+        }
+        VMHandler.http_profiles = {
+            isolate_id: {
+                "type": "HttpProfile",
+                "timestamp": 1,
+                "requests": [{"id": f"old-{isolate_id}"}],
+            }
+            for isolate_id in ("isolates/background", "isolates/flutter")
+        }
+
+        before_start = self.cli("network-logs", check=False)
+        self.assertEqual(1, before_start.returncode)
+        self.assertIn("run network-start first", before_start.stderr)
+        self.assertEqual(
+            "network recording started",
+            self.cli("network-start").stdout.strip(),
+        )
+        self.assertEqual(
+            {"isolates/background": True, "isolates/flutter": True},
+            VMHandler.http_logging_enabled,
+        )
+        self.assertTrue(
+            all(not profile["requests"] for profile in VMHandler.http_profiles.values())
+        )
+
+        VMHandler.http_profiles["isolates/flutter"] = {
+            "type": "HttpProfile",
+            "timestamp": 1_800_000,
+            "requests": [
+                {
+                    "type": "@HttpProfileRequest",
+                    "id": "request-1",
+                    "isolateId": "isolates/flutter",
+                    "method": "GET",
+                    "uri": "https://user:password@api.example.test/posts?page=2&token=secret#part",
+                    "events": [],
+                    "startTime": 1_000_000,
+                    "endTime": 1_200_000,
+                    "request": {
+                        "headers": {"authorization": "Bearer secret"},
+                        "cookies": ["session=secret"],
+                    },
+                    "response": {
+                        "statusCode": 200,
+                        "reasonPhrase": "OK",
+                        "endTime": 1_250_000,
+                        "headers": {"set-cookie": "session=secret"},
+                    },
+                },
+            ],
+        }
+        VMHandler.http_profiles["isolates/background"] = {
+            "type": "HttpProfile",
+            "timestamp": 1_900_000,
+            "requests": [
+                {
+                    "type": "@HttpProfileRequest",
+                    "id": "request-2",
+                    "isolateId": "isolates/background",
+                    "method": "POST",
+                    "uri": "https://api.example.test/posts",
+                    "events": [],
+                    "startTime": 1_500_000,
+                    "request": {"error": "connection failed"},
+                },
+            ],
+        }
+
+        output = self.cli("network-logs", "--limit", "1")
+        profile = json.loads(output.stdout)
+
+        self.assertTrue(profile["recording"])
+        self.assertEqual(1_900_000, profile["timestampMicros"])
+        self.assertEqual(1, len(profile["requests"]))
+        self.assertEqual("request-2", profile["requests"][0]["id"])
+        self.assertEqual("error", profile["requests"][0]["state"])
+        all_output = self.cli("network-logs", "--limit", "2").stdout
+        self.assertIn("page=<redacted>&token=<redacted>", all_output)
+        for secret in ("user", "password", "Bearer secret", "session=secret", "#part"):
+            self.assertNotIn(secret, all_output)
+        self.assertNotIn("isolateId", all_output)
+        self.assertIn('"durationMs": 250.0', all_output)
+
+        negative = self.cli("network-logs", "--limit", "-1", check=False)
+        self.assertNotEqual(0, negative.returncode)
+        self.assertIn("--limit must be non-negative", negative.stderr)
 
     def test_selected_summary_runs_the_complete_inspector_flow(self):
         self.start()

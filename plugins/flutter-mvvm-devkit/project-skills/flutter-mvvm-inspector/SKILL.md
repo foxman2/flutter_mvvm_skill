@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-inspector
 description: >-
-  通过 bundled helper 管理已有 Flutter 项目的单个受管 debug 实例，查看日志与异常，并使用 Flutter Inspector 定位当前选中 Widget 的本地源码。用于运行诊断或定位、修改“当前选中” Widget；不用于接管外部进程、接受用户提供的 VM Service URI、创建项目或独立开发功能。
+  通过 bundled helper 管理已有 Flutter 项目的单个受管 debug 实例，读取应用、异常与 HTTP 网络请求日志，并使用 Flutter Inspector 定位当前选中 Widget 的本地源码。用于运行诊断、排查网络请求，或定位、修改“当前选中” Widget；不用于接管外部进程、接受用户提供的 VM Service URI、创建项目或独立开发功能。
 ---
 
 # Flutter MVVM Inspector
@@ -20,18 +20,29 @@ RUNTIME="$SKILL_DIR/scripts/flutter_runtime.py"
 FLUTTER_TARGET_DEVICE="<device-id>"
 python3 "$RUNTIME" start -- -d "$FLUTTER_TARGET_DEVICE" -t lib/main.dart
 
+# 热重启当前受管实例
+python3 "$RUNTIME" restart
+
 # 开启 Widget 选择并读取选中结果
 python3 "$RUNTIME" selected-summary
 
 # 失败后诊断，或按用户要求执行
 python3 "$RUNTIME" status
 python3 "$RUNTIME" errors --lines 400
+python3 "$RUNTIME" network-start
+# 在应用中复现请求后读取最近记录
+python3 "$RUNTIME" network-logs --limit 100
 python3 "$RUNTIME" logs --lines 200
 python3 "$RUNTIME" stop
 ```
 
 - 直接执行目标命令，不先搜索进程、解析 endpoint 或运行 `status`。
 - `start` 自动复用受管实例；只在 `--` 后传项目实际需要的 device、flavor、target 或 dart-define，helper 会固定添加 debug、Widget tracking 和受管参数。
+- `restart` 只向验证过的当前项目受管进程发送 Flutter 热重启信号，并等待日志确认完成；不要在调用前搜索进程、读取 PID 或解析 endpoint。
+- 排查 API 调用时，先执行 `network-start` 清空旧记录并开启 DevTools Network，再让用户复现操作，最后执行 `network-logs`。不要在开启记录前让用户复现。
+- `network-logs` 通过受管 VM Service 聚合所有应用 isolate 的 `dart:io` HTTP Profile，适用于 iOS、Android 和其他原生 Dart 目标，包括 Dio 请求；输出方法、脱敏查询参数后的 URI、状态、耗时与错误，不输出 isolate id、headers、cookies 或 body。
+- `network-start` 或 `network-logs` 遇到 localhost 限制时，申请只读访问当前项目受管 VM Service 后重试；保持命令完整，不打印或传递 URI、token 与 isolate id。
+- 每次 `restart` 或应用重新启动后都重新执行 `network-start`；HTTP Profile 只包含开启记录后发出的请求。
 - 选择项目已包含平台目录且当前可用的设备；优先使用能提供原生 Dart VM Service 的 iOS、Android 或 macOS 目标，不假设项目支持某个固定平台。
 - 若环境限制 localhost，在执行 `selected-summary` 前申请只读访问当前项目受管 VM Service；保持命令完整，不打印或传递 URI、token 与 isolate id。
 - 只通过 helper 查看日志和异常，不直接读取 `.dart_tool/flutter-mvvm-inspector/`。
