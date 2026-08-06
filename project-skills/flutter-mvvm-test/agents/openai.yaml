@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM 测试"
   short_description: "为 Flutter MVVM 项目设计、补充、修复和验证行为测试"
-  default_prompt: "使用 $flutter-mvvm-test 为已有 Flutter MVVM 功能设计并实现稳定、针对性的行为测试。"
+  default_prompt: "使用 $flutter-mvvm-test 检查非视觉 Flutter 改动的现有行为覆盖，并按需补充、修复和运行针对性测试。"

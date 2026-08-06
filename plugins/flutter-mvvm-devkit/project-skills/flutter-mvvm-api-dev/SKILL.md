@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-api-dev
 description: >-
-  在已有 Flutter MVVM 项目中开发协议已确认的正式后端 API，包括 domain contract、Dio 实现、request/response model、Repository/ViewModel 接入，以及把现有临时数据实现迁移为正式实现。用于路径、字段和响应结构已经确认的接口；不用于协议未确认的临时实现、纯页面或导航开发，或新增和修改测试。
+  在已有 Flutter MVVM 项目中开发协议已确认的正式后端 API，包括 domain contract、Dio 实现、request/response model、Repository/ViewModel 接入，以及把现有临时数据实现迁移为正式实现。用于路径、字段和响应结构已经确认的接口；不用于协议未确认的临时实现、纯页面或导航开发。
 ---
 
 # Flutter MVVM API Dev
@@ -13,7 +13,7 @@ description: >-
 3. 沿用项目序列化方案；默认使用 `json_serializable`，并把字段解析限制在 model 内。
 4. 让 Dio 实现复用 `ApiService` 配置的 client，通过 `.parseData(...)` 统一解析数据和转换 `DioException`。
 5. 通过构造函数把 domain service 或 repository 注入 ViewModel；对应 AppPage provider 从 `AppContainer.shared` 取得依赖并完成组装。
-6. 采用 `json_serializable` 时运行 `dart run build_runner build`，再格式化、运行 `flutter analyze` 和受影响的已有测试；不在本工作流中新增或修改测试。
+6. 采用 `json_serializable` 时运行 `dart run build_runner build`，再格式化并运行 `flutter analyze`；受影响的 API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 行为必须由相关测试直接覆盖并运行。
 
 ## 关键边界
 

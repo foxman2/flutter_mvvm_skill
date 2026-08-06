@@ -1,7 +1,7 @@
 ---
 name: flutter-mvvm-pm-ui
 description: >-
-  在已有 Flutter MVVM 项目中完成用户明确要求的 PM 评审、UI 原型、隔离预览或非发布展示调整，包括展示型 UI、文案、样式、lib/product_preview/ 页面、对应 AppPage 和预览局部样例数据。用于不改变正式业务行为的产品展示；不用于正式业务逻辑、domain API contract、依赖装配、正式 model、真实 Dio 请求、正式页面迁移，或新增和修改测试。
+  在已有 Flutter MVVM 项目中完成用户明确要求的 PM 评审、UI 原型、隔离预览或非发布展示调整，包括展示型 UI、文案、样式、lib/product_preview/ 页面、对应 AppPage 和预览局部样例数据。用于不改变正式业务行为的产品展示；不用于正式业务逻辑、domain API contract、依赖装配、正式 model、真实 Dio 请求或正式页面迁移。
 ---
 
 # Flutter MVVM PM UI
@@ -18,7 +18,7 @@ description: >-
 2. 现有 UI 微调只改展示层；新页面或流程原型只放入 `lib/product_preview/`，并使用同目录 ViewModel 管理展示状态和临时交互。
 3. 业务形态数据和纯布局占位、tab、选中态或筛选项等临时状态都保持在预览局部，不进入正式数据层。
 4. 复用项目已有组件、theme、间距、按钮和弹层风格。
-5. 格式化、运行 `flutter analyze` 和受影响的已有测试，并通过实际 Product Preview 验收；不在本工作流中新增或修改测试。
+5. 格式化、运行 `flutter analyze` 并通过实际 Product Preview 验收；纯展示、静态 fixture 和静态文案改动不新增或修改测试；预览 ViewModel 状态、callback 或临时交互改动必须由相关行为测试直接覆盖并运行，混合改动只验证行为部分。
 6. 交付时列出 PM 改动、预览局部样例数据和不得直接发布的预览页面。
 
 ## 关键边界
@@ -26,7 +26,7 @@ description: >-
 - 不修改正式 ViewModel 的状态、异步、业务动作、导航决策或数据持久化，也不修改与预览无关的 AppPage、route parser 和正式依赖。
 - 不新增或修改 domain API contract、ApiService wiring、mock service、正式 model、真实 Dio 请求、认证、埋点、推送或持久化逻辑。
 - 不得新增或修改任何 Dart define、环境解析、默认环境、启动配置、构建脚本或 CI 参数。
-- 仅在项目已有开关时原样使用 `--dart-define=server=mock`；缺少开关或需要新环境参数时停止 PM 修改并交由开发处理。
+- 仅在项目已有开关时原样使用 `--dart-define=server=mock`；缺少开关或需要新环境参数时停止 PM 修改并报告缺失配置。
 
 ## 读取参考
 

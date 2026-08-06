@@ -19,10 +19,29 @@
 ## ViewModel 职责
 
 - input 表达用户或生命周期事件，并跟随项目已有 `onClickXxx`、`onInputXxx` 等命名。
-- output 暴露展示状态；默认使用 getter 配合 `makeRebuild()`。
+- output 暴露依赖业务状态、异步结果、页面参数或用户操作的展示状态；默认使用 getter 配合 `makeRebuild()`。
 - 仅为输入联动、进度、倒计时、刷新或一次性 UI 事件等局部高频状态使用 `ValueStream<T>`/`Stream<T>`。
 - 内部状态保持私有；异步 loading/error 使用项目现有 tracker。
 - 导航、弹窗和业务动作由 ViewModel 发起，Widget 只绑定事件。
+
+## 展示值归属
+
+- 新增 ViewModel Output 前先识别值的依赖，不因相邻页面已有同名 Output 就直接照搬。
+- 仅依赖 l10n、Theme 或 BuildContext 的固定文案和样式由 Page/Widget 直接读取。
+- 不得为单纯返回 `localStrings.xxx` 的值新增 ViewModel Output、接口 getter 或实现 getter。
+- 仅当值依赖业务状态、异步结果、页面参数或用户操作时，才作为 ViewModel Output。
+
+固定页面标题直接留在 Page：
+
+```dart
+title: Text(strings.dragDropEditTitle),
+```
+
+不要为它新增纯透传：
+
+```dart
+String get title => localStrings.dragDropEditTitle;
+```
 
 ## Page 与依赖
 
@@ -35,4 +54,4 @@
 
 - 用户可见文案写入项目现有 ARB，并遵循当前 key 命名。
 - Page 或纯 Widget 用 `AppLocalizations.of(context)!` 读取展示文案。
-- ViewModel 用 `localStrings` 读取状态、toast、弹窗和导航结果文案，但不能在构造函数或 `initState()` 中读取，因为 callback 尚未绑定。
+- ViewModel 用 `localStrings` 读取状态派生文案、toast、弹窗和导航结果文案，但不能在构造函数或 `initState()` 中读取，因为 callback 尚未绑定。
