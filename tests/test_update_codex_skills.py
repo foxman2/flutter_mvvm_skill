@@ -25,6 +25,7 @@ UPDATER_PATH = (
     / "update-codex-skills.py"
 )
 GENERATOR_PATH = ROOT / "skills" / "flutter-mvvm-template" / "scripts" / "flutter_mvvm.py"
+RETIRED_TEST_SKILL_NAME = "flutter-mvvm-" + "test"
 
 
 def load_module(name: str, path: Path):
@@ -238,7 +239,7 @@ class UpdateCodexSkillsTests(unittest.TestCase):
         target = self.target_with_sentinel()
         skills_dir = target / ".codex" / "skills"
         for name, marker in {
-            "retired-skill": "old managed",
+            RETIRED_TEST_SKILL_NAME: "old managed",
             "shared-skill": "old shared",
             "local-skill": "user local",
         }.items():
@@ -250,7 +251,7 @@ class UpdateCodexSkillsTests(unittest.TestCase):
                 {
                     "asset": "old-release-file.tar.gz",
                     "version": "v0.1.0",
-                    "managedSkills": ["retired-skill", "shared-skill"],
+                    "managedSkills": [RETIRED_TEST_SKILL_NAME, "shared-skill"],
                 }
             ),
             encoding="utf-8",
@@ -262,7 +263,7 @@ class UpdateCodexSkillsTests(unittest.TestCase):
         package = updater.update_project(target, "main", self.repository_url)
 
         self.assertEqual(package.version, "0.2.0")
-        self.assertFalse((skills_dir / "retired-skill").exists())
+        self.assertFalse((skills_dir / RETIRED_TEST_SKILL_NAME).exists())
         self.assertIn("main shared", (skills_dir / "shared-skill/SKILL.md").read_text())
         self.assertTrue((skills_dir / "main-only-skill/SKILL.md").is_file())
         self.assertEqual((skills_dir / "local-skill/SKILL.md").read_text(), "user local\n")

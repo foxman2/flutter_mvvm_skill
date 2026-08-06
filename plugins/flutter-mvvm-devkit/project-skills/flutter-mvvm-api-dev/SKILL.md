@@ -13,7 +13,7 @@ description: >-
 3. 沿用项目序列化方案；默认使用 `json_serializable`，并把字段解析限制在 model 内。
 4. 让 Dio 实现复用 `ApiService` 配置的 client，通过 `.parseData(...)` 统一解析数据和转换 `DioException`。
 5. 通过构造函数把 domain service 或 repository 注入 ViewModel；对应 AppPage provider 从 `AppContainer.shared` 取得依赖并完成组装。
-6. 采用 `json_serializable` 时运行 `dart run build_runner build`，再格式化并运行 `flutter analyze`；受影响的 API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 行为必须由相关测试直接覆盖并运行。
+6. 采用 `json_serializable` 时运行 `dart run build_runner build`，再格式化并运行 `flutter analyze`；API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 全部属于非视觉改动，先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试。
 
 ## 关键边界
 

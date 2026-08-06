@@ -13,7 +13,7 @@ description: >-
 3. 让 Widget 负责固定展示内容和事件绑定，让 ViewModel 负责状态、异步、导航、弹窗和业务动作。
 4. 为可导航页面新增强类型 AppPage case；由 AppPage provider 延迟创建 ViewModel，并从 `AppContainer.shared` 取得 Service 或 Repository 后构造注入。
 5. 复用项目已有组件、主题、间距、导航、loading/error 和弹层封装。
-6. 格式化改动文件并运行 `flutter analyze`；纯展示改动不新增或修改测试，通过实际界面验收；其余改动必须由相关行为测试直接覆盖并运行，混合改动只验证行为部分。
+6. 格式化改动文件并运行 `flutter analyze`；纯展示改动不新增或修改测试，通过实际界面验收；其余改动先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试；混合改动只覆盖行为部分。
 
 ## 关键边界
 

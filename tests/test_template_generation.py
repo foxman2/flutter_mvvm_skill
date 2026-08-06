@@ -36,12 +36,13 @@ CODE_QUALITY_SKILL_PATH = ROOT / "project-skills/code-quality"
 MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/code-quality"
 )
-TEST_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-test"
-MARKETPLACE_TEST_SKILL_PATH = (
-    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-test"
-)
 MARKETPLACE_PROJECT_SKILLS_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills"
+)
+RETIRED_TEST_SKILL_NAME = "flutter-mvvm-" + "test"
+RETIRED_TEST_SKILL_PATH = ROOT / "project-skills" / RETIRED_TEST_SKILL_NAME
+MARKETPLACE_RETIRED_TEST_SKILL_PATH = (
+    MARKETPLACE_PROJECT_SKILLS_PATH / RETIRED_TEST_SKILL_NAME
 )
 ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 CONTRACT_TEST_RANDOMIZATION_SEED = 2
@@ -53,7 +54,6 @@ PROJECT_SKILLS = (
     "flutter-mvvm-inspector",
     "flutter-mvvm-mock-api-dev",
     "flutter-mvvm-pm-ui",
-    "flutter-mvvm-test",
 )
 ALL_SKILL_NAMES = ("flutter-mvvm-template", *PROJECT_SKILLS)
 CROSS_SKILL_ROUTING_PHRASES = (
@@ -180,40 +180,61 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             directory_snapshot(MARKETPLACE_CODE_QUALITY_SKILL_PATH),
         )
 
-    def test_test_skill_guards_lifecycle_ordering_and_coverage(self) -> None:
-        skill_text = searchable_text(TEST_SKILL_PATH)
-
-        for guidance in (
-            "评审或仅运行时保持代码只读",
-            "`addTearDown`",
-            "--test-randomize-ordering-seed",
-            "flutter test <scope> --coverage",
-            "不为测试擅自新增全局替换或重置入口",
-        ):
-            self.assertIn(guidance, skill_text)
-        self.assertNotIn("整体替换或初始化 `AppContainer`", skill_text)
-        self.assertNotIn("在 `tearDown` 中恢复容器", skill_text)
-        self.assertEqual(
-            directory_snapshot(TEST_SKILL_PATH),
-            directory_snapshot(MARKETPLACE_TEST_SKILL_PATH),
+    def test_retired_testing_skill_is_absent(self) -> None:
+        self.assertFalse(RETIRED_TEST_SKILL_PATH.exists())
+        self.assertFalse(MARKETPLACE_RETIRED_TEST_SKILL_PATH.exists())
+        self.assertNotIn(
+            RETIRED_TEST_SKILL_NAME,
+            (ROOT / "README.md").read_text(encoding="utf-8"),
         )
+        for skill_name in PROJECT_SKILLS:
+            self.assertNotIn(
+                RETIRED_TEST_SKILL_NAME,
+                searchable_text(ROOT / "project-skills" / skill_name),
+            )
 
-    def test_testing_responsibilities_are_centralized(self) -> None:
-        test_skill_entry = (TEST_SKILL_PATH / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        test_skill = searchable_text(TEST_SKILL_PATH)
-        for guidance in (
-            "任何新增、修改或重构的非纯视觉 Flutter 代码",
-            "纯视觉任务不新增或修改测试",
-            "非视觉部分从用户可观察行为和稳定 contract 定义覆盖",
+    def test_development_skills_own_testing_completion_gates(self) -> None:
+        direct_coverage_gate = (
+            "先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract",
+            "仅执行到相关代码不算直接覆盖",
             "覆盖充分时复跑并记录依据",
             "覆盖不足时才新增或更新最小测试",
-            "混合改动只验证行为部分",
-            "仅执行到相关代码或拥有行覆盖不算",
+        )
+        for skill_path in (
+            FEATURE_DEV_SKILL_PATH,
+            API_DEV_SKILL_PATH,
+            MOCK_API_DEV_SKILL_PATH,
+            PM_UI_SKILL_PATH,
         ):
-            self.assertIn(guidance, test_skill_entry)
-        self.assertNotIn("用于用户明确要求新增测试", test_skill_entry)
+            skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+            for guidance in direct_coverage_gate:
+                self.assertIn(guidance, skill)
+
+        development_gates = {
+            FEATURE_DEV_SKILL_PATH: (
+                "纯展示改动不新增或修改测试",
+                "混合改动只覆盖行为部分",
+            ),
+            API_DEV_SKILL_PATH: (
+                "API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 全部属于非视觉改动",
+            ),
+            MOCK_API_DEV_SKILL_PATH: (
+                "domain contract、mock 返回、非 mock fail-fast、wiring 和调用方全部属于非视觉改动",
+                "不通过测试固化未确认的真实 URL",
+            ),
+            PM_UI_SKILL_PATH: (
+                "纯展示、静态 fixture 和静态文案改动不新增或修改测试",
+                "混合改动只覆盖行为部分",
+            ),
+            INSPECTOR_SKILL_PATH: (
+                "纯展示修改不新增或修改测试",
+                "涉及状态、callback、校验、交互、数据、API、导航、弹层结果或异步行为，停止本工作流并报告超出当前范围",
+            ),
+        }
+        for skill_path, expected_guidance in development_gates.items():
+            skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+            for guidance in expected_guidance:
+                self.assertIn(guidance, skill)
 
         detailed_test_guidance = (
             "`addTearDown`",
@@ -222,44 +243,10 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             "--test-randomize-ordering-seed",
             "flutter test <scope> --coverage",
         )
-        for guidance in detailed_test_guidance:
-            self.assertIn(guidance, test_skill)
-
-        development_gates = {
-            FEATURE_DEV_SKILL_PATH: (
-                "纯展示改动不新增或修改测试",
-                "其余改动必须由相关行为测试直接覆盖并运行",
-                "混合改动只验证行为部分",
-            ),
-            API_DEV_SKILL_PATH: (
-                "必须由相关测试直接覆盖并运行",
-            ),
-            MOCK_API_DEV_SKILL_PATH: (
-                "必须由相关测试直接覆盖并运行",
-                "不通过测试固化未确认的真实 URL",
-            ),
-            PM_UI_SKILL_PATH: (
-                "纯展示、静态 fixture 和静态文案改动不新增或修改测试",
-                "预览 ViewModel 状态、callback 或临时交互改动必须由相关行为测试直接覆盖并运行",
-                "混合改动只验证行为部分",
-            ),
-            INSPECTOR_SKILL_PATH: (
-                "纯展示修改不新增或修改测试",
-                "涉及状态、callback、数据、API 或导航行为，停止本工作流并报告超出当前范围",
-            ),
-        }
-        for skill_path, expected_guidance in development_gates.items():
-            skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
-            for guidance in expected_guidance:
-                self.assertIn(guidance, skill)
-
         for skill_name in PROJECT_SKILLS:
-            if skill_name == "flutter-mvvm-test":
-                continue
-            skill_path = ROOT / "project-skills" / skill_name
             markdown = "\n".join(
                 path.read_text(encoding="utf-8")
-                for path in sorted(skill_path.rglob("*.md"))
+                for path in sorted((ROOT / "project-skills" / skill_name).rglob("*.md"))
             )
             for guidance in detailed_test_guidance:
                 self.assertNotIn(guidance, markdown)
@@ -277,11 +264,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
 
         code_quality = searchable_text(CODE_QUALITY_SKILL_PATH)
         self.assertIn("遵循项目已有验证要求", code_quality)
-
-        test_metadata = (TEST_SKILL_PATH / "agents/openai.yaml").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("检查非视觉 Flutter 改动的现有行为覆盖", test_metadata)
 
     def test_skills_do_not_reference_other_skills(self) -> None:
         skill_paths = {
@@ -310,6 +292,18 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                 )
 
     def test_all_marketplace_project_skills_match_source(self) -> None:
+        canonical_skill_names = tuple(
+            path.name
+            for path in sorted((ROOT / "project-skills").iterdir())
+            if path.is_dir()
+        )
+        marketplace_skill_names = tuple(
+            path.name
+            for path in sorted(MARKETPLACE_PROJECT_SKILLS_PATH.iterdir())
+            if path.is_dir()
+        )
+        self.assertEqual(canonical_skill_names, PROJECT_SKILLS)
+        self.assertEqual(marketplace_skill_names, PROJECT_SKILLS)
         for skill_name in PROJECT_SKILLS:
             self.assertEqual(
                 directory_snapshot(ROOT / "project-skills" / skill_name),

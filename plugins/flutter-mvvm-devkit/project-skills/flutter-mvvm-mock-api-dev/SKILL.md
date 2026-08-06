@@ -13,7 +13,7 @@ description: >-
 3. 在 `lib/services/mock_api/mock_<domain>_api_service.dart` 实现 contract；复用已确认 model，未确认结构放入 `lib/services/mock_api/models/`。
 4. 只在 `ApiService` 组装层根据现有环境开关选择 Mock、Unimplemented 或已有 Dio 实现，不在 Widget 或 ViewModel 中判断 mock/real。
 5. 由 AppPage provider 从 `AppContainer.shared.apiService.<domain>` 取得 contract，并通过构造函数注入 ViewModel。
-6. 把新增 contract、wiring、mock service 和 mock-only model 标记为待开发审核；格式化并运行 `flutter analyze`；受影响的 domain contract、mock 返回、非 mock fail-fast、wiring 和调用方行为必须由相关测试直接覆盖并运行。
+6. 把新增 contract、wiring、mock service 和 mock-only model 标记为待开发审核；格式化并运行 `flutter analyze`；domain contract、mock 返回、非 mock fail-fast、wiring 和调用方全部属于非视觉改动，先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试。
 7. 后端协议确认后停止本工作流，记录 contract 对齐、model 迁移和非 mock 分支实现需求，不在此处新增真实 Dio 实现。
 
 ## 关键边界
