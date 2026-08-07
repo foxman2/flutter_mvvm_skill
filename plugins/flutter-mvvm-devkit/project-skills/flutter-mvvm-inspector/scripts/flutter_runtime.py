@@ -55,8 +55,14 @@ INSPECTOR_EXTENSIONS = {INSPECTOR_SHOW, INSPECTOR_SUMMARY}
 INSPECTOR_OBJECT_GROUP = "flutter-mvvm-inspector"
 HTTP_TIMELINE_LOGGING = "ext.dart.io.httpEnableTimelineLogging"
 HTTP_PROFILE = "ext.dart.io.getHttpProfile"
+HTTP_PROFILE_REQUEST = "ext.dart.io.getHttpProfileRequest"
 HTTP_CLEAR_PROFILE = "ext.dart.io.clearHttpProfile"
-HTTP_PROFILE_EXTENSIONS = {HTTP_TIMELINE_LOGGING, HTTP_PROFILE, HTTP_CLEAR_PROFILE}
+HTTP_PROFILE_EXTENSIONS = {
+    HTTP_TIMELINE_LOGGING,
+    HTTP_PROFILE,
+    HTTP_PROFILE_REQUEST,
+    HTTP_CLEAR_PROFILE,
+}
 HOT_RESTART_TIMEOUT_SECONDS = 15.0
 
 
@@ -470,30 +476,9 @@ def managed_vm_context(command: str) -> tuple[str, dict[str, Any]]:
     return base, vm
 
 
-def safe_network_uri(value: Any) -> str | None:
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        parts = urllib.parse.urlsplit(value)
-        port = parts.port
-    except ValueError:
-        return "<redacted-invalid-uri>"
-    if parts.scheme.lower() not in {"http", "https", "ws", "wss"} or not parts.hostname:
-        return "<redacted-uri>"
-    host = parts.hostname
-    if ":" in host:
-        host = f"[{host}]"
-    netloc = f"{host}:{port}" if port is not None else host
-    query = urllib.parse.urlencode([
-        (key, "<redacted>")
-        for key, _ in urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
-    ]).replace("%3Credacted%3E", "<redacted>")
-    return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, query, ""))
-
-
-def network_request_summary(request: Any) -> dict[str, Any] | None:
+def add_network_derived_fields(request: Any) -> dict[str, Any]:
     if not isinstance(request, dict):
-        return None
+        raise RuntimeCommandError("DevTools Network request response has an invalid format")
     response = request.get("response")
     if not isinstance(response, dict):
         response = {}
@@ -511,19 +496,10 @@ def network_request_summary(request: Any) -> dict[str, Any] | None:
         state = "complete"
     else:
         state = "pending"
-    return {
-        "id": request.get("id"),
-        "method": request.get("method"),
-        "uri": safe_network_uri(request.get("uri")),
-        "state": state,
-        "statusCode": response.get("statusCode"),
-        "reasonPhrase": response.get("reasonPhrase"),
-        "startTimeMicros": start,
-        "endTimeMicros": end,
-        "durationMs": duration_ms,
-        "requestError": request_data.get("error"),
-        "responseError": response.get("error"),
-    }
+    result = dict(request)
+    result["state"] = state
+    result["durationMs"] = duration_ms
+    return result
 
 
 def network_start() -> None:
@@ -544,7 +520,7 @@ def network_start() -> None:
 def network_profile(limit: int) -> dict[str, Any]:
     base, vm = managed_vm_context("network-logs")
     isolate_ids = extension_isolates(base, vm, HTTP_PROFILE_EXTENSIONS, "DevTools Network")
-    profiles: list[dict[str, Any]] = []
+    profiles: list[tuple[str, dict[str, Any]]] = []
     for isolate_id in isolate_ids:
         state = vm_service_result(base, HTTP_TIMELINE_LOGGING, {"isolateId": isolate_id})
         enabled = state.get("enabled") if isinstance(state, dict) else None
@@ -553,29 +529,44 @@ def network_profile(limit: int) -> dict[str, Any]:
         profile = vm_service_result(base, HTTP_PROFILE, {"isolateId": isolate_id})
         if not isinstance(profile, dict) or not isinstance(profile.get("requests"), list):
             raise RuntimeCommandError("DevTools Network profile response has an invalid format")
-        profiles.append(profile)
-    requests = [
-        summary
-        for profile in profiles
+        profiles.append((isolate_id, profile))
+    request_refs = [
+        (isolate_id, value)
+        for isolate_id, profile in profiles
         for value in profile["requests"]
-        if (summary := network_request_summary(value)) is not None
+        if isinstance(value, dict)
     ]
-    requests.sort(
-        key=lambda value: value["startTimeMicros"]
-        if isinstance(value.get("startTimeMicros"), int)
+    request_refs.sort(
+        key=lambda item: item[1]["startTime"]
+        if isinstance(item[1].get("startTime"), int)
         else -1
     )
+    if limit:
+        request_refs = request_refs[-limit:]
+    else:
+        request_refs = []
+    requests: list[dict[str, Any]] = []
+    for isolate_id, request_ref in request_refs:
+        request_id = request_ref.get("id")
+        if not isinstance(request_id, str) or not request_id:
+            raise RuntimeCommandError("DevTools Network request reference has no id")
+        detail = vm_service_result(
+            base,
+            HTTP_PROFILE_REQUEST,
+            {"isolateId": isolate_id, "id": request_id},
+        )
+        requests.append(add_network_derived_fields(detail))
     return {
         "recording": True,
         "timestampMicros": max(
             (
                 profile["timestamp"]
-                for profile in profiles
+                for _, profile in profiles
                 if isinstance(profile.get("timestamp"), int)
             ),
             default=None,
         ),
-        "requests": requests[-limit:] if limit else [],
+        "requests": requests,
     }
 
 

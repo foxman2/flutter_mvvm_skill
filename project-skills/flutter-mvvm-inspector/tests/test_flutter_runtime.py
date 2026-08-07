@@ -59,6 +59,7 @@ class VMHandler(BaseHTTPRequestHandler):
     show_enabled = "true"
     http_logging_enabled = {}
     http_profiles = {}
+    http_profile_requests = {}
 
     def send_json(self, payload):
         body = json.dumps(payload).encode()
@@ -116,12 +117,23 @@ class VMHandler(BaseHTTPRequestHandler):
                 "timestamp": current.get("timestamp", 0),
                 "requests": [],
             }
+            handler.http_profile_requests[isolate_id] = {}
             result = {"type": "Success"}
         elif method == "ext.dart.io.getHttpProfile":
             result = handler.http_profiles.get(
                 query.get("isolateId"),
                 {"type": "HttpProfile", "timestamp": 0, "requests": []},
             )
+        elif method == "ext.dart.io.getHttpProfileRequest":
+            isolate_id = query.get("isolateId")
+            request_id = query.get("id")
+            result = handler.http_profile_requests.get(isolate_id, {}).get(request_id)
+            if result is None:
+                self.send_json({
+                    "jsonrpc": "2.0",
+                    "error": {"code": -32000, "message": "request not found"},
+                })
+                return
         else:
             self.send_json({
                 "jsonrpc": "2.0",
@@ -157,6 +169,7 @@ class FlutterRuntimeTest(unittest.TestCase):
         VMHandler.show_enabled = "true"
         VMHandler.http_logging_enabled = {}
         VMHandler.http_profiles = {}
+        VMHandler.http_profile_requests = {}
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), VMHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -319,12 +332,13 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertNotIn("old failure", errors)
         self.assertNotIn(SECRET, errors)
 
-    def test_devtools_network_recording_and_redacted_profile_summary(self):
+    def test_devtools_network_recording_and_complete_profile_details(self):
         self.start()
         self.wait_running()
         extensions = [
             "ext.dart.io.httpEnableTimelineLogging",
             "ext.dart.io.getHttpProfile",
+            "ext.dart.io.getHttpProfileRequest",
             "ext.dart.io.clearHttpProfile",
         ]
         VMHandler.vm_isolates = [
@@ -380,15 +394,10 @@ class FlutterRuntimeTest(unittest.TestCase):
                     "events": [],
                     "startTime": 1_000_000,
                     "endTime": 1_200_000,
-                    "request": {
-                        "headers": {"authorization": "Bearer secret"},
-                        "cookies": ["session=secret"],
-                    },
                     "response": {
                         "statusCode": 200,
                         "reasonPhrase": "OK",
                         "endTime": 1_250_000,
-                        "headers": {"set-cookie": "session=secret"},
                     },
                 },
             ],
@@ -409,6 +418,58 @@ class FlutterRuntimeTest(unittest.TestCase):
                 },
             ],
         }
+        VMHandler.http_profile_requests = {
+            "isolates/flutter": {
+                "request-1": {
+                    "type": "HttpProfileRequest",
+                    "id": "request-1",
+                    "isolateId": "isolates/flutter",
+                    "method": "GET",
+                    "uri": "https://user:password@api.example.test/posts?page=2&token=secret#part",
+                    "events": [
+                        {
+                            "timestamp": 1_050_000,
+                            "event": "Connection established",
+                        },
+                    ],
+                    "startTime": 1_000_000,
+                    "endTime": 1_200_000,
+                    "request": {
+                        "headers": {"authorization": ["Bearer secret"]},
+                        "cookies": ["session=secret"],
+                        "contentLength": 13,
+                        "connectionInfo": {
+                            "localPort": 50000,
+                            "remoteAddress": "203.0.113.10",
+                            "remotePort": 443,
+                        },
+                    },
+                    "response": {
+                        "startTime": 1_210_000,
+                        "endTime": 1_250_000,
+                        "statusCode": 200,
+                        "reasonPhrase": "OK",
+                        "headers": {"set-cookie": ["session=secret"]},
+                    },
+                    "requestBody": [123, 34, 97, 34, 58, 49, 125],
+                    "responseBody": [123, 34, 111, 107, 34, 58, 116, 114, 117, 101, 125],
+                },
+            },
+            "isolates/background": {
+                "request-2": {
+                    "type": "HttpProfileRequest",
+                    "id": "request-2",
+                    "isolateId": "isolates/background",
+                    "method": "POST",
+                    "uri": "https://api.example.test/posts",
+                    "events": [],
+                    "startTime": 1_500_000,
+                    "endTime": 1_550_000,
+                    "request": {"error": "connection failed"},
+                    "requestBody": [112, 97, 121, 108, 111, 97, 100],
+                },
+            },
+        }
 
         output = self.cli("network-logs", "--limit", "1")
         profile = json.loads(output.stdout)
@@ -418,12 +479,32 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertEqual(1, len(profile["requests"]))
         self.assertEqual("request-2", profile["requests"][0]["id"])
         self.assertEqual("error", profile["requests"][0]["state"])
-        all_output = self.cli("network-logs", "--limit", "2").stdout
-        self.assertIn("page=<redacted>&token=<redacted>", all_output)
-        for secret in ("user", "password", "Bearer secret", "session=secret", "#part"):
-            self.assertNotIn(secret, all_output)
-        self.assertNotIn("isolateId", all_output)
-        self.assertIn('"durationMs": 250.0', all_output)
+        all_profile = json.loads(self.cli("network-logs", "--limit", "2").stdout)
+        complete = all_profile["requests"][0]
+        self.assertEqual(
+            "https://user:password@api.example.test/posts?page=2&token=secret#part",
+            complete["uri"],
+        )
+        self.assertEqual("isolates/flutter", complete["isolateId"])
+        self.assertEqual(["Bearer secret"], complete["request"]["headers"]["authorization"])
+        self.assertEqual(["session=secret"], complete["response"]["headers"]["set-cookie"])
+        self.assertEqual([123, 34, 97, 34, 58, 49, 125], complete["requestBody"])
+        self.assertEqual(
+            [123, 34, 111, 107, 34, 58, 116, 114, 117, 101, 125],
+            complete["responseBody"],
+        )
+        self.assertEqual("Connection established", complete["events"][0]["event"])
+        self.assertEqual("complete", complete["state"])
+        self.assertEqual(250.0, complete["durationMs"])
+        detail_calls = [
+            request
+            for request in VMHandler.requests
+            if request["method"] == "ext.dart.io.getHttpProfileRequest"
+        ]
+        self.assertEqual(
+            {"request-1", "request-2"},
+            {request["query"]["id"] for request in detail_calls},
+        )
 
         negative = self.cli("network-logs", "--limit", "-1", check=False)
         self.assertNotEqual(0, negative.returncode)

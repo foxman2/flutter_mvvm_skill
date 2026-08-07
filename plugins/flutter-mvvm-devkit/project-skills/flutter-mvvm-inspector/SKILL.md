@@ -30,7 +30,7 @@ python3 "$RUNTIME" selected-summary
 python3 "$RUNTIME" status
 python3 "$RUNTIME" errors --lines 400
 python3 "$RUNTIME" network-start
-# 在应用中复现请求后读取最近记录
+# 在应用中复现请求后读取最近的完整记录
 python3 "$RUNTIME" network-logs --limit 100
 python3 "$RUNTIME" logs --lines 200
 python3 "$RUNTIME" stop
@@ -40,8 +40,10 @@ python3 "$RUNTIME" stop
 - `start` 自动复用受管实例；只在 `--` 后传项目实际需要的 device、flavor、target 或 dart-define，helper 会固定添加 debug、Widget tracking 和受管参数。
 - `restart` 只向验证过的当前项目受管进程发送 Flutter 热重启信号，并等待日志确认完成；不要在调用前搜索进程、读取 PID 或解析 endpoint。
 - 排查 API 调用时，先执行 `network-start` 清空旧记录并开启 DevTools Network，再让用户复现操作，最后执行 `network-logs`。不要在开启记录前让用户复现。
-- `network-logs` 通过受管 VM Service 聚合所有应用 isolate 的 `dart:io` HTTP Profile，适用于 iOS、Android 和其他原生 Dart 目标，包括 Dio 请求；输出方法、脱敏查询参数后的 URI、状态、耗时与错误，不输出 isolate id、headers、cookies 或 body。
-- `network-start` 或 `network-logs` 遇到 localhost 限制时，申请只读访问当前项目受管 VM Service 后重试；保持命令完整，不打印或传递 URI、token 与 isolate id。
+- `network-logs` 通过受管 VM Service 聚合所有应用 isolate 的 `dart:io` HTTP Profile，适用于 iOS、Android 和其他原生 Dart 目标，包括 Dio 请求；对按时间选出的每条请求读取完整 Profile，原样输出 isolate id、完整 URI、阶段事件、时间、代理与连接信息、重定向、请求和响应 headers、cookies、状态、错误，以及原始字节形式的请求和响应 body，并附加 `state` 与 `durationMs`。
+- `network-logs --limit` 只限制输出的请求条数，不限制 Dart VM 内部 Profile 的数量或字节数。记录期间可能持续占用内存，因此只开启完成一次复现所需的短时间窗口；大 body、高频请求或长时间记录时尤其谨慎。
+- `network-logs` 的完整结果可能包含 authorization、cookie、账号、查询参数和业务数据。把输出视为敏感信息；除非用户明确要求，不持久化、转发或粘贴到外部系统。
+- `network-start` 或 `network-logs` 遇到 localhost 限制时，申请只读访问当前项目受管 VM Service 后重试；保持命令完整，不自行读取或传递 VM Service URI、token 或 isolate id，应用 isolate id 只使用 `network-logs` 的返回值。
 - 每次 `restart` 或应用重新启动后都重新执行 `network-start`；HTTP Profile 只包含开启记录后发出的请求。
 - 选择项目已包含平台目录且当前可用的设备；优先使用能提供原生 Dart VM Service 的 iOS、Android 或 macOS 目标，不假设项目支持某个固定平台。
 - 若环境限制 localhost，在执行 `selected-summary` 前申请只读访问当前项目受管 VM Service；保持命令完整，不打印或传递 URI、token 与 isolate id。
@@ -67,6 +69,6 @@ python3 "$RUNTIME" stop
 
 - 只操作 helper 创建并验证的当前项目实例；一个项目只管理一个实例。
 - 不接管、停止或复用其他 Flutter 进程，不扫描端口或搜索系统进程。
-- 不输出 VM Service URI、认证 token、isolate id 或原始状态文件。
+- 不输出 VM Service URI、VM Service 认证 token 或原始状态文件；`network-logs` 返回的应用 isolate id 和完整 HTTP Profile 除外。
 - 不接受用户提供的 endpoint，也不使用 `endpoint` 子命令驱动 Inspector。
 - 扩大网络或进程访问范围前遵循宿主 Agent 的授权规则。
