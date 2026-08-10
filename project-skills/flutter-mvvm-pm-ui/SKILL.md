@@ -26,7 +26,6 @@ description: >-
 - 不修改正式 ViewModel 的状态、异步、业务动作、导航决策或数据持久化，也不修改与预览无关的 AppPage、route parser 和正式依赖。
 - 不新增或修改 domain API contract、ApiService wiring、mock service、正式 model、真实 Dio 请求、认证、埋点、推送或持久化逻辑。
 - 不得新增或修改任何 Dart define、环境解析、默认环境、启动配置、构建脚本或 CI 参数。
-- 仅在项目已有开关时原样使用 `--dart-define=server=mock`；缺少开关或需要新环境参数时停止 PM 修改并报告缺失配置。
 
 ## 读取参考
 

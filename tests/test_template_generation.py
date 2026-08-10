@@ -44,7 +44,6 @@ RETIRED_TEST_SKILL_PATH = ROOT / "project-skills" / RETIRED_TEST_SKILL_NAME
 MARKETPLACE_RETIRED_TEST_SKILL_PATH = (
     MARKETPLACE_PROJECT_SKILLS_PATH / RETIRED_TEST_SKILL_NAME
 )
-ALLOWED_PM_DART_DEFINE = "--dart-define=server=mock"
 CONTRACT_TEST_RANDOMIZATION_SEED = 2
 PROJECT_SKILLS = (
     "code-quality",
@@ -134,7 +133,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             directory_snapshot(MARKETPLACE_API_DEV_SKILL_PATH),
         )
 
-    def test_pm_ui_allows_only_the_existing_mock_dart_define(self) -> None:
+    def test_pm_ui_does_not_prescribe_dart_define_arguments(self) -> None:
         markdown = "\n".join(
             path.read_text(encoding="utf-8")
             for path in sorted(PM_UI_SKILL_PATH.rglob("*.md"))
@@ -143,9 +142,8 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             re.findall(r"--dart-define=[A-Za-z0-9_.-]+=[A-Za-z0-9_.-]+", markdown)
         )
 
-        self.assertEqual(dart_define_arguments, {ALLOWED_PM_DART_DEFINE})
+        self.assertEqual(dart_define_arguments, set())
         self.assertIn("不得新增或修改任何 Dart define", markdown)
-        self.assertIn("停止 PM 修改并报告缺失配置", markdown)
 
     def test_marketplace_pm_ui_skill_matches_source(self) -> None:
         self.assertEqual(
