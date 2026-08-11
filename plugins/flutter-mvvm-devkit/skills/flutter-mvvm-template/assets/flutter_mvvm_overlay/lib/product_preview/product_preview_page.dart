@@ -20,10 +20,10 @@ class ProductPreviewPage extends StatelessWidget {
           final item = productPreviewItems[index];
           return Card(
             child: ListTile(
-              title: Text(item.title(strings)),
+              title: Text(item.title.resolve(context)),
               subtitle: item.description == null
                   ? null
-                  : Text(item.description!(strings)),
+                  : Text(item.description!.resolve(context)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _openPreview(context, item),
             ),

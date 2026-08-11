@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
 import '../../mvvm/base_view.dart';
 import 'alert_view_model.dart';
 
@@ -15,10 +14,20 @@ class _AlertPageState
     extends BaseStatefulViewState<AlertViewModelType, AlertPage> {
   @override
   Widget createWidget(BuildContext context) {
-    final strings = AppLocalizations.of(context)!;
     final actions = viewModel.actions.isEmpty
-        ? [AlertViewAction(strings.commonOk, isDefault: true)]
+        ? [
+            AlertViewAction(
+              .localized((strings) => strings.commonOk),
+              isDefault: true,
+            ),
+          ]
         : viewModel.actions;
+    final richTitle = viewModel.richTitle?.resolve(context);
+    final title = richTitle == null ? viewModel.title?.resolve(context) : null;
+    final richContent = viewModel.richContent?.resolve(context);
+    final content = richContent == null
+        ? viewModel.content?.resolve(context)
+        : null;
 
     return PopScope<Object?>(
       canPop: viewModel.cancelable,
@@ -28,27 +37,25 @@ class _AlertPageState
         }
       },
       child: AlertDialog(
-        title: viewModel.richTitle == null
-            ? Text(viewModel.title ?? '')
-            : Text.rich(viewModel.richTitle!),
-        content: viewModel.richContent == null
-            ? (viewModel.content == null ? null : Text(viewModel.content!))
-            : Text.rich(viewModel.richContent!),
-        actions: [
-          for (final action in actions)
-            TextButton(
-              onPressed: () => viewModel.onClickAction(action),
-              child: Text(
-                action.title,
-                style: TextStyle(
-                  fontWeight: action.isDefault
-                      ? FontWeight.w700
-                      : FontWeight.w400,
-                  color: action.isDestructive ? Colors.red : null,
-                ),
-              ),
-            ),
-        ],
+        title: richTitle == null ? Text(title ?? '') : Text.rich(richTitle),
+        content: richContent == null
+            ? (content == null ? null : Text(content))
+            : Text.rich(richContent),
+        actions: [for (final action in actions) _buildAction(context, action)],
+      ),
+    );
+  }
+
+  Widget _buildAction(BuildContext context, AlertViewAction action) {
+    final title = action.title.resolve(context);
+    return TextButton(
+      onPressed: () => viewModel.onClickAction(action, title),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: action.isDefault ? FontWeight.w700 : FontWeight.w400,
+          color: action.isDestructive ? Colors.red : null,
+        ),
       ),
     );
   }

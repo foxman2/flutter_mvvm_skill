@@ -12,7 +12,8 @@ import 'package:{{project_name}}/product_preview/pages/sample_product/sample_pro
 void main() {
   test('parameterized AppPage owns route metadata', () {
     final page = AlertAppPage(
-      AlertViewModel(title: 'Hi')..addAction('OK', isDefault: true),
+      AlertViewModel(title: const .raw('Hi'))
+        ..addAction(const .raw('OK'), isDefault: true),
     );
 
     expect(page.routeName, '/alert');
@@ -38,8 +39,8 @@ void main() {
   testWidgets('alert AppPage preserves its configured view model instance', (
     tester,
   ) async {
-    final viewModel = AlertViewModel(title: 'Hi')
-      ..addAction('OK', isDefault: true);
+    final viewModel = AlertViewModel(title: const .raw('Hi'))
+      ..addAction(const .raw('OK'), isDefault: true);
     await tester.pumpWidget(const SizedBox());
     final context = tester.element(find.byType(SizedBox));
 

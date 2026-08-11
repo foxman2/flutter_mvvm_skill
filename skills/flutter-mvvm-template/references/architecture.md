@@ -39,7 +39,8 @@ test/
 - `AppContainer` 是唯一全局依赖容器；其持有的 Service 和 Repository 不提供独立 `shared`。
 - 普通页面的 AppPage provider 延迟创建 ViewModel，并从 AppContainer 取得构造依赖。
 - 页面 ViewModel 使用 Input、Output、Type 与实现类，Page 只依赖 Type。
-- 用户可见文案走 Flutter l10n；ViewModel 只在页面绑定后使用 `localStrings`。
+- 用户可见文案走 Flutter l10n；固定 Widget 文案直接读取 `AppLocalizations`，跨页面、弹层和 toast 的 `DisplayText` 参数用 `.localized` 延迟到展示时解析，服务端原文用 `.raw`。
+- `.raw` 不读取 `AppLocalizations`；ViewModel 不持有 `BuildContext`，也不直接访问 `AppLocalizations`。
 - 导航使用具体 sealed AppPage 子类和强类型参数。
 - `product_preview/` 是隔离预览区；审核通过后再迁移到正式页面与业务实现。
 

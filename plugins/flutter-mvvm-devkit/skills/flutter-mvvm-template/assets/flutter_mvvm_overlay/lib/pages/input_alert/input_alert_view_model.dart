@@ -1,5 +1,6 @@
 import 'package:rxdart/rxdart.dart';
 
+import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
 abstract class InputAlertViewModelInput {
@@ -11,19 +12,19 @@ abstract class InputAlertViewModelInput {
 }
 
 abstract class InputAlertViewModelOutput {
-  String? get title;
+  DisplayText? get title;
 
-  String? get content;
+  DisplayText? get content;
 
-  String? get hint;
+  DisplayText? get hint;
 
   String get initialValue;
 
-  String get cancelText;
+  DisplayText get cancelText;
 
-  String get okText;
+  DisplayText get okText;
 
-  String? get errorMessage;
+  DisplayText? get errorMessage;
 
   ValueStream<bool> get isDoneEnabled;
 }
@@ -33,14 +34,14 @@ abstract class InputAlertViewModelType extends AppBaseViewModel
 
 class InputAlertViewModel extends InputAlertViewModelType {
   factory InputAlertViewModel({
-    String? title,
-    String? content,
-    String? hint,
+    DisplayText? title,
+    DisplayText? content,
+    DisplayText? hint,
     String initialValue = '',
     bool allowEmpty = false,
-    String cancelText = 'Cancel',
-    String okText = 'OK',
-    String? errorMessage,
+    DisplayText? cancelText,
+    DisplayText? okText,
+    DisplayText? errorMessage,
     Future<void> Function(String value)? onSubmitted,
   }) {
     return InputAlertViewModel._(
@@ -49,8 +50,8 @@ class InputAlertViewModel extends InputAlertViewModelType {
       hint: hint,
       initialValue: initialValue,
       allowEmpty: allowEmpty,
-      cancelText: cancelText,
-      okText: okText,
+      cancelText: cancelText ?? .localized((strings) => strings.commonCancel),
+      okText: okText ?? .localized((strings) => strings.commonOk),
       errorMessage: errorMessage,
       onSubmitted: onSubmitted,
     );
@@ -68,14 +69,14 @@ class InputAlertViewModel extends InputAlertViewModelType {
     required this._onSubmitted,
   });
 
-  final String? _title;
-  final String? _content;
-  final String? _hint;
+  final DisplayText? _title;
+  final DisplayText? _content;
+  final DisplayText? _hint;
   final String _initialValue;
   final bool _allowEmpty;
-  final String _cancelText;
-  final String _okText;
-  final String? _errorMessage;
+  final DisplayText _cancelText;
+  final DisplayText _okText;
+  final DisplayText? _errorMessage;
   final Future<void> Function(String value)? _onSubmitted;
   final _isDoneEnabled = BehaviorSubject<bool>.seeded(false);
 
@@ -114,25 +115,25 @@ class InputAlertViewModel extends InputAlertViewModelType {
   }
 
   @override
-  String? get title => _title;
+  DisplayText? get title => _title;
 
   @override
-  String? get content => _content;
+  DisplayText? get content => _content;
 
   @override
-  String? get hint => _hint;
+  DisplayText? get hint => _hint;
 
   @override
   String get initialValue => _initialValue;
 
   @override
-  String get cancelText => _cancelText;
+  DisplayText get cancelText => _cancelText;
 
   @override
-  String get okText => _okText;
+  DisplayText get okText => _okText;
 
   @override
-  String? get errorMessage => _errorMessage;
+  DisplayText? get errorMessage => _errorMessage;
 
   @override
   ValueStream<bool> get isDoneEnabled => _isDoneEnabled.stream;

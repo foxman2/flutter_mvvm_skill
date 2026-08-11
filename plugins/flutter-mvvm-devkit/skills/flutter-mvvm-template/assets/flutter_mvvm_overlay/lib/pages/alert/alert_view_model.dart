@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
 class AlertViewAction {
@@ -10,7 +11,7 @@ class AlertViewAction {
     this.handler,
   });
 
-  final String title;
+  final DisplayText title;
   final bool isDefault;
   final bool isDestructive;
   final VoidCallback? handler;
@@ -19,17 +20,17 @@ class AlertViewAction {
 abstract class AlertViewModelInput {
   void onPop(Object? result);
 
-  void onClickAction(AlertViewAction action);
+  void onClickAction(AlertViewAction action, String resolvedTitle);
 }
 
 abstract class AlertViewModelOutput {
-  String? get title;
+  DisplayText? get title;
 
-  String? get content;
+  DisplayText? get content;
 
-  TextSpan? get richTitle;
+  DisplayTextSpan? get richTitle;
 
-  TextSpan? get richContent;
+  DisplayTextSpan? get richContent;
 
   bool get cancelable;
 
@@ -41,10 +42,10 @@ abstract class AlertViewModelType extends BaseViewModel
 
 class AlertViewModel extends AlertViewModelType {
   factory AlertViewModel({
-    String? title,
-    String? content,
-    TextSpan? richTitle,
-    TextSpan? richContent,
+    DisplayText? title,
+    DisplayText? content,
+    DisplayTextSpan? richTitle,
+    DisplayTextSpan? richContent,
     bool cancelable = true,
     VoidCallback? cancelHandler,
   }) {
@@ -67,10 +68,10 @@ class AlertViewModel extends AlertViewModelType {
     required this._cancelHandler,
   });
 
-  final String? _title;
-  final String? _content;
-  final TextSpan? _richTitle;
-  final TextSpan? _richContent;
+  final DisplayText? _title;
+  final DisplayText? _content;
+  final DisplayTextSpan? _richTitle;
+  final DisplayTextSpan? _richContent;
   final bool _cancelable;
   final VoidCallback? _cancelHandler;
   final _actions = <AlertViewAction>[];
@@ -83,13 +84,13 @@ class AlertViewModel extends AlertViewModelType {
   }
 
   @override
-  void onClickAction(AlertViewAction action) {
+  void onClickAction(AlertViewAction action, String resolvedTitle) {
     action.handler?.call();
-    popUseRoot(action.title);
+    popUseRoot(resolvedTitle);
   }
 
   void addAction(
-    String title, {
+    DisplayText title, {
     bool isDefault = false,
     bool isDestructive = false,
     VoidCallback? handler,
@@ -105,16 +106,16 @@ class AlertViewModel extends AlertViewModelType {
   }
 
   @override
-  String? get title => _title;
+  DisplayText? get title => _title;
 
   @override
-  String? get content => _content;
+  DisplayText? get content => _content;
 
   @override
-  TextSpan? get richTitle => _richTitle;
+  DisplayTextSpan? get richTitle => _richTitle;
 
   @override
-  TextSpan? get richContent => _richContent;
+  DisplayTextSpan? get richContent => _richContent;
 
   @override
   bool get cancelable => _cancelable;

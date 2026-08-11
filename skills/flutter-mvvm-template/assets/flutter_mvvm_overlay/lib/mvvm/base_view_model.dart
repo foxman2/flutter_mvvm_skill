@@ -1,4 +1,4 @@
-import '../l10n/app_localizations.dart';
+import '../l10n/display_text.dart';
 import '../navigation/app_page.dart';
 import '../navigation/app_page_transition.dart';
 import 'dispose_bag.dart';
@@ -19,17 +19,6 @@ abstract class BaseViewModel {
   void Function()? popToRootPage;
   void Function([Object? result])? popPageUseRoot;
   void Function()? rebuild;
-  AppLocalizations Function()? getLocalStrings;
-
-  AppLocalizations get localStrings {
-    final callback = getLocalStrings;
-    if (callback == null) {
-      throw StateError(
-        'AppLocalizations is only available after the view model is bound to a page.',
-      );
-    }
-    return callback();
-  }
 
   void initState() {}
 
@@ -79,23 +68,23 @@ abstract class AppBaseViewModel extends BaseViewModel {
   final loadingTracker = LoadingTracker();
   final errorTracker = ErrorTracker();
 
-  void Function(String? message)? showSuccessMessageImpl;
-  void Function(String? message)? showFailMessageImpl;
-  void Function(String? message)? showNormalMessageImpl;
+  void Function(DisplayText? message)? showSuccessMessageImpl;
+  void Function(DisplayText? message)? showFailMessageImpl;
+  void Function(DisplayText? message)? showNormalMessageImpl;
 
   bool get hookBackButton => true;
 
   Future<bool> onWillPop() async => true;
 
-  void showSuccessMessage({String? message}) {
+  void showSuccessMessage({DisplayText? message}) {
     showSuccessMessageImpl?.call(message);
   }
 
-  void showFailMessage({String? message}) {
+  void showFailMessage({DisplayText? message}) {
     showFailMessageImpl?.call(message);
   }
 
-  void showNormalMessage({String? message}) {
+  void showNormalMessage({DisplayText? message}) {
     showNormalMessageImpl?.call(message);
   }
 

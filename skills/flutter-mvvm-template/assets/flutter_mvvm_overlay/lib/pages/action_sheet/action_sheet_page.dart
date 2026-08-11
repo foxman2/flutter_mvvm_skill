@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 
-import '../../l10n/app_localizations.dart';
 import '../../mvvm/base_view.dart';
 import 'action_sheet_view_model.dart';
 
@@ -15,22 +14,31 @@ class _ActionSheetPageState
     extends BaseStatefulViewState<ActionSheetViewModelType, ActionSheetPage> {
   @override
   Widget createWidget(BuildContext context) {
-    final strings = AppLocalizations.of(context)!;
+    final title = viewModel.title?.resolve(context);
+    final message = viewModel.message?.resolve(context);
+    final cancelTitle =
+        (viewModel.cancelAction?.title ??
+                .localized((strings) => strings.commonCancel))
+            .resolve(context);
     return CupertinoActionSheet(
-      title: viewModel.title == null ? null : Text(viewModel.title!),
-      message: viewModel.message == null ? null : Text(viewModel.message!),
+      title: title == null ? null : Text(title),
+      message: message == null ? null : Text(message),
       actions: [
-        for (final action in viewModel.actions)
-          CupertinoActionSheetAction(
-            isDestructiveAction: action.isDestructive,
-            onPressed: () => viewModel.onClickAction(action),
-            child: Text(action.title),
-          ),
+        for (final action in viewModel.actions) _buildAction(context, action),
       ],
       cancelButton: CupertinoActionSheetAction(
         onPressed: viewModel.onClickCancel,
-        child: Text(viewModel.cancelAction?.title ?? strings.commonCancel),
+        child: Text(cancelTitle),
       ),
+    );
+  }
+
+  Widget _buildAction(BuildContext context, ActionSheetAction action) {
+    final title = action.title.resolve(context);
+    return CupertinoActionSheetAction(
+      isDestructiveAction: action.isDestructive,
+      onPressed: () => viewModel.onClickAction(action, title),
+      child: Text(title),
     );
   }
 }

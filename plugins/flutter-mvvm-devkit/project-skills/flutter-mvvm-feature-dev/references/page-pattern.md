@@ -28,7 +28,7 @@
 
 - 新增 ViewModel Output 前先识别值的依赖，不因相邻页面已有同名 Output 就直接照搬。
 - 仅依赖 l10n、Theme 或 BuildContext 的固定文案和样式由 Page/Widget 直接读取。
-- 不得为单纯返回 `localStrings.xxx` 的值新增 ViewModel Output、接口 getter 或实现 getter。
+- 不得为单纯返回固定 l10n 文案的值新增 ViewModel Output、接口 getter 或实现 getter。
 - 仅当值依赖业务状态、异步结果、页面参数或用户操作时，才作为 ViewModel Output。
 
 固定页面标题直接留在 Page：
@@ -40,7 +40,7 @@ title: Text(strings.dragDropEditTitle),
 不要为它新增纯透传：
 
 ```dart
-String get title => localStrings.dragDropEditTitle;
+DisplayText get title => .localized((strings) => strings.dragDropEditTitle);
 ```
 
 ## Page 与依赖
@@ -54,4 +54,13 @@ String get title => localStrings.dragDropEditTitle;
 
 - 用户可见文案写入项目现有 ARB，并遵循当前 key 命名。
 - Page 或纯 Widget 用 `AppLocalizations.of(context)!` 读取展示文案。
-- ViewModel 用 `localStrings` 读取状态派生文案、toast、弹窗和导航结果文案，但不能在构造函数或 `initState()` 中读取，因为 callback 尚未绑定。
+- ViewModel 传递给 toast、Alert、InputAlert 或 ActionSheet 的 `DisplayText` 参数使用 `.localized((strings) => strings.xxx)`，由展示端按当前语言解析。
+- API 和服务端返回的原始展示字符串使用 `.raw(value)`；raw 分支不会读取 `AppLocalizations` 或建立本地化依赖。
+- ViewModel 不持有 `BuildContext`，也不直接读取 `AppLocalizations`；需要结合业务状态或参数的展示文案同样通过 `.localized(...)` 闭包延迟计算。
+
+```dart
+final alert = AlertViewModel(
+  title: .localized((strings) => strings.deleteTitle),
+  content: .raw(serverMessage),
+);
+```

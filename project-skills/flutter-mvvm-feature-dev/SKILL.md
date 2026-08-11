@@ -18,8 +18,8 @@ description: >-
 ## 关键边界
 
 - 新页面 ViewModel 使用 `<Feature>ViewModelInput`、`Output`、`Type` 和实现类；Page 接收返回非空 ViewModel 的 provider。
-- 用户可见文案走 l10n；ViewModel 只在页面绑定后使用 `localStrings`。
-- 仅依赖 l10n、Theme 或 BuildContext 的固定展示值由 Page/Widget 直接读取；不得为 `localStrings.xxx` 的纯透传新增 ViewModel Output。只有值依赖业务状态、异步结果、页面参数或用户操作时，才由 ViewModel 输出。
+- 用户可见文案走 l10n；固定 Widget 文案直接读取 `AppLocalizations`，跨页面、弹层和 toast 的 `DisplayText` 参数用 `.localized` 延迟到展示时解析，服务端原文用 `.raw`。
+- 仅依赖 l10n、Theme 或 BuildContext 的固定展示值由 Page/Widget 直接读取；不得为纯 l10n 透传新增 ViewModel Output。只有值依赖业务状态、异步结果、页面参数或用户操作时，才由 ViewModel 输出。
 - 只有颜色、字体、间距、布局、圆角、阴影、图标或静态文案发生变化，且状态、callback、校验、交互、导航、弹层结果和异步行为全部不变时，才视为纯展示改动。
 - Service 和 Repository 不新增 `shared`，业务依赖也不进入通用 MVVM 基类。
 - 普通页面不预先创建 ViewModel；Alert、ActionSheet 和 child ViewModel 等特殊所有权按生命周期单独判断。

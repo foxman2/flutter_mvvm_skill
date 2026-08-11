@@ -1,25 +1,26 @@
 import 'package:flutter/foundation.dart';
 
+import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
 class ActionSheetAction {
   ActionSheetAction(this.title, {this.isDestructive = false, this.handler});
 
-  final String title;
+  final DisplayText title;
   final bool isDestructive;
   final VoidCallback? handler;
 }
 
 abstract class ActionSheetViewModelInput {
-  void onClickAction(ActionSheetAction action);
+  void onClickAction(ActionSheetAction action, String resolvedTitle);
 
   void onClickCancel();
 }
 
 abstract class ActionSheetViewModelOutput {
-  String? get title;
+  DisplayText? get title;
 
-  String? get message;
+  DisplayText? get message;
 
   List<ActionSheetAction> get actions;
 
@@ -33,18 +34,18 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
   ActionSheetViewModel({this.title, this.message});
 
   @override
-  final String? title;
+  final DisplayText? title;
 
   @override
-  final String? message;
+  final DisplayText? message;
 
   final _actions = <ActionSheetAction>[];
   ActionSheetAction? _cancelAction;
 
   @override
-  void onClickAction(ActionSheetAction action) {
+  void onClickAction(ActionSheetAction action, String resolvedTitle) {
     action.handler?.call();
-    popUseRoot(action.title);
+    popUseRoot(resolvedTitle);
   }
 
   @override
@@ -54,7 +55,7 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
   }
 
   void addAction(
-    String title, {
+    DisplayText title, {
     bool isDestructive = false,
     VoidCallback? handler,
   }) {
@@ -63,8 +64,11 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
     );
   }
 
-  void setCancelAction([VoidCallback? handler, String title = 'Cancel']) {
-    _cancelAction = ActionSheetAction(title, handler: handler);
+  void setCancelAction([VoidCallback? handler, DisplayText? title]) {
+    _cancelAction = ActionSheetAction(
+      title ?? .localized((strings) => strings.commonCancel),
+      handler: handler,
+    );
   }
 
   @override

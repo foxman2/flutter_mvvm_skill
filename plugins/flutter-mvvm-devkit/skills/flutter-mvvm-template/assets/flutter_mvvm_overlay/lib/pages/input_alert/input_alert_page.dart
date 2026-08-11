@@ -29,22 +29,25 @@ class _InputAlertPageState
 
   @override
   Widget createWidget2(BuildContext context) {
+    final title = viewModel.title?.resolve(context);
+    final content = viewModel.content?.resolve(context);
+    final hint = viewModel.hint?.resolve(context);
+    final errorMessage = viewModel.errorMessage?.resolve(context);
+    final cancelText = viewModel.cancelText.resolve(context);
+    final okText = viewModel.okText.resolve(context);
     return AlertDialog(
-      title: Text(viewModel.title ?? ''),
+      title: Text(title ?? ''),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (viewModel.content != null) ...[
-            Text(viewModel.content!),
-            const SizedBox(height: 12),
-          ],
+          if (content != null) ...[Text(content), const SizedBox(height: 12)],
           TextField(
             controller: _controller,
             autofocus: true,
             decoration: InputDecoration(
-              hintText: viewModel.hint,
-              errorText: viewModel.errorMessage,
+              hintText: hint,
+              errorText: errorMessage,
             ),
             onChanged: viewModel.onInputText,
             onSubmitted: (_) {
@@ -56,17 +59,14 @@ class _InputAlertPageState
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: viewModel.onClickCancel,
-          child: Text(viewModel.cancelText),
-        ),
+        TextButton(onPressed: viewModel.onClickCancel, child: Text(cancelText)),
         ValueStreamBuilder<bool>(
           stream: viewModel.isDoneEnabled,
           builder: (context, snapshot) {
             final enabled = snapshot.data ?? false;
             return FilledButton(
               onPressed: enabled ? viewModel.onClickOk : null,
-              child: Text(viewModel.okText),
+              child: Text(okText),
             );
           },
         ),

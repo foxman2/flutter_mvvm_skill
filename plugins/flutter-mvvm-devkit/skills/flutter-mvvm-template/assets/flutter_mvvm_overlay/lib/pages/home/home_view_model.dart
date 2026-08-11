@@ -16,22 +16,12 @@ abstract class HomeViewModelInput {
   void onClickBottomSheetDemo();
 }
 
-abstract class HomeViewModelOutput {
-  String get templateTitle;
-
-  String get templateDescription;
-}
+abstract class HomeViewModelOutput {}
 
 abstract class HomeViewModelType extends AppBaseViewModel
     implements HomeViewModelInput, HomeViewModelOutput {}
 
 class HomeViewModel extends HomeViewModelType {
-  @override
-  String get templateTitle => localStrings.homeTemplateTitle;
-
-  @override
-  String get templateDescription => localStrings.homeTemplateDescription;
-
   @override
   void onClickProductPreview() {
     show(const ProductPreviewAppPage());
@@ -39,24 +29,24 @@ class HomeViewModel extends HomeViewModelType {
 
   @override
   void onClickAlertDemo() {
-    final strings = localStrings;
     final alert = AlertViewModel(
-      title: strings.homeAlertTitle,
-      content: strings.homeAlertContent,
-    )..addAction(strings.commonOk, isDefault: true);
+      title: .localized((strings) => strings.homeAlertTitle),
+      content: .localized((strings) => strings.homeAlertContent),
+    )..addAction(.localized((strings) => strings.commonOk), isDefault: true);
     show(AlertAppPage(alert));
   }
 
   @override
   void onClickInputAlertDemo() {
-    final strings = localStrings;
     final input = InputAlertViewModel(
-      title: strings.homeInputAlertTitle,
-      hint: strings.homeInputAlertHint,
-      cancelText: strings.commonCancel,
-      okText: strings.commonOk,
+      title: .localized((strings) => strings.homeInputAlertTitle),
+      hint: .localized((strings) => strings.homeInputAlertHint),
+      cancelText: .localized((strings) => strings.commonCancel),
+      okText: .localized((strings) => strings.commonOk),
       onSubmitted: (value) async {
-        showSuccessMessage(message: localStrings.homeSubmittedMessage(value));
+        showSuccessMessage(
+          message: .localized((strings) => strings.homeSubmittedMessage(value)),
+        );
       },
     );
     show(InputAlertAppPage(input));
@@ -64,15 +54,20 @@ class HomeViewModel extends HomeViewModelType {
 
   @override
   void onClickActionSheetDemo() {
-    final strings = localStrings;
     final sheet =
         ActionSheetViewModel(
-            title: strings.homeActionSheetTitle,
-            message: strings.homeActionSheetMessage,
+            title: .localized((strings) => strings.homeActionSheetTitle),
+            message: .localized((strings) => strings.homeActionSheetMessage),
           )
-          ..addAction(strings.homeNormalAction)
-          ..addAction(strings.homeDestructiveAction, isDestructive: true)
-          ..setCancelAction(null, strings.commonCancel);
+          ..addAction(.localized((strings) => strings.homeNormalAction))
+          ..addAction(
+            .localized((strings) => strings.homeDestructiveAction),
+            isDestructive: true,
+          )
+          ..setCancelAction(
+            null,
+            .localized((strings) => strings.commonCancel),
+          );
     show(ActionSheetAppPage(sheet));
   }
 

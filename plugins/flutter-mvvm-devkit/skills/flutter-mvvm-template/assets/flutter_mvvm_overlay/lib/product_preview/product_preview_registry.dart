@@ -1,4 +1,4 @@
-import '../l10n/app_localizations.dart';
+import '../l10n/display_text.dart';
 import '../navigation/app_page.dart';
 
 class ProductPreviewItem {
@@ -10,16 +10,18 @@ class ProductPreviewItem {
   });
 
   final String id;
-  final String Function(AppLocalizations strings) title;
-  final String Function(AppLocalizations strings)? description;
+  final DisplayText title;
+  final DisplayText? description;
   final AppPage appPage;
 }
 
 final List<ProductPreviewItem> productPreviewItems = [
   ProductPreviewItem(
     id: 'sample-ui',
-    title: (strings) => strings.productPreviewSampleTitle,
-    description: (strings) => strings.productPreviewSampleDescription,
+    title: .localized((strings) => strings.productPreviewSampleTitle),
+    description: .localized(
+      (strings) => strings.productPreviewSampleDescription,
+    ),
     appPage: const SampleProductAppPage(),
   ),
 ];

@@ -49,7 +49,7 @@ class _SampleProductPageState
                       style: textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text(viewModel.mockContentDescription),
+                    Text(strings.productPreviewMockContentDescription),
                   ],
                 ),
               ),

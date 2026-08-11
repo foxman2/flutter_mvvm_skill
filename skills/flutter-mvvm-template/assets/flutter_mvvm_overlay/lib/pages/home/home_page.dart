@@ -26,12 +26,12 @@ class _HomePageState
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            viewModel.templateTitle,
+            strings.homeTemplateTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            viewModel.templateDescription,
+            strings.homeTemplateDescription,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
