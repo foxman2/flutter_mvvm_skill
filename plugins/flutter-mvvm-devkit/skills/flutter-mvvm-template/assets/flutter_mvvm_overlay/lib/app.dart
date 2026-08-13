@@ -4,6 +4,7 @@ import 'l10n/app_localizations.dart';
 import 'navigation/app_navigator.dart';
 import 'navigation/app_page.dart';
 
+/// 应用根组件，集中配置主题、本地化和全局导航器。
 class App extends StatelessWidget {
   const App({super.key});
 

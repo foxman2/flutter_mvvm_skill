@@ -5,6 +5,7 @@ import 'dispose_bag.dart';
 import 'error_tracker.dart';
 import 'loading_tracker.dart';
 
+/// 提供导航、重建和资源释放能力的基础 ViewModel。
 abstract class BaseViewModel {
   final disposeBag = DisposeBag();
 
@@ -64,6 +65,7 @@ abstract class BaseViewModel {
   }
 }
 
+/// 在基础能力上增加 Loading、错误追踪和短消息输出。
 abstract class AppBaseViewModel extends BaseViewModel {
   final loadingTracker = LoadingTracker();
   final errorTracker = ErrorTracker();
@@ -72,8 +74,10 @@ abstract class AppBaseViewModel extends BaseViewModel {
   void Function(DisplayText? message)? showFailMessageImpl;
   void Function(DisplayText? message)? showNormalMessageImpl;
 
-  bool get hookBackButton => true;
+  /// 是否接管页面返回事件；默认关闭以保留系统原生返回和 predictive back。
+  bool get hookBackButton => false;
 
+  /// 显式接管返回事件时，返回 true 表示允许页面退出。
   Future<bool> onWillPop() async => true;
 
   void showSuccessMessage({DisplayText? message}) {
@@ -96,6 +100,7 @@ abstract class AppBaseViewModel extends BaseViewModel {
   }
 }
 
+/// 组合应用默认的 Loading 跟踪与错误消费策略。
 extension LoadingAndErrorTrack<T> on Future<T> {
   Future<T?> trackLoadingAndConsumeError(AppBaseViewModel viewModel) {
     return trackLoading(

@@ -14,6 +14,7 @@ import '../product_preview/product_preview_page.dart';
 import '../widgets/common_bottom_sheet_container.dart';
 import 'app_page_transition.dart';
 
+/// 描述业务页面的强类型路由、参数、默认转场和 Widget 工厂。
 sealed class AppPage {
   const AppPage();
 
@@ -25,6 +26,7 @@ sealed class AppPage {
 
   WidgetBuilder generateWidgetBuilder();
 
+  /// 返回包含查询参数的完整路由名。
   String get routeNameWithQuery {
     if (queryParameters.isEmpty) {
       return routeName;
@@ -33,6 +35,7 @@ sealed class AppPage {
   }
 }
 
+/// 应用首页路由。
 final class HomeAppPage extends AppPage {
   const HomeAppPage();
 
@@ -48,6 +51,7 @@ final class HomeAppPage extends AppPage {
   }
 }
 
+/// Product Preview 列表页路由。
 final class ProductPreviewAppPage extends AppPage {
   const ProductPreviewAppPage();
 
@@ -63,6 +67,7 @@ final class ProductPreviewAppPage extends AppPage {
   }
 }
 
+/// Product Preview 示例页面路由。
 final class SampleProductAppPage extends AppPage {
   const SampleProductAppPage();
 
@@ -79,6 +84,7 @@ final class SampleProductAppPage extends AppPage {
   }
 }
 
+/// 通用提示弹窗路由，复用调用方配置的 ViewModel 实例。
 final class AlertAppPage extends AppPage {
   const AlertAppPage(this.viewModel);
 
@@ -96,6 +102,7 @@ final class AlertAppPage extends AppPage {
   }
 }
 
+/// 带输入框的提示弹窗路由。
 final class InputAlertAppPage extends AppPage {
   const InputAlertAppPage(this.viewModel);
 
@@ -113,6 +120,7 @@ final class InputAlertAppPage extends AppPage {
   }
 }
 
+/// Cupertino Action Sheet 路由。
 final class ActionSheetAppPage extends AppPage {
   const ActionSheetAppPage(this.viewModel);
 
@@ -130,6 +138,7 @@ final class ActionSheetAppPage extends AppPage {
   }
 }
 
+/// 底部弹层示例路由及其尺寸配置。
 final class BottomSheetDemoAppPage extends AppPage
     implements BottomSheetConfigProvider {
   const BottomSheetDemoAppPage();

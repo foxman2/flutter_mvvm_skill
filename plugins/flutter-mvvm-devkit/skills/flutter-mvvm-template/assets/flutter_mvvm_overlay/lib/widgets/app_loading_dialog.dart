@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// 在根导航器上统一管理全局 Loading Dialog。
+///
+/// 控制器按 owner 聚合多个页面的加载状态，只展示一个 Dialog，并在所有
+/// owner 结束后定向移除对应路由，避免误关页面或其他弹层。
 class AppLoadingDialogController {
   AppLoadingDialogController();
 
@@ -10,6 +14,7 @@ class AppLoadingDialogController {
   BuildContext? _latestContext;
   var _showRequestedAfterDismiss = false;
 
+  /// 更新指定 [owner] 的加载状态。
   void update({
     required Object owner,
     required bool isLoading,
@@ -19,6 +24,7 @@ class AppLoadingDialogController {
       _latestContext = context;
       _activeOwners.add(owner);
       final route = _route;
+      // 路由正在响应系统返回时，只有新的 true 事件才请求在关闭后重显。
       if (route != null && !route.isCurrent) {
         _showRequestedAfterDismiss = true;
       }
@@ -34,6 +40,7 @@ class AppLoadingDialogController {
     }
   }
 
+  /// 页面销毁时解除 owner，不影响其他仍在加载的页面。
   void detach(Object owner) {
     _activeOwners.remove(owner);
     if (_activeOwners.isEmpty) {
@@ -85,6 +92,7 @@ class AppLoadingDialogController {
     );
     _route = route;
     navigator.push<void>(route).whenComplete(() {
+      // 系统返回可能先关闭 Dialog；仅处理仍由当前控制器持有的同一路由。
       if (identical(_route, route)) {
         _route = null;
         final context = _latestContext;
@@ -105,6 +113,7 @@ class AppLoadingDialogController {
     _route = null;
     final navigator = route.navigator;
     if (navigator != null && route.isActive) {
+      // 定向移除 Loading 路由，不能使用 pop 以免误关顶部的其他弹层或页面。
       navigator.removeRoute(route);
     }
   }

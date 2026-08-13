@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// 定义通用底部弹层的尺寸、外观和交互行为。
 class BottomSheetConfig {
   const BottomSheetConfig({
     this.enableDrag = true,
@@ -20,10 +21,12 @@ class BottomSheetConfig {
   static const defaultConfig = BottomSheetConfig(height: 320);
 }
 
+/// 允许 [AppPage] 为底部弹层提供专属配置。
 abstract class BottomSheetConfigProvider {
   BottomSheetConfig get bottomSheetConfig;
 }
 
+/// 根据固定高度和键盘策略约束底部弹层内容。
 class CommonBottomSheetContainer extends StatelessWidget {
   const CommonBottomSheetContainer({
     super.key,

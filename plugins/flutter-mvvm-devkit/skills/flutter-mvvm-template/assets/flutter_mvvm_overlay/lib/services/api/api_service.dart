@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import '../mock_api/mock_user_api_service.dart';
 import 'user_api_service.dart';
 
+/// 应用可连接的服务环境。
 enum ApiEnvironment { production, test, mock }
 
+/// 为每个真实服务环境提供基础地址。
 extension ApiEnvironmentBaseUrl on ApiEnvironment {
   String get baseUrl {
     switch (this) {
@@ -19,7 +21,7 @@ extension ApiEnvironmentBaseUrl on ApiEnvironment {
   }
 }
 
-// Debug and profile builds use this when --dart-define=server is omitted or invalid.
+// Debug/Profile 未提供或错误配置 --dart-define=server 时使用该默认值。
 const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
 
 const String _server = String.fromEnvironment('server');
@@ -28,6 +30,7 @@ final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
   isReleaseMode: kReleaseMode,
 );
 
+/// 按编译参数和构建模式选择环境；Release 始终对非法值回退生产环境。
 ApiEnvironment resolveApiEnvironment({
   required String server,
   required bool isReleaseMode,
@@ -45,6 +48,7 @@ ApiEnvironment resolveApiEnvironment({
   }
 }
 
+/// 聚合各业务 API 模块，并根据环境装配真实或 Mock 实现。
 class ApiService {
   factory ApiService({ApiEnvironment? environment}) {
     final selectedEnvironment = environment ?? _apiEnvironment;
@@ -56,6 +60,7 @@ class ApiService {
     return ApiService.withModules(user: DioUserApiService(client));
   }
 
+  /// 允许测试或上层容器显式注入 API 模块。
   ApiService.withModules({required this.user});
 
   final UserApiService user;

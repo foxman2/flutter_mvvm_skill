@@ -11,8 +11,10 @@ import '../widgets/app_toast.dart';
 import 'base_view_model.dart';
 import 'dispose_bag.dart';
 
+/// 页面创建 ViewModel 的延迟工厂。
 typedef ViewModelProvider<T extends BaseViewModel> = T Function();
 
+/// 负责持有 ViewModel 的基础 StatefulWidget。
 abstract class BaseStatefulView<ViewModel extends BaseViewModel>
     extends StatefulWidget {
   const BaseStatefulView({super.key, required this.viewModelProvider});
@@ -22,6 +24,7 @@ abstract class BaseStatefulView<ViewModel extends BaseViewModel>
   ViewModel createViewModel() => viewModelProvider();
 }
 
+/// 创建、绑定并释放 ViewModel，同时为其接入通用导航能力。
 abstract class BaseStatefulViewState<
   ViewModel extends BaseViewModel,
   T extends BaseStatefulView<ViewModel>
@@ -123,9 +126,11 @@ abstract class BaseStatefulViewState<
   Widget createWidget(BuildContext context);
 }
 
+/// 使用应用级 Loading、错误和短消息能力的页面别名。
 typedef AppBaseStatefulPage<ViewModel extends AppBaseViewModel> =
     BaseStatefulView<ViewModel>;
 
+/// 在基础页面绑定之上接入 Loading、错误弹窗和 Toast 展示。
 abstract class AppBaseStatefulPageState<
   ViewModel extends AppBaseViewModel,
   T extends AppBaseStatefulPage<ViewModel>
@@ -152,10 +157,12 @@ abstract class AppBaseStatefulPageState<
 
   @override
   void dispose() {
+    // 页面销毁时仅移除自己的 owner，其他页面仍在加载时不会误关 Dialog。
     AppLoadingDialogController.shared.detach(this);
     super.dispose();
   }
 
+  /// 将显式启用的页面返回决策转发给 ViewModel。
   Future<bool> onWillPop() => viewModel.onWillPop();
 
   void _updateLoadingState(bool isLoading) {
@@ -202,6 +209,7 @@ abstract class AppBaseStatefulPageState<
   @override
   Widget createWidget(BuildContext context) {
     final child = createWidget2(context);
+    // 默认保留系统原生返回；只有 ViewModel 明确开启时才安装 PopScope。
     if (!viewModel.hookBackButton) {
       return child;
     }
@@ -220,5 +228,6 @@ abstract class AppBaseStatefulPageState<
     );
   }
 
+  /// 构建页面自身内容，通用交互包装由基类统一处理。
   Widget createWidget2(BuildContext context);
 }

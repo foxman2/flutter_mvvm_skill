@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
+/// 提示弹窗中的单个操作及其视觉语义。
 class AlertViewAction {
   AlertViewAction(
     this.title, {
@@ -17,12 +18,14 @@ class AlertViewAction {
   final VoidCallback? handler;
 }
 
+/// 提示弹窗接受的用户动作。
 abstract class AlertViewModelInput {
   void onPop(Object? result);
 
   void onClickAction(AlertViewAction action, String resolvedTitle);
 }
 
+/// 提示弹窗渲染所需的只读状态。
 abstract class AlertViewModelOutput {
   DisplayText? get title;
 
@@ -37,9 +40,11 @@ abstract class AlertViewModelOutput {
   List<AlertViewAction> get actions;
 }
 
+/// 提示弹窗 ViewModel 的完整页面契约。
 abstract class AlertViewModelType extends BaseViewModel
     implements AlertViewModelInput, AlertViewModelOutput {}
 
+/// 管理提示内容、操作列表和取消回调。
 class AlertViewModel extends AlertViewModelType {
   factory AlertViewModel({
     DisplayText? title,
@@ -89,6 +94,7 @@ class AlertViewModel extends AlertViewModelType {
     popUseRoot(resolvedTitle);
   }
 
+  /// 按展示顺序添加一个操作。
   void addAction(
     DisplayText title, {
     bool isDefault = false,

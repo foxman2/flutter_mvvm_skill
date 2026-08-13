@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../mvvm/base_view.dart';
 import 'action_sheet_view_model.dart';
 
+/// 根据 [ActionSheetViewModelType] 渲染 Cupertino Action Sheet。
 class ActionSheetPage extends BaseStatefulView<ActionSheetViewModelType> {
   const ActionSheetPage({super.key, required super.viewModelProvider});
 

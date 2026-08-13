@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../errors/app_exception.dart';
 
+/// 将 Dio 网络异常转换为包含状态码和请求路径的应用错误。
 class ApiServiceException extends AppException {
   const ApiServiceException({
     super.title,
@@ -14,6 +15,7 @@ class ApiServiceException extends AppException {
   final int? statusCode;
   final String? path;
 
+  /// 保留 Dio 请求上下文并生成面向用户的错误信息。
   factory ApiServiceException.fromDioException(
     DioException error,
     StackTrace stackTrace,

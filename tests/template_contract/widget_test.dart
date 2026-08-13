@@ -199,6 +199,75 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
+  testWidgets('page uses native back behavior by default', (tester) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      _PresentationPage(viewModelProvider: () => viewModel),
+                ),
+              ),
+              child: const Text('Open page'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open page'));
+    await tester.pumpAndSettle();
+    expect(find.text('Presentation page'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Presentation page'), findsNothing);
+    expect(find.text('Open page'), findsOneWidget);
+  });
+
+  testWidgets('opt-in back hook can block and then allow page pop', (
+    tester,
+  ) async {
+    final viewModel = _BackHookViewModel();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      _BackHookPage(viewModelProvider: () => viewModel),
+                ),
+              ),
+              child: const Text('Open hooked page'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open hooked page'));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Hooked page'), findsOneWidget);
+    expect(viewModel.popAttempts, 1);
+
+    viewModel.allowPop = true;
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Hooked page'), findsNothing);
+    expect(find.text('Open hooked page'), findsOneWidget);
+    expect(viewModel.popAttempts, 2);
+  });
+
   testWidgets('loading controller aggregates independent owners', (
     tester,
   ) async {
@@ -429,5 +498,34 @@ class _PresentationPageState
         ),
       ),
     );
+  }
+}
+
+class _BackHookViewModel extends AppBaseViewModel {
+  var allowPop = false;
+  var popAttempts = 0;
+
+  @override
+  bool get hookBackButton => true;
+
+  @override
+  Future<bool> onWillPop() async {
+    popAttempts += 1;
+    return allowPop;
+  }
+}
+
+class _BackHookPage extends AppBaseStatefulPage<_BackHookViewModel> {
+  const _BackHookPage({required super.viewModelProvider});
+
+  @override
+  State<_BackHookPage> createState() => _BackHookPageState();
+}
+
+class _BackHookPageState
+    extends AppBaseStatefulPageState<_BackHookViewModel, _BackHookPage> {
+  @override
+  Widget createWidget2(BuildContext context) {
+    return const Scaffold(body: Center(child: Text('Hooked page')));
   }
 }

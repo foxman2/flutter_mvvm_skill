@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
+/// 使用 [ValueStream] 当前值初始化快照的 StreamBuilder。
 class ValueStreamBuilder<T> extends StreamBuilderBase<T, AsyncSnapshot<T>> {
   const ValueStreamBuilder({
     super.key,

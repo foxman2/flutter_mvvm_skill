@@ -4,6 +4,7 @@ import '../action_sheet/action_sheet_view_model.dart';
 import '../alert/alert_view_model.dart';
 import '../input_alert/input_alert_view_model.dart';
 
+/// 首页接受的用户动作。
 abstract class HomeViewModelInput {
   void onClickProductPreview();
 
@@ -16,11 +17,14 @@ abstract class HomeViewModelInput {
   void onClickBottomSheetDemo();
 }
 
+/// 首页对外输出契约；示例当前没有额外状态。
 abstract class HomeViewModelOutput {}
 
+/// 首页 ViewModel 的完整页面契约。
 abstract class HomeViewModelType extends AppBaseViewModel
     implements HomeViewModelInput, HomeViewModelOutput {}
 
+/// 组装模板内置示例页面与弹层的导航参数。
 class HomeViewModel extends HomeViewModelType {
   @override
   void onClickProductPreview() {

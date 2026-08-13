@@ -4,6 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../mvvm/base_view.dart';
 import 'sample_product_view_model.dart';
 
+/// 演示 Product Preview 页面组织方式的静态示例页。
 class SampleProductPage
     extends AppBaseStatefulPage<SampleProductViewModelType> {
   const SampleProductPage({super.key, required super.viewModelProvider});

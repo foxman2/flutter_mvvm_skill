@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../navigation/app_navigator.dart';
 import 'product_preview_registry.dart';
 
+/// 展示已注册 UI 示例并导航到对应预览页面。
 class ProductPreviewPage extends StatelessWidget {
   const ProductPreviewPage({super.key});
 

@@ -2,9 +2,13 @@ import 'package:flutter/widgets.dart';
 
 import 'app_localizations.dart';
 
+/// 使用当前本地化资源解析普通文本。
 typedef LocalizedTextResolver = String Function(AppLocalizations strings);
+
+/// 使用当前本地化资源解析富文本。
 typedef LocalizedTextSpanResolver = TextSpan Function(AppLocalizations strings);
 
+/// 延迟到拥有 [BuildContext] 时再解析的普通展示文本。
 sealed class DisplayText {
   const DisplayText();
 
@@ -13,6 +17,7 @@ sealed class DisplayText {
   const factory DisplayText.localized(LocalizedTextResolver resolver) =
       _LocalizedDisplayText;
 
+  /// 根据当前上下文返回最终展示字符串。
   String resolve(BuildContext context);
 }
 
@@ -36,6 +41,7 @@ final class _LocalizedDisplayText extends DisplayText {
   }
 }
 
+/// 延迟到拥有 [BuildContext] 时再解析的富文本。
 sealed class DisplayTextSpan {
   const DisplayTextSpan();
 
@@ -44,6 +50,7 @@ sealed class DisplayTextSpan {
   const factory DisplayTextSpan.localized(LocalizedTextSpanResolver resolver) =
       _LocalizedDisplayTextSpan;
 
+  /// 根据当前上下文返回最终富文本。
   TextSpan resolve(BuildContext context);
 }
 

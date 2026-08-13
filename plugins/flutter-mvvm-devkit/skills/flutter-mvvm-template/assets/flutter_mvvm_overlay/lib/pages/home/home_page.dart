@@ -5,6 +5,7 @@ import '../../mvvm/base_view.dart';
 import '../../product_preview/product_preview_entry_button.dart';
 import 'home_view_model.dart';
 
+/// 模板首页，集中展示内置导航和弹层示例入口。
 class HomePage extends AppBaseStatefulPage<HomeViewModelType> {
   const HomePage({super.key, required super.viewModelProvider});
 
@@ -60,6 +61,7 @@ class _HomePageState
   }
 }
 
+/// 用于演示通用底部弹层布局的内容页。
 class BottomSheetDemoPage extends StatelessWidget {
   const BottomSheetDemoPage({super.key});
 

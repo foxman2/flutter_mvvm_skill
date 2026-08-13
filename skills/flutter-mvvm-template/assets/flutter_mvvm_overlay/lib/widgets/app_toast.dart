@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+/// 短消息的视觉类型。
 enum AppToastType { success, fail, normal }
 
+/// 通过根 Overlay 展示非阻塞、可跨页面延续的居中短消息。
 class AppToastController {
   AppToastController();
 
@@ -18,6 +20,7 @@ class AppToastController {
   Timer? _displayTimer;
   Timer? _removalTimer;
 
+  /// 展示短消息；新消息会立即替换当前消息并重置计时器。
   void show(
     BuildContext context, {
     required AppToastType type,
@@ -42,6 +45,7 @@ class AppToastController {
     _displayTimer = Timer(displayDuration, () => _hide(entry, key));
   }
 
+  /// 触发当前消息的淡出动画。
   void dismiss() {
     final entry = _entry;
     final key = _toastKey;
@@ -70,6 +74,7 @@ class AppToastController {
   }
 
   void _removeCurrent() {
+    // 同时取消展示和移除计时器，防止旧回调删除后续插入的新 OverlayEntry。
     _displayTimer?.cancel();
     _removalTimer?.cancel();
     _displayTimer = null;
@@ -108,6 +113,7 @@ class _AppToastOverlayState extends State<_AppToastOverlay> {
   @override
   void initState() {
     super.initState();
+    // 等首帧以 0 透明度挂载后再切换状态，确保淡入动画能够执行。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() => _visible = true);

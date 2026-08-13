@@ -42,6 +42,12 @@ void main() {
     tracker.dispose();
   });
 
+  test('AppBaseViewModel leaves system back handling enabled by default', () {
+    final viewModel = _ToastViewModel();
+
+    expect(viewModel.hookBackButton, isFalse);
+  });
+
   test('GeneralAppException keeps explicit presentation and stack', () {
     final stackTrace = StackTrace.fromString('general exception origin');
     final exception = GeneralAppException(

@@ -4,6 +4,7 @@ import '../../mvvm/base_view.dart';
 import '../../widgets/value_stream_builder.dart';
 import 'input_alert_view_model.dart';
 
+/// 渲染带输入校验和异步提交能力的 Material 弹窗。
 class InputAlertPage extends AppBaseStatefulPage<InputAlertViewModelType> {
   const InputAlertPage({super.key, required super.viewModelProvider});
 

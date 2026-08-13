@@ -3,6 +3,7 @@ import 'package:rxdart/rxdart.dart';
 import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
+/// 输入弹窗接受的用户动作。
 abstract class InputAlertViewModelInput {
   void onInputText(String value);
 
@@ -11,6 +12,7 @@ abstract class InputAlertViewModelInput {
   void onClickCancel();
 }
 
+/// 输入弹窗渲染所需的只读状态。
 abstract class InputAlertViewModelOutput {
   DisplayText? get title;
 
@@ -29,9 +31,11 @@ abstract class InputAlertViewModelOutput {
   ValueStream<bool> get isDoneEnabled;
 }
 
+/// 输入弹窗 ViewModel 的完整页面契约。
 abstract class InputAlertViewModelType extends AppBaseViewModel
     implements InputAlertViewModelInput, InputAlertViewModelOutput {}
 
+/// 管理输入清洗、按钮可用状态和异步提交。
 class InputAlertViewModel extends InputAlertViewModelType {
   factory InputAlertViewModel({
     DisplayText? title,
@@ -106,6 +110,7 @@ class InputAlertViewModel extends InputAlertViewModelType {
   }
 
   Future<void> _submitInput() async {
+    // 仅在业务提交成功后关闭弹窗，异常交由应用级错误链路处理。
     await _onSubmitted?.call(_inputContent);
     pop(_inputContent);
   }

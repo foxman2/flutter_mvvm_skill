@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../l10n/display_text.dart';
 import '../../mvvm/base_view_model.dart';
 
+/// Action Sheet 中的单个操作。
 class ActionSheetAction {
   ActionSheetAction(this.title, {this.isDestructive = false, this.handler});
 
@@ -11,12 +12,14 @@ class ActionSheetAction {
   final VoidCallback? handler;
 }
 
+/// Action Sheet 接受的用户动作。
 abstract class ActionSheetViewModelInput {
   void onClickAction(ActionSheetAction action, String resolvedTitle);
 
   void onClickCancel();
 }
 
+/// Action Sheet 渲染所需的只读状态。
 abstract class ActionSheetViewModelOutput {
   DisplayText? get title;
 
@@ -27,9 +30,11 @@ abstract class ActionSheetViewModelOutput {
   ActionSheetAction? get cancelAction;
 }
 
+/// Action Sheet ViewModel 的完整页面契约。
 abstract class ActionSheetViewModelType extends BaseViewModel
     implements ActionSheetViewModelInput, ActionSheetViewModelOutput {}
 
+/// 管理 Action Sheet 的普通操作和取消操作。
 class ActionSheetViewModel extends ActionSheetViewModelType {
   ActionSheetViewModel({this.title, this.message});
 
@@ -54,6 +59,7 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
     popUseRoot();
   }
 
+  /// 按展示顺序添加一个普通操作。
   void addAction(
     DisplayText title, {
     bool isDestructive = false,
@@ -64,6 +70,7 @@ class ActionSheetViewModel extends ActionSheetViewModelType {
     );
   }
 
+  /// 配置独立显示的取消操作。
   void setCancelAction([VoidCallback? handler, DisplayText? title]) {
     _cancelAction = ActionSheetAction(
       title ?? .localized((strings) => strings.commonCancel),

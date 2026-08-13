@@ -368,6 +368,23 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         )
         self.assertTrue((OVERLAY_PATH / "lib/widgets/app_toast.dart").is_file())
 
+    def test_handwritten_template_dart_files_have_chinese_docs(self) -> None:
+        lib = OVERLAY_PATH / "lib"
+        handwritten_files = [
+            path
+            for path in sorted(lib.rglob("*.dart"))
+            if not path.name.endswith(".g.dart")
+        ]
+
+        self.assertGreater(len(handwritten_files), 0)
+        for path in handwritten_files:
+            source = path.read_text(encoding="utf-8")
+            self.assertRegex(
+                source,
+                r"(?m)^\s*///.*[\u4e00-\u9fff]",
+                f"missing Chinese DartDoc: {path.relative_to(OVERLAY_PATH)}",
+            )
+
     def test_default_overlay_contains_only_smoke_test(self) -> None:
         generated_tests = sorted(path.name for path in OVERLAY_TEST_PATH.glob("*.dart"))
         contract_tests = sorted(path.name for path in CONTRACT_TEST_PATH.glob("*.dart"))

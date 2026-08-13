@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../mvvm/base_view.dart';
 import 'alert_view_model.dart';
 
+/// 根据 [AlertViewModelType] 渲染 Material 提示弹窗。
 class AlertPage extends BaseStatefulView<AlertViewModelType> {
   const AlertPage({super.key, required super.viewModelProvider});
 
@@ -22,6 +23,7 @@ class _AlertPageState
             ),
           ]
         : viewModel.actions;
+    // 富文本优先于普通文本，避免同一区域重复渲染两种内容。
     final richTitle = viewModel.richTitle?.resolve(context);
     final title = richTitle == null ? viewModel.title?.resolve(context) : null;
     final richContent = viewModel.richContent?.resolve(context);
