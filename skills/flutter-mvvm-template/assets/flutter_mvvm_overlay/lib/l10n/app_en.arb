@@ -16,10 +16,6 @@
   "@commonDelete": {
     "description": "Generic destructive delete action label."
   },
-  "commonErrorTitle": "Something went wrong",
-  "@commonErrorTitle": {
-    "description": "Fallback title for unexpected errors."
-  },
   "homeTemplateTitle": "Flutter MVVM Template",
   "@homeTemplateTitle": {
     "description": "Title shown on the generated template home page."

@@ -46,7 +46,7 @@ void main() {
     expect(find.text('Close'), findsOneWidget);
   });
 
-  testWidgets('tracked error localizes fallback title and keeps raw body', (
+  testWidgets('tracked error without a title only displays its raw body', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -60,7 +60,8 @@ void main() {
     await tester.tap(find.text('Emit error'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Something went wrong'), findsOneWidget);
+    final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+    expect(dialog.title, isNull);
     expect(find.text('Server failure'), findsOneWidget);
     expect(find.text('OK'), findsOneWidget);
   });
@@ -81,6 +82,29 @@ void main() {
 
     expect(find.text('Request failed'), findsOneWidget);
     expect(find.text('Server failure'), findsOneWidget);
+  });
+
+  testWidgets('tracked error without a message omits alert content', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: _ErrorPage(
+          viewModelProvider: () =>
+              _ErrorViewModel(title: 'Request failed', message: null),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Emit error'));
+    await tester.pumpAndSettle();
+
+    final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+    expect(dialog.content, isNull);
+    expect(find.text('Request failed'), findsOneWidget);
+    expect(find.text('OK'), findsOneWidget);
   });
 
   testWidgets('input alert resolves labels and parameterized toast lazily', (
@@ -144,15 +168,14 @@ abstract class _ErrorViewModelType extends AppBaseViewModel
     implements _ErrorViewModelInput {}
 
 class _ErrorViewModel extends _ErrorViewModelType {
-  _ErrorViewModel({this.title});
+  _ErrorViewModel({this.title, this.message = 'Server failure'});
 
   final String? title;
+  final String? message;
 
   @override
   void emitError() {
-    errorTracker.onError(
-      GeneralAppException(title: title, message: 'Server failure'),
-    );
+    errorTracker.onError(GeneralAppException(title: title, message: message));
   }
 }
 

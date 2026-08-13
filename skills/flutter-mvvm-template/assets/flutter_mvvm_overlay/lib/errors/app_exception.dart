@@ -6,7 +6,7 @@ abstract class AppException implements Exception {
   });
 
   final String? title;
-  final String message;
+  final String? message;
   final StackTrace stackTrace;
 
   @override

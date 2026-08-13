@@ -177,10 +177,8 @@ abstract class AppBaseStatefulPageState<
 
   void _handleError(AppException error) {
     final alert = AlertViewModel(
-      title: error.title == null
-          ? .localized((strings) => strings.commonErrorTitle)
-          : .raw(error.title!),
-      content: .raw(error.message),
+      title: error.title == null ? null : .raw(error.title!),
+      content: error.message == null ? null : .raw(error.message!),
     )..addAction(.localized((strings) => strings.commonOk), isDefault: true);
     _show(AlertAppPage(alert));
   }

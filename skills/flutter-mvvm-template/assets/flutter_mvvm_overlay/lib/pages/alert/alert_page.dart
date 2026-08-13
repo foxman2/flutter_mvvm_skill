@@ -37,7 +37,9 @@ class _AlertPageState
         }
       },
       child: AlertDialog(
-        title: richTitle == null ? Text(title ?? '') : Text.rich(richTitle),
+        title: richTitle == null
+            ? (title == null ? null : Text(title))
+            : Text.rich(richTitle),
         content: richContent == null
             ? (content == null ? null : Text(content))
             : Text.rich(richContent),
