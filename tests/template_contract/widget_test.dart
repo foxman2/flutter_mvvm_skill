@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/app.dart';
 import 'package:{{project_name}}/errors/app_exception.dart';
@@ -8,6 +7,8 @@ import 'package:{{project_name}}/mvvm/base_view.dart';
 import 'package:{{project_name}}/mvvm/base_view_model.dart';
 import 'package:{{project_name}}/pages/alert/alert_page.dart';
 import 'package:{{project_name}}/pages/alert/alert_view_model.dart';
+import 'package:{{project_name}}/widgets/app_loading_dialog.dart';
+import 'package:{{project_name}}/widgets/app_toast.dart';
 
 void main() {
   test('template currently supports English localization only', () {
@@ -125,8 +126,206 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Submitted: demo_app'), findsOneWidget);
-    await EasyLoading.dismiss(animation: false);
+    AppToastController.shared.dismiss();
+    await tester.pump(AppToastController.animationDuration);
+  });
+
+  testWidgets('loading blocks taps and closes when tracking ends', (
+    tester,
+  ) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(home: _PresentationPage(viewModelProvider: () => viewModel)),
+    );
+
+    viewModel.loadingTracker.increment();
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    final progress = tester.widget<CircularProgressIndicator>(
+      find.byType(CircularProgressIndicator),
+    );
+    final barrier = tester.widget<ModalBarrier>(find.byType(ModalBarrier).last);
+    expect(progress.color, Colors.white);
+    expect(progress.backgroundColor, const Color(0x4DFFFFFF));
+    expect(progress.strokeWidth, 3);
+    expect(barrier.color, Colors.black.withValues(alpha: 0.18));
+    await tester.tapAt(const Offset(10, 10));
+    expect(viewModel.tapCount, 0);
+
+    viewModel.loadingTracker.decrement();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('Android back closes loading without popping its page', (
+    tester,
+  ) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(home: _PresentationPage(viewModelProvider: () => viewModel)),
+    );
+
+    viewModel.loadingTracker.increment();
+    viewModel.loadingTracker.increment();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Presentation page'), findsOneWidget);
+
+    viewModel.loadingTracker.decrement();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Presentation page'), findsOneWidget);
+
+    viewModel.loadingTracker.decrement();
+    await tester.pump();
+    expect(find.text('Presentation page'), findsOneWidget);
+
+    viewModel.loadingTracker.increment();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    viewModel.loadingTracker.decrement();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('loading controller aggregates independent owners', (
+    tester,
+  ) async {
+    final controller = AppLoadingDialogController();
+    final firstOwner = Object();
+    final secondOwner = Object();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () {
+                controller.update(
+                  owner: firstOwner,
+                  isLoading: true,
+                  context: context,
+                );
+                controller.update(
+                  owner: secondOwner,
+                  isLoading: true,
+                  context: context,
+                );
+              },
+              child: const Text('Start'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Start'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    controller.update(
+      owner: firstOwner,
+      isLoading: false,
+      context: tester.element(find.byType(Scaffold)),
+    );
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    controller.update(
+      owner: secondOwner,
+      isLoading: false,
+      context: tester.element(find.byType(Scaffold)),
+    );
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('toast types render and newer messages replace older ones', (
+    tester,
+  ) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(home: _PresentationPage(viewModelProvider: () => viewModel)),
+    );
+
+    viewModel.showSuccessMessage(message: const .raw('Saved'));
+    await tester.pump();
+    expect(find.text('Saved'), findsOneWidget);
+    expect(find.byIcon(Icons.done), findsOneWidget);
+
+    viewModel.showFailMessage(message: const .raw('Failed'));
+    await tester.pump();
+    expect(find.text('Saved'), findsNothing);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.byIcon(Icons.clear), findsOneWidget);
+
+    viewModel.showNormalMessage(message: const .raw('Updated'));
+    await tester.pump();
+    expect(find.text('Failed'), findsNothing);
+    expect(find.text('Updated'), findsOneWidget);
+    expect(find.byIcon(Icons.done), findsNothing);
+    expect(find.byIcon(Icons.clear), findsNothing);
+
+    await tester.pump(AppToastController.normalMessageDuration);
+    await tester.pump(AppToastController.animationDuration);
+    expect(find.text('Updated'), findsNothing);
+  });
+
+  testWidgets('success toast remains for its two second duration', (
+    tester,
+  ) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(home: _PresentationPage(viewModelProvider: () => viewModel)),
+    );
+
+    viewModel.showSuccessMessage(message: const .raw('Saved'));
+    await tester.pump();
+    await tester.pump(
+      AppToastController.messageDuration - const Duration(milliseconds: 1),
+    );
+    expect(find.text('Saved'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(AppToastController.animationDuration);
+    expect(find.text('Saved'), findsNothing);
+  });
+
+  testWidgets('toast stays visible while navigating to another page', (
+    tester,
+  ) async {
+    final viewModel = _PresentationViewModel();
+    await tester.pumpWidget(
+      MaterialApp(home: _PresentationPage(viewModelProvider: () => viewModel)),
+    );
+    final context = tester.element(find.text('Presentation page'));
+
+    viewModel.showSuccessMessage(message: const .raw('Navigating'));
+    await tester.pump();
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => const Scaffold(body: Text('Second page')),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Second page'), findsOneWidget);
+    expect(find.text('Navigating'), findsOneWidget);
+
+    AppToastController.shared.dismiss();
+    await tester.pump(AppToastController.animationDuration);
   });
 
   testWidgets('action sheet resolves localized labels', (tester) async {
@@ -195,6 +394,38 @@ class _ErrorPageState
         child: FilledButton(
           onPressed: viewModel.emitError,
           child: const Text('Emit error'),
+        ),
+      ),
+    );
+  }
+}
+
+class _PresentationViewModel extends AppBaseViewModel {
+  var tapCount = 0;
+
+  void onTap() {
+    tapCount += 1;
+  }
+}
+
+class _PresentationPage extends AppBaseStatefulPage<_PresentationViewModel> {
+  const _PresentationPage({required super.viewModelProvider});
+
+  @override
+  State<_PresentationPage> createState() => _PresentationPageState();
+}
+
+class _PresentationPageState
+    extends
+        AppBaseStatefulPageState<_PresentationViewModel, _PresentationPage> {
+  @override
+  Widget createWidget2(BuildContext context) {
+    return Scaffold(
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: viewModel.onTap,
+        child: const SizedBox.expand(
+          child: Center(child: Text('Presentation page')),
         ),
       ),
     );

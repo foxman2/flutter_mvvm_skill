@@ -39,6 +39,9 @@ MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
 MARKETPLACE_PROJECT_SKILLS_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills"
 )
+MARKETPLACE_TEMPLATE_SKILL_PATH = (
+    ROOT / "plugins/flutter-mvvm-devkit/skills/flutter-mvvm-template"
+)
 RETIRED_TEST_SKILL_NAME = "flutter-mvvm-" + "test"
 RETIRED_TEST_SKILL_PATH = ROOT / "project-skills" / RETIRED_TEST_SKILL_NAME
 MARKETPLACE_RETIRED_TEST_SKILL_PATH = (
@@ -308,6 +311,12 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                 directory_snapshot(MARKETPLACE_PROJECT_SKILLS_PATH / skill_name),
             )
 
+    def test_marketplace_template_skill_matches_source(self) -> None:
+        self.assertEqual(
+            directory_snapshot(ROOT / "skills/flutter-mvvm-template"),
+            directory_snapshot(MARKETPLACE_TEMPLATE_SKILL_PATH),
+        )
+
     def test_copy_project_skills_installs_all_managed_skills(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flutter-mvvm-project-skills-") as temporary:
             target = Path(temporary)
@@ -346,6 +355,18 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertIn("part 'user_profile.g.dart';", user_model)
         self.assertIn("_$UserProfileFromJson", generated_model)
         self.assertIn("_$UserProfileToJson", generated_model)
+
+    def test_overlay_does_not_depend_on_easyloading(self) -> None:
+        pubspec_patch = (OVERLAY_PATH / "template_pubspec_patch.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertNotIn("flutter_easyloading", pubspec_patch)
+        self.assertNotIn("EasyLoading", searchable_text(OVERLAY_PATH))
+        self.assertTrue(
+            (OVERLAY_PATH / "lib/widgets/app_loading_dialog.dart").is_file()
+        )
+        self.assertTrue((OVERLAY_PATH / "lib/widgets/app_toast.dart").is_file())
 
     def test_default_overlay_contains_only_smoke_test(self) -> None:
         generated_tests = sorted(path.name for path in OVERLAY_TEST_PATH.glob("*.dart"))

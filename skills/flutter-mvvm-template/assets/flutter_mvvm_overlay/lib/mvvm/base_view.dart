@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import '../errors/app_exception.dart';
 import '../l10n/display_text.dart';
@@ -7,6 +6,8 @@ import '../navigation/app_navigator.dart';
 import '../navigation/app_page.dart';
 import '../navigation/app_page_transition.dart';
 import '../pages/alert/alert_view_model.dart';
+import '../widgets/app_loading_dialog.dart';
+import '../widgets/app_toast.dart';
 import 'base_view_model.dart';
 import 'dispose_bag.dart';
 
@@ -130,8 +131,6 @@ abstract class AppBaseStatefulPageState<
   T extends AppBaseStatefulPage<ViewModel>
 >
     extends BaseStatefulViewState<ViewModel, T> {
-  var _isShowingLoading = false;
-
   @override
   @mustCallSuper
   void bindViewModel() {
@@ -153,26 +152,18 @@ abstract class AppBaseStatefulPageState<
 
   @override
   void dispose() {
-    _updateLoadingState(false);
+    AppLoadingDialogController.shared.detach(this);
     super.dispose();
   }
 
-  Future<bool> onWillPop() {
-    if (_isShowingLoading) {
-      _updateLoadingState(false);
-      return Future.value(false);
-    }
-    return viewModel.onWillPop();
-  }
+  Future<bool> onWillPop() => viewModel.onWillPop();
 
   void _updateLoadingState(bool isLoading) {
-    if (isLoading && !_isShowingLoading) {
-      EasyLoading.show(maskType: EasyLoadingMaskType.clear);
-      _isShowingLoading = true;
-    } else if (!isLoading && _isShowingLoading) {
-      EasyLoading.dismiss();
-      _isShowingLoading = false;
-    }
+    AppLoadingDialogController.shared.update(
+      owner: this,
+      isLoading: isLoading,
+      context: context,
+    );
   }
 
   void _handleError(AppException error) {
@@ -184,16 +175,26 @@ abstract class AppBaseStatefulPageState<
   }
 
   void _showSuccessMessage(DisplayText? message) {
-    EasyLoading.showSuccess(message?.resolve(context) ?? '');
+    AppToastController.shared.show(
+      context,
+      type: AppToastType.success,
+      message: message?.resolve(context) ?? '',
+    );
   }
 
   void _showFailMessage(DisplayText? message) {
-    EasyLoading.showError(message?.resolve(context) ?? '');
+    AppToastController.shared.show(
+      context,
+      type: AppToastType.fail,
+      message: message?.resolve(context) ?? '',
+    );
   }
 
   void _showNormalMessage(DisplayText? message) {
-    EasyLoading.showToast(
-      message?.resolve(context) ?? '',
+    AppToastController.shared.show(
+      context,
+      type: AppToastType.normal,
+      message: message?.resolve(context) ?? '',
       duration: const Duration(seconds: 1),
     );
   }

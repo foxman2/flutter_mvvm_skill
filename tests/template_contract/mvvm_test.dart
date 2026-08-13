@@ -32,10 +32,12 @@ void main() {
     final sub = tracker.isLoading.listen(states.add);
 
     tracker.increment();
+    tracker.increment();
+    tracker.decrement();
     tracker.decrement();
     await Future<void>.delayed(Duration.zero);
 
-    expect(states, containsAllInOrder([false, true, false]));
+    expect(states, [false, true, false]);
     await sub.cancel();
     tracker.dispose();
   });

@@ -7,10 +7,11 @@ class LoadingTracker {
     if (_activeCount.hasValue) {
       return _activeCount
           .map((count) => count > 0)
+          .distinct()
           .skip(1)
           .shareValueSeeded(_activeCount.value > 0);
     }
-    return _activeCount.map((count) => count > 0).shareValue();
+    return _activeCount.map((count) => count > 0).distinct().shareValue();
   }
 
   void increment() {
