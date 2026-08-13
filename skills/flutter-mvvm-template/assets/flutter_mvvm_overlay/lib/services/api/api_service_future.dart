@@ -8,8 +8,11 @@ extension ApiServiceResponseFuture<T> on Future<Response<T>> {
       (response) => parser(response.data as T),
       onError: (Object error, StackTrace stackTrace) {
         if (error is DioException) {
-          final exception = ApiServiceException.fromDioException(error);
-          Error.throwWithStackTrace(exception, error.stackTrace);
+          final exception = ApiServiceException.fromDioException(
+            error,
+            stackTrace,
+          );
+          Error.throwWithStackTrace(exception, stackTrace);
         }
         Error.throwWithStackTrace(error, stackTrace);
       },

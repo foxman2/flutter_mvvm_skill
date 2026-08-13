@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/app_container.dart';
+import 'package:{{project_name}}/errors/app_exception.dart';
 import 'package:{{project_name}}/models/user/user_profile.dart';
 import 'package:{{project_name}}/services/api/api_service.dart';
 import 'package:{{project_name}}/services/api/api_service_exception.dart';
@@ -182,16 +183,26 @@ void main() {
         requestOptions: requestOptions,
       ),
     );
+    final stackTrace = StackTrace.fromString('dio exception origin');
 
     await expectLater(
       Future<Response<Map<String, dynamic>>>.error(
         dioError,
+        stackTrace,
       ).parseData(UserProfile.fromJson),
       throwsA(
-        isA<ApiServiceException>()
-            .having((error) => error.statusCode, 'statusCode', 500)
-            .having((error) => error.path, 'path', '/user/profile')
-            .having((error) => error.message, 'message', 'Server error'),
+        allOf(
+          isA<AppException>(),
+          isA<ApiServiceException>()
+              .having((error) => error.statusCode, 'statusCode', 500)
+              .having((error) => error.path, 'path', '/user/profile')
+              .having((error) => error.message, 'message', 'Server error')
+              .having(
+                (error) => error.stackTrace.toString(),
+                'stackTrace',
+                stackTrace.toString(),
+              ),
+        ),
       ),
     );
   });

@@ -1,27 +1,28 @@
 import 'package:dio/dio.dart';
 
-class ApiServiceException implements Exception {
+import '../../errors/app_exception.dart';
+
+class ApiServiceException extends AppException {
   const ApiServiceException({
-    required this.message,
+    super.title,
+    required super.message,
+    required super.stackTrace,
     this.statusCode,
     this.path,
-    this.originalError,
-    this.stackTrace,
   });
 
-  final String message;
   final int? statusCode;
   final String? path;
-  final Object? originalError;
-  final StackTrace? stackTrace;
 
-  factory ApiServiceException.fromDioException(DioException error) {
+  factory ApiServiceException.fromDioException(
+    DioException error,
+    StackTrace stackTrace,
+  ) {
     return ApiServiceException(
       message: _messageFor(error),
       statusCode: error.response?.statusCode,
       path: error.requestOptions.path,
-      originalError: error,
-      stackTrace: error.stackTrace,
+      stackTrace: stackTrace,
     );
   }
 
@@ -68,5 +69,11 @@ class ApiServiceException implements Exception {
   }
 
   @override
-  String toString() => message;
+  String toString() {
+    return '$runtimeType('
+        'title: $title, '
+        'message: $message, '
+        'statusCode: $statusCode, '
+        'path: $path)';
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import '../errors/app_exception.dart';
 import '../l10n/display_text.dart';
 import '../navigation/app_navigator.dart';
 import '../navigation/app_page.dart';
@@ -8,7 +9,6 @@ import '../navigation/app_page_transition.dart';
 import '../pages/alert/alert_view_model.dart';
 import 'base_view_model.dart';
 import 'dispose_bag.dart';
-import 'error_tracker.dart';
 
 typedef ViewModelProvider<T extends BaseViewModel> = T Function();
 
@@ -175,12 +175,12 @@ abstract class AppBaseStatefulPageState<
     }
   }
 
-  void _handleError(AppError error) {
+  void _handleError(AppException error) {
     final alert = AlertViewModel(
       title: error.title == null
           ? .localized((strings) => strings.commonErrorTitle)
           : .raw(error.title!),
-      content: error.message == null ? null : .raw(error.message!),
+      content: .raw(error.message),
     )..addAction(.localized((strings) => strings.commonOk), isDefault: true);
     _show(AlertAppPage(alert));
   }

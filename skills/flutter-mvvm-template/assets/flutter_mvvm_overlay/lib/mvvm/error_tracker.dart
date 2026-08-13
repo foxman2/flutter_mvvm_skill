@@ -1,50 +1,47 @@
+import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
-class AppError implements Exception {
-  AppError({this.title, this.message, StackTrace? stackTrace})
-    : stackTrace = stackTrace ?? StackTrace.current;
-
-  final String? title;
-  final String? message;
-  final StackTrace? stackTrace;
-
-  factory AppError.from(Object error, [StackTrace? stackTrace]) {
-    if (error is AppError) {
-      return error;
-    }
-    return AppError(message: error.toString(), stackTrace: stackTrace);
-  }
-}
+import '../errors/app_exception.dart';
 
 class ErrorTracker {
-  final _subject = PublishSubject<AppError>(sync: true);
+  final _subject = PublishSubject<AppException>(sync: true);
 
-  Stream<AppError> get stream => _subject.stream;
+  Stream<AppException> get stream => _subject.stream;
 
   void onError(Object error, [StackTrace? stackTrace]) {
-    _subject.add(AppError.from(error, stackTrace));
+    final exception = error is AppException
+        ? error
+        : GeneralAppException.from(error, stackTrace ?? StackTrace.current);
+    _log(exception);
+    _subject.add(exception);
   }
 
   void dispose() {
     _subject.close();
   }
+
+  void _log(AppException exception) {
+    debugPrint('$exception');
+    debugPrint('App exception stack trace:\n${exception.stackTrace}');
+  }
 }
 
 extension ErrorTrack<T> on Future<T> {
-  Future<T> trackError(ErrorTracker tracker) {
-    return catchError((Object error, StackTrace stackTrace) {
+  Future<T> trackError(ErrorTracker tracker) async {
+    try {
+      return await this;
+    } catch (error, stackTrace) {
       tracker.onError(error, stackTrace);
-      throw error;
-    });
+      rethrow;
+    }
   }
 
-  Future<T?> consumeError(ErrorTracker tracker) {
-    return then<T?>(
-      (value) => value,
-      onError: (Object error, StackTrace stackTrace) {
-        tracker.onError(error, stackTrace);
-        return null;
-      },
-    );
+  Future<T?> consumeError(ErrorTracker tracker) async {
+    try {
+      return await this;
+    } catch (error, stackTrace) {
+      tracker.onError(error, stackTrace);
+      return null;
+    }
   }
 }

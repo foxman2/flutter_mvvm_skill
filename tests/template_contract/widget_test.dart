@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/app.dart';
+import 'package:{{project_name}}/errors/app_exception.dart';
 import 'package:{{project_name}}/l10n/app_localizations.dart';
 import 'package:{{project_name}}/mvvm/base_view.dart';
 import 'package:{{project_name}}/mvvm/base_view_model.dart';
-import 'package:{{project_name}}/mvvm/error_tracker.dart';
 import 'package:{{project_name}}/pages/alert/alert_page.dart';
 import 'package:{{project_name}}/pages/alert/alert_view_model.dart';
 
@@ -64,6 +65,24 @@ void main() {
     expect(find.text('OK'), findsOneWidget);
   });
 
+  testWidgets('tracked error displays its custom title', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: _ErrorPage(
+          viewModelProvider: () => _ErrorViewModel(title: 'Request failed'),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Emit error'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Request failed'), findsOneWidget);
+    expect(find.text('Server failure'), findsOneWidget);
+  });
+
   testWidgets('input alert resolves labels and parameterized toast lazily', (
     tester,
   ) async {
@@ -82,6 +101,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Submitted: demo_app'), findsOneWidget);
+    await EasyLoading.dismiss(animation: false);
+    await tester.pump();
   });
 
   testWidgets('action sheet resolves localized labels', (tester) async {
@@ -123,9 +144,15 @@ abstract class _ErrorViewModelType extends AppBaseViewModel
     implements _ErrorViewModelInput {}
 
 class _ErrorViewModel extends _ErrorViewModelType {
+  _ErrorViewModel({this.title});
+
+  final String? title;
+
   @override
   void emitError() {
-    errorTracker.onError(AppError(message: 'Server failure'));
+    errorTracker.onError(
+      GeneralAppException(title: title, message: 'Server failure'),
+    );
   }
 }
 

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:{{project_name}}/errors/app_exception.dart';
 import 'package:{{project_name}}/l10n/app_localizations.dart';
 import 'package:{{project_name}}/l10n/display_text.dart';
 import 'package:{{project_name}}/mvvm/base_view.dart';
 import 'package:{{project_name}}/mvvm/base_view_model.dart';
 import 'package:{{project_name}}/mvvm/dispose_bag.dart';
+import 'package:{{project_name}}/mvvm/error_tracker.dart';
 import 'package:{{project_name}}/mvvm/loading_tracker.dart';
 import 'package:{{project_name}}/navigation/app_page.dart';
 import 'package:{{project_name}}/pages/action_sheet/action_sheet_view_model.dart';
@@ -36,6 +38,74 @@ void main() {
     expect(states, containsAllInOrder([false, true, false]));
     await sub.cancel();
     tracker.dispose();
+  });
+
+  test('GeneralAppException keeps explicit presentation and stack', () {
+    final stackTrace = StackTrace.fromString('general exception origin');
+    final exception = GeneralAppException(
+      title: 'Request failed',
+      message: 'Try again later',
+      stackTrace: stackTrace,
+    );
+
+    expect(exception.title, 'Request failed');
+    expect(exception.message, 'Try again later');
+    expect(exception.stackTrace, same(stackTrace));
+  });
+
+  test('ErrorTracker wraps unknown errors with the captured stack', () async {
+    final tracker = ErrorTracker();
+    addTearDown(tracker.dispose);
+    final stackTrace = StackTrace.fromString('unknown exception origin');
+    final emitted = tracker.stream.first;
+
+    tracker.onError(const _TestException('Unknown failure'), stackTrace);
+
+    final exception = await emitted;
+    expect(exception, isA<GeneralAppException>());
+    expect(exception.message, 'Unknown failure');
+    expect(exception.stackTrace, same(stackTrace));
+  });
+
+  test('trackError reports and rethrows with the original stack', () async {
+    final tracker = ErrorTracker();
+    addTearDown(tracker.dispose);
+    const error = _TestException('Tracked failure');
+    final stackTrace = StackTrace.fromString('tracked exception origin');
+    final emitted = tracker.stream.first;
+
+    Object? caughtError;
+    StackTrace? caughtStackTrace;
+    try {
+      await Future<int>.error(error, stackTrace).trackError(tracker);
+    } catch (error, stackTrace) {
+      caughtError = error;
+      caughtStackTrace = stackTrace;
+    }
+
+    final exception = await emitted;
+    expect(caughtError, same(error));
+    expect(caughtStackTrace.toString(), stackTrace.toString());
+    expect(exception.message, 'Tracked failure');
+    expect(exception.stackTrace.toString(), stackTrace.toString());
+  });
+
+  test('consumeError reports the error and returns null', () async {
+    final tracker = ErrorTracker();
+    addTearDown(tracker.dispose);
+    const error = _TestException('Consumed failure');
+    final stackTrace = StackTrace.fromString('consumed exception origin');
+    final emitted = tracker.stream.first;
+
+    final result = await Future<int>.error(
+      error,
+      stackTrace,
+    ).consumeError(tracker);
+
+    final exception = await emitted;
+    expect(result, isNull);
+    expect(exception.message, 'Consumed failure');
+    expect(exception.stackTrace.toString(), stackTrace.toString());
   });
 
   testWidgets('ValueStreamBuilder renders seeded value and updates', (
@@ -254,4 +324,13 @@ class _StrictPageState
   Widget createWidget2(BuildContext context) {
     return Text(viewModel.title);
   }
+}
+
+class _TestException implements Exception {
+  const _TestException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
