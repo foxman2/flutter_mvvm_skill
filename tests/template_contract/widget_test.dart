@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:{{project_name}}/app.dart';
 import 'package:{{project_name}}/errors/app_exception.dart';
@@ -345,6 +346,21 @@ void main() {
     expect(find.text('Updated'), findsOneWidget);
     expect(find.byIcon(Icons.done), findsNothing);
     expect(find.byIcon(Icons.clear), findsNothing);
+    final renderedText = tester.renderObject<RenderParagraph>(
+      find.text('Updated'),
+    );
+    expect(
+      renderedText.text.style?.decoration,
+      isNot(TextDecoration.underline),
+    );
+    expect(
+      renderedText.text.style?.decorationColor,
+      isNot(const Color(0xFFFFFF00)),
+    );
+    expect(
+      renderedText.text.style?.decorationStyle,
+      isNot(TextDecorationStyle.double),
+    );
 
     await tester.pump(AppToastController.normalMessageDuration);
     await tester.pump(AppToastController.animationDuration);

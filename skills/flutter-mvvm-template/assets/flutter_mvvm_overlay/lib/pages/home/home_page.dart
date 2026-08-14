@@ -37,6 +37,11 @@ class _HomePageState
           ),
           const SizedBox(height: 24),
           FilledButton(
+            onPressed: viewModel.onClickToastDemo,
+            child: Text(strings.homeShowToast),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
             onPressed: viewModel.onClickAlertDemo,
             child: Text(strings.homeShowAlert),
           ),

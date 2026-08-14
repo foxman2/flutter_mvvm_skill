@@ -8,6 +8,8 @@ import '../input_alert/input_alert_view_model.dart';
 abstract class HomeViewModelInput {
   void onClickProductPreview();
 
+  void onClickToastDemo();
+
   void onClickAlertDemo();
 
   void onClickInputAlertDemo();
@@ -29,6 +31,13 @@ class HomeViewModel extends HomeViewModelType {
   @override
   void onClickProductPreview() {
     show(const ProductPreviewAppPage());
+  }
+
+  @override
+  void onClickToastDemo() {
+    showNormalMessage(
+      message: .localized((strings) => strings.homeToastMessage),
+    );
   }
 
   @override

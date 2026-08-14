@@ -136,41 +136,44 @@ class _AppToastOverlayState extends State<_AppToastOverlay> {
     };
     return Positioned.fill(
       child: IgnorePointer(
-        child: SafeArea(
-          child: Center(
-            child: AnimatedOpacity(
-              opacity: _visible ? 1 : 0,
-              duration: AppToastController.animationDuration,
-              child: Semantics(
-                liveRegion: true,
-                label: widget.message,
-                child: Container(
-                  margin: const EdgeInsets.all(50),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 15,
-                    horizontal: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (icon != null)
-                        Icon(icon, color: Colors.white, size: 40),
-                      if (icon != null && widget.message.isNotEmpty)
-                        const SizedBox(height: 10),
-                      if (widget.message.isNotEmpty)
-                        Text(
-                          widget.message,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
+        child: Material(
+          type: MaterialType.transparency,
+          child: SafeArea(
+            child: Center(
+              child: AnimatedOpacity(
+                opacity: _visible ? 1 : 0,
+                duration: AppToastController.animationDuration,
+                child: Semantics(
+                  liveRegion: true,
+                  label: widget.message,
+                  child: Container(
+                    margin: const EdgeInsets.all(50),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                      horizontal: 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null)
+                          Icon(icon, color: Colors.white, size: 40),
+                        if (icon != null && widget.message.isNotEmpty)
+                          const SizedBox(height: 10),
+                        if (widget.message.isNotEmpty)
+                          Text(
+                            widget.message,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

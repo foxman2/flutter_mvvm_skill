@@ -24,6 +24,14 @@
   "@homeTemplateDescription": {
     "description": "Description shown on the generated template home page."
   },
+  "homeShowToast": "Show toast",
+  "@homeShowToast": {
+    "description": "Button label for showing the toast demo."
+  },
+  "homeToastMessage": "Hello from Toast",
+  "@homeToastMessage": {
+    "description": "Message shown by the toast demo."
+  },
   "homeShowAlert": "Show alert",
   "@homeShowAlert": {
     "description": "Button label for opening the alert demo."
