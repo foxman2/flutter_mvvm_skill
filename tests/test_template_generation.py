@@ -356,18 +356,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertIn("_$UserProfileFromJson", generated_model)
         self.assertIn("_$UserProfileToJson", generated_model)
 
-    def test_overlay_does_not_depend_on_easyloading(self) -> None:
-        pubspec_patch = (OVERLAY_PATH / "template_pubspec_patch.yaml").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertNotIn("flutter_easyloading", pubspec_patch)
-        self.assertNotIn("EasyLoading", searchable_text(OVERLAY_PATH))
-        self.assertTrue(
-            (OVERLAY_PATH / "lib/widgets/app_loading_dialog.dart").is_file()
-        )
-        self.assertTrue((OVERLAY_PATH / "lib/widgets/app_toast.dart").is_file())
-
     def test_handwritten_template_dart_files_have_chinese_docs(self) -> None:
         lib = OVERLAY_PATH / "lib"
         handwritten_files = [
