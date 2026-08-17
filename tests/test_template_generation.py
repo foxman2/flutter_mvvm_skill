@@ -28,9 +28,9 @@ API_DEV_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-api-dev"
 MARKETPLACE_API_DEV_SKILL_PATH = (
     ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-api-dev"
 )
-CODE_MAP_SKILL_PATH = ROOT / "project-skills/flutter-mvvm-code-map"
+CODE_MAP_SKILL_PATH = ROOT / "project-skills/feature-code-map"
 MARKETPLACE_CODE_MAP_SKILL_PATH = (
-    ROOT / "plugins/flutter-mvvm-devkit/project-skills/flutter-mvvm-code-map"
+    ROOT / "plugins/flutter-mvvm-devkit/project-skills/feature-code-map"
 )
 CODE_QUALITY_SKILL_PATH = ROOT / "project-skills/code-quality"
 MARKETPLACE_CODE_QUALITY_SKILL_PATH = (
@@ -50,8 +50,8 @@ MARKETPLACE_RETIRED_TEST_SKILL_PATH = (
 CONTRACT_TEST_RANDOMIZATION_SEED = 2
 PROJECT_SKILLS = (
     "code-quality",
+    "feature-code-map",
     "flutter-mvvm-api-dev",
-    "flutter-mvvm-code-map",
     "flutter-mvvm-feature-dev",
     "flutter-mvvm-inspector",
     "flutter-mvvm-mock-api-dev",

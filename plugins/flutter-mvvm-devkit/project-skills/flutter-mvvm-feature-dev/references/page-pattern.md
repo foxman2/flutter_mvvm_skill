@@ -46,9 +46,39 @@ DisplayText get title => .localized((strings) => strings.dragDropEditTitle);
 ## Page 与依赖
 
 - Page 只依赖 `<Feature>ViewModelType>`，并显式接收返回非空 ViewModel 的 `viewModelProvider`。
-- 普通页面由对应 AppPage provider 延迟创建 ViewModel；Page 不自行创建，也不接收预先创建的普通页面实例。
+- 独立路由页面由对应 AppPage provider 延迟创建 ViewModel；Page 不自行创建 ViewModel，也不接收预先创建的页面实例。
 - ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖。
-- Alert、ActionSheet 和 child ViewModel 可能需要预配置实例；修改前确认创建、绑定和释放责任，不套用普通页面所有权。
+- Alert 和 ActionSheet 等特殊场景可能需要预配置实例；修改前确认创建、绑定和释放责任，不套用独立路由页面的所有权。
+
+## 父页面组合子 Page
+
+- 页面是否被嵌套不改变其 Page 类型。由父页面组合的子 Page 仍优先使用普通 `AppBaseStatefulPage<T>` 与对应 State。
+- ViewModel 的创建者、持有者和生命周期所有者可以不同，但责任必须明确，且只能有一个生命周期所有者。
+- 父级可以创建并持有稳定的子 ViewModel，再通过 `viewModelProvider` 交给子 Page。
+- 当子 Page 是生命周期所有者时，由子 Page 负责 ViewModel 的初始化、绑定和释放；父级不得重复调用 ViewModel 的 `initState()` 或 `dispose()`。
+- 父子页面通过明确的状态、回调或合同协调；不因嵌套关系新增另一套 Page 基类、专用绑定组件，或修改通用 MVVM Base。
+- 同一次子 Page 生命周期内，provider 返回稳定且有效的实例。子 Page 重新挂载时，provider 不得返回已被释放的实例。
+
+父级创建和持有实例、子 Page 拥有其生命周期时，最小 provider 写法如下：
+
+```dart
+late final ChildViewModelType _childViewModel;
+
+@override
+void initState() {
+  super.initState();
+  _childViewModel = ChildViewModel();
+}
+
+@override
+Widget build(BuildContext context) {
+  return ChildPage(
+    viewModelProvider: () => _childViewModel,
+  );
+}
+```
+
+容器形式、是否保留 State、是否条件挂载，以及实例在重新挂载时如何更新，均由具体功能需求决定；本 skill 只规定职责和生命周期边界，不规定 Widget 结构或状态保留策略。
 
 ## 本地化
 
