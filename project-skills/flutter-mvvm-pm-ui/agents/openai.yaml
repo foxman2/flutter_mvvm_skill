@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM 产品界面"
-  short_description: "创建带局部样例数据的隔离产品预览页面并安全调整展示层"
-  default_prompt: "使用 $flutter-mvvm-pm-ui 在已有 Flutter MVVM 项目中创建带局部样例数据的隔离产品 UI 预览页，并保持正式业务行为不变。"
+  short_description: "创建隔离产品预览，安全调整展示层并记录 PM 改动与接口对接"
+  default_prompt: "使用 $flutter-mvvm-pm-ui 在已有 Flutter MVVM 项目中创建隔离产品 UI 预览，并记录最终 PM 改动、接口差异和关键查看入口。"

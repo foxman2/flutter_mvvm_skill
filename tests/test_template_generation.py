@@ -148,6 +148,28 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         self.assertEqual(dart_define_arguments, set())
         self.assertIn("不得新增或修改任何 Dart define", markdown)
 
+    def test_pm_ui_defines_compact_change_handoff(self) -> None:
+        skill = (PM_UI_SKILL_PATH / "SKILL.md").read_text(encoding="utf-8")
+        handoff_path = PM_UI_SKILL_PATH / "references/change-handoff-pattern.md"
+
+        self.assertTrue(handoff_path.is_file())
+        self.assertIn("references/change-handoff-pattern.md", skill)
+
+        handoff = handoff_path.read_text(encoding="utf-8")
+        self.assertIn("docs/pm-changes/<change-id>.md", handoff)
+        for heading in ("## PM 改动", "## 接口对接", "## 查看改动"):
+            self.assertIn(heading, handoff)
+        for interface_delta in (
+            "- 修改 `PATCH /users/me`",
+            "- 新增 `POST /files/avatar`",
+            "- 调用顺序：上传头像成功后更新用户资料。",
+        ):
+            self.assertIn(interface_delta, handoff)
+        self.assertIn("method、path 和字段已有正式协议依据", handoff)
+        self.assertIn("`- 无。`", handoff)
+        self.assertNotIn("\n## 待确认事项\n", handoff)
+        self.assertNotIn("\n## 明确不包含\n", handoff)
+
     def test_marketplace_pm_ui_skill_matches_source(self) -> None:
         self.assertEqual(
             directory_snapshot(PM_UI_SKILL_PATH),
