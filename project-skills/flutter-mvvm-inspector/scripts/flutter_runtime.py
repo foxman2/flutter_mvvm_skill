@@ -64,6 +64,7 @@ HTTP_PROFILE_EXTENSIONS = {
     HTTP_CLEAR_PROFILE,
 }
 HOT_RESTART_TIMEOUT_SECONDS = 15.0
+NETWORK_START_TIMEOUT_SECONDS = 30.0
 
 
 class RuntimeCommandError(Exception):
@@ -286,7 +287,12 @@ def start(flutter_args: list[str]) -> int:
         print(f"helper manages this Flutter option: {value}", file=sys.stderr)
         return 2
     if managed_pid() is not None:
-        print(status())
+        try:
+            wait_for_network_recording("start", clear_profile=False)
+        except RuntimeCommandError as error:
+            print(redact(str(error)), file=sys.stderr)
+            return 1
+        print("running")
         return 0
 
     flutter = shutil.which("flutter")
@@ -323,7 +329,18 @@ def start(flutter_args: list[str]) -> int:
         flutter_executable=flutter,
         status="starting", started_at=time.time(),
     )
-    print("starting")
+    try:
+        wait_for_network_recording("start", clear_profile=True)
+    except RuntimeCommandError as error:
+        print(
+            redact(
+                "Flutter started, but automatic network recording could not be enabled: "
+                f"{error}"
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    print("running")
     return 0
 
 def log_text_after(offset: int) -> str:
@@ -353,6 +370,17 @@ def hot_restart() -> int:
     while time.monotonic() < deadline:
         output = log_text_after(log_offset)
         if "Restarted application in" in output:
+            try:
+                wait_for_network_recording("restart", clear_profile=True)
+            except RuntimeCommandError as error:
+                print(
+                    redact(
+                        "Flutter restarted, but automatic network recording could not be enabled: "
+                        f"{error}"
+                    ),
+                    file=sys.stderr,
+                )
+                return 1
             print("restarted")
             return 0
         if "hot restart failed" in output.lower() or "hot restart is not supported" in output.lower():
@@ -502,11 +530,16 @@ def add_network_derived_fields(request: Any) -> dict[str, Any]:
     return result
 
 
-def network_start() -> None:
-    base, vm = managed_vm_context("network-start")
+def enable_network_recording(
+    base: str,
+    vm: dict[str, Any],
+    *,
+    clear_profile: bool,
+) -> None:
     isolate_ids = extension_isolates(base, vm, HTTP_PROFILE_EXTENSIONS, "DevTools Network")
     for isolate_id in isolate_ids:
-        vm_service_result(base, HTTP_CLEAR_PROFILE, {"isolateId": isolate_id})
+        if clear_profile:
+            vm_service_result(base, HTTP_CLEAR_PROFILE, {"isolateId": isolate_id})
         state = vm_service_result(
             base,
             HTTP_TIMELINE_LOGGING,
@@ -515,6 +548,32 @@ def network_start() -> None:
         enabled = state.get("enabled") if isinstance(state, dict) else None
         if enabled not in (True, "true"):
             raise RuntimeCommandError("DevTools Network recording could not be enabled")
+
+
+def wait_for_network_recording(command: str, *, clear_profile: bool) -> None:
+    deadline = time.monotonic() + NETWORK_START_TIMEOUT_SECONDS
+    last_error: RuntimeCommandError | None = None
+    while time.monotonic() < deadline:
+        if managed_pid() is None:
+            raise RuntimeCommandError(
+                "managed Flutter instance stopped before DevTools Network was ready"
+            )
+        try:
+            base, vm = managed_vm_context(command)
+            enable_network_recording(base, vm, clear_profile=clear_profile)
+            return
+        except RuntimeCommandError as error:
+            last_error = error
+            if "localhost network access" in str(error):
+                raise
+        time.sleep(0.05)
+    detail = f": {last_error}" if last_error is not None else ""
+    raise RuntimeCommandError(f"timed out waiting for DevTools Network{detail}")
+
+
+def network_start() -> None:
+    base, vm = managed_vm_context("network-start")
+    enable_network_recording(base, vm, clear_profile=True)
 
 
 def network_profile(limit: int) -> dict[str, Any]:

@@ -17,6 +17,12 @@ from pathlib import Path
 
 HELPER = Path(__file__).resolve().parents[1] / "scripts/flutter_runtime.py"
 SECRET = "fixture-vm-secret"
+HTTP_EXTENSIONS = [
+    "ext.dart.io.httpEnableTimelineLogging",
+    "ext.dart.io.getHttpProfile",
+    "ext.dart.io.getHttpProfileRequest",
+    "ext.dart.io.clearHttpProfile",
+]
 FAKE_FLUTTER = r"""
 import json, os, signal, sys, time
 from pathlib import Path
@@ -170,6 +176,7 @@ class FlutterRuntimeTest(unittest.TestCase):
         VMHandler.http_logging_enabled = {}
         VMHandler.http_profiles = {}
         VMHandler.http_profile_requests = {}
+        self.configure_http_isolates("isolates/flutter")
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), VMHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -182,6 +189,20 @@ class FlutterRuntimeTest(unittest.TestCase):
             "FAKE_HTTP_URI": self.http_uri,
             "FAKE_WS_URI": self.ws_uri,
             "PYTHONUNBUFFERED": "1",
+        }
+
+    def configure_http_isolates(self, *isolate_ids: str) -> None:
+        VMHandler.vm_isolates = [
+            {"id": isolate_id, "isSystemIsolate": False}
+            for isolate_id in isolate_ids
+        ]
+        VMHandler.isolates = {
+            isolate_id: {
+                "type": "Isolate",
+                "id": isolate_id,
+                "extensionRPCs": HTTP_EXTENSIONS,
+            }
+            for isolate_id in isolate_ids
         }
 
     def tearDown(self):
@@ -235,8 +256,8 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertEqual("not_started", self.status())
         self.assertNotEqual(0, self.cli("start", "--", "--release", check=False).returncode)
         slow = self.env | {"FAKE_READY_DELAY": "0.4"}
-        self.assertEqual("starting", self.start(slow).stdout.strip())
-        self.assertEqual("starting", self.status())
+        self.assertEqual("running", self.start(slow).stdout.strip())
+        self.assertEqual("running", self.status())
         self.wait_running()
         args = self.records()[0]["args"]
         for value in ("run", "--debug", "--track-widget-creation", "-d", "fixture-device"):
@@ -304,11 +325,19 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.start()
         self.wait_running()
         pid = self.records()[0]["pid"]
+        VMHandler.http_logging_enabled["isolates/flutter"] = False
+        VMHandler.http_profiles["isolates/flutter"] = {
+            "type": "HttpProfile",
+            "timestamp": 1,
+            "requests": [{"id": "before-restart"}],
+        }
 
         self.assertEqual("restarted", self.cli("restart").stdout.strip())
         self.assertEqual(pid, self.records()[0]["pid"])
         self.assertEqual(1, len(self.records()))
         self.assertIn("Restarted application in 1ms.", self.cli("logs").stdout)
+        self.assertTrue(VMHandler.http_logging_enabled["isolates/flutter"])
+        self.assertEqual([], VMHandler.http_profiles["isolates/flutter"]["requests"])
 
     def test_recent_flutter_and_dart_error_blocks(self):
         self.runtime.mkdir(parents=True)
@@ -333,42 +362,35 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertNotIn(SECRET, errors)
 
     def test_devtools_network_recording_and_complete_profile_details(self):
-        self.start()
-        self.wait_running()
-        extensions = [
-            "ext.dart.io.httpEnableTimelineLogging",
-            "ext.dart.io.getHttpProfile",
-            "ext.dart.io.getHttpProfileRequest",
-            "ext.dart.io.clearHttpProfile",
-        ]
-        VMHandler.vm_isolates = [
-            {"id": "isolates/background", "isSystemIsolate": False},
-            {"id": "isolates/flutter", "isSystemIsolate": False},
-        ]
-        VMHandler.isolates = {
-            "isolates/background": {
-                "type": "Isolate",
-                "id": "isolates/background",
-                "extensionRPCs": extensions,
-            },
-            "isolates/flutter": {
-                "type": "Isolate",
-                "id": "isolates/flutter",
-                "extensionRPCs": extensions,
-            },
-        }
+        isolate_ids = ("isolates/background", "isolates/flutter")
+        self.configure_http_isolates(*isolate_ids)
         VMHandler.http_profiles = {
             isolate_id: {
                 "type": "HttpProfile",
                 "timestamp": 1,
                 "requests": [{"id": f"old-{isolate_id}"}],
             }
-            for isolate_id in ("isolates/background", "isolates/flutter")
+            for isolate_id in isolate_ids
         }
 
-        before_start = self.cli("network-logs", check=False)
-        self.assertEqual(1, before_start.returncode)
-        self.assertIn("run network-start first", before_start.stderr)
+        self.assertEqual("running", self.start().stdout.strip())
+        self.wait_running()
+        self.assertEqual(
+            {"isolates/background": True, "isolates/flutter": True},
+            VMHandler.http_logging_enabled,
+        )
+        self.assertTrue(
+            all(not profile["requests"] for profile in VMHandler.http_profiles.values())
+        )
+
+        VMHandler.http_profiles["isolates/flutter"]["requests"] = [
+            {"id": "preserved-on-reuse", "startTime": 1}
+        ]
+        self.assertEqual("running", self.start().stdout.strip())
+        self.assertEqual(
+            [{"id": "preserved-on-reuse", "startTime": 1}],
+            VMHandler.http_profiles["isolates/flutter"]["requests"],
+        )
         self.assertEqual(
             "network recording started",
             self.cli("network-start").stdout.strip(),
