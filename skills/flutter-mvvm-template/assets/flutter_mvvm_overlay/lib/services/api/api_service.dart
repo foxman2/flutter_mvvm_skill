@@ -22,7 +22,7 @@ extension ApiEnvironmentBaseUrl on ApiEnvironment {
 }
 
 // Debug/Profile 未提供或错误配置 --dart-define=server 时使用该默认值。
-const ApiEnvironment defaultApiEnvironment = ApiEnvironment.production;
+const ApiEnvironment defaultApiEnvironment = ApiEnvironment.mock;
 
 const String _server = String.fromEnvironment('server');
 final ApiEnvironment _apiEnvironment = resolveApiEnvironment(
