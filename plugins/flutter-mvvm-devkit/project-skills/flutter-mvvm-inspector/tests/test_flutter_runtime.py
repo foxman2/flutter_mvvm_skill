@@ -53,6 +53,12 @@ vm_file.write_text(os.environ["FAKE_WS_URI"] + "\n")
 while running:
     time.sleep(0.03)
 """
+FAKE_BROWSER = r"""
+import os, sys
+from pathlib import Path
+
+Path(os.environ["FAKE_BROWSER_OPEN"]).write_text(sys.argv[-1])
+"""
 
 
 class VMHandler(BaseHTTPRequestHandler):
@@ -163,7 +169,11 @@ class FlutterRuntimeTest(unittest.TestCase):
         flutter.write_text(f"#!{sys.executable}\n{textwrap.dedent(FAKE_FLUTTER).lstrip()}")
         flutter.chmod(0o755)
         self.flutter = flutter
+        browser = fake_bin / "browser"
+        browser.write_text(f"#!{sys.executable}\n{textwrap.dedent(FAKE_BROWSER).lstrip()}")
+        browser.chmod(0o755)
         self.launches = self.project / "launches.jsonl"
+        self.devtools_open = self.project / "devtools-open.txt"
         self.runtime = self.project / ".dart_tool/flutter-mvvm-inspector"
         self.decoys = []
         VMHandler.paths = []
@@ -188,6 +198,8 @@ class FlutterRuntimeTest(unittest.TestCase):
             "FAKE_LAUNCHES": str(self.launches),
             "FAKE_HTTP_URI": self.http_uri,
             "FAKE_WS_URI": self.ws_uri,
+            "FAKE_BROWSER_OPEN": str(self.devtools_open),
+            "BROWSER": str(browser),
             "PYTHONUNBUFFERED": "1",
         }
 
@@ -316,6 +328,27 @@ class FlutterRuntimeTest(unittest.TestCase):
         (self.runtime / "flutter.log.1").write_text("\n".join(lines[:30]) + "\n")
         (self.runtime / "flutter.log").write_text("\n".join(lines[30:]) + "\n")
         self.assertEqual(lines[-200:], self.cli("logs").stdout.splitlines())
+
+    def test_devtools_opens_connected_page_without_exposing_endpoint(self):
+        not_ready = self.cli("devtools", check=False)
+        self.assertEqual(1, not_ready.returncode)
+        self.assertIn("VM Service is not ready", not_ready.stderr)
+        self.assertFalse(self.devtools_open.exists())
+
+        self.start()
+        self.wait_running()
+        result = self.cli("devtools")
+
+        self.assertEqual("DevTools opened", result.stdout.strip())
+        self.assertNotIn(SECRET, result.stdout + result.stderr)
+        opened = urllib.parse.urlsplit(self.devtools_open.read_text())
+        self.assertEqual("http", opened.scheme)
+        self.assertEqual("127.0.0.1", opened.hostname)
+        self.assertEqual(f"/{SECRET}=/devtools/", opened.path)
+        self.assertEqual(
+            [self.ws_uri],
+            urllib.parse.parse_qs(opened.query).get("uri"),
+        )
 
     def test_hot_restart_only_signals_the_verified_managed_process(self):
         not_running = self.cli("restart", check=False)

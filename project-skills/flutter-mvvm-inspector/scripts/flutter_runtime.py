@@ -16,6 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from collections import deque
 from pathlib import Path
 from typing import Any, Iterable
@@ -265,6 +266,20 @@ def live_vm() -> tuple[str, dict[str, Any]] | None:
 def live_endpoint() -> str | None:
     live = live_vm()
     return live[0] if live else None
+
+
+def open_devtools() -> None:
+    base, _ = managed_vm_context("devtools")
+    try:
+        ws_uri = VM_WS.read_text(encoding="utf-8").strip()
+    except OSError as error:
+        raise RuntimeCommandError("Flutter VM Service is not ready") from error
+    if http_base(ws_uri) != base:
+        raise RuntimeCommandError("Flutter VM Service endpoint is invalid")
+    devtools_url = urllib.parse.urljoin(base, "devtools/")
+    devtools_url += "?" + urllib.parse.urlencode({"uri": ws_uri})
+    if not webbrowser.open(devtools_url, new=2, autoraise=True):
+        raise RuntimeCommandError("could not open Flutter DevTools in a browser")
 
 def status() -> str:
     if not STATE.exists() and not PID.exists():
@@ -716,6 +731,7 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("network-start")
     network_logs = commands.add_parser("network-logs")
     network_logs.add_argument("--limit", type=int, default=100)
+    commands.add_parser("devtools")
     commands.add_parser("endpoint")
     commands.add_parser("selected-summary")
     commands.add_parser("stop")
@@ -754,6 +770,13 @@ def main(argv: list[str] | None = None) -> int:
             print(redact(str(error)), file=sys.stderr)
             return 1
         print(redact(json.dumps(profile, ensure_ascii=False, indent=2)))
+    elif args.command == "devtools":
+        try:
+            open_devtools()
+        except RuntimeCommandError as error:
+            print(redact(str(error)), file=sys.stderr)
+            return 1
+        print("DevTools opened")
     elif args.command == "endpoint":
         endpoint = live_endpoint()
         if endpoint is None:
