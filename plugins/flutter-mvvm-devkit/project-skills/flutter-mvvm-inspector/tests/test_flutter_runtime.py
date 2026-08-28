@@ -310,6 +310,28 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.cli("stop")
         self.assertIsNone(decoy.poll(), "stale PID identity must never be signalled")
 
+    def test_start_waits_for_vm_and_treats_network_setup_as_best_effort(self):
+        self.configure_http_isolates()
+        delayed = self.env | {"FAKE_READY_DELAY": "0.4"}
+
+        result = self.start(delayed)
+
+        self.assertEqual("running", result.stdout.strip())
+        self.assertIn("automatic DevTools Network recording is unavailable", result.stderr)
+        self.assertEqual("running", self.status())
+        self.assertEqual(1, len(self.records()))
+
+        unavailable = self.cli("network-start", check=False)
+        self.assertEqual(1, unavailable.returncode)
+        self.assertIn("required DevTools Network extensions", unavailable.stderr)
+
+        self.configure_http_isolates("isolates/flutter")
+        reused = self.start()
+        self.assertEqual("running", reused.stdout.strip())
+        self.assertEqual("", reused.stderr)
+        self.assertTrue(VMHandler.http_logging_enabled["isolates/flutter"])
+        self.assertEqual(1, len(self.records()))
+
     def test_logs_tail_rotate_and_redact(self):
         self.start(self.env | {"FAKE_LABEL": "first"})
         self.wait_running()
@@ -375,6 +397,17 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertIn("Restarted application in 1ms.", self.cli("logs").stdout)
         self.assertTrue(VMHandler.http_logging_enabled["isolates/flutter"])
         self.assertEqual([], VMHandler.http_profiles["isolates/flutter"]["requests"])
+
+    def test_hot_restart_keeps_success_when_network_setup_is_unavailable(self):
+        self.start()
+        self.wait_running()
+        self.configure_http_isolates()
+
+        result = self.cli("restart")
+
+        self.assertEqual("restarted", result.stdout.strip())
+        self.assertIn("automatic DevTools Network recording is unavailable", result.stderr)
+        self.assertEqual("running", self.status())
 
     def test_hot_reload_only_signals_the_verified_managed_process(self):
         not_running = self.cli("reload", check=False)

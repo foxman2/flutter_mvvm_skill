@@ -66,7 +66,8 @@ HTTP_PROFILE_EXTENSIONS = {
 }
 HOT_RESTART_TIMEOUT_SECONDS = 15.0
 HOT_RELOAD_TIMEOUT_SECONDS = 15.0
-NETWORK_START_TIMEOUT_SECONDS = 30.0
+# Includes device discovery, native compilation, installation, and VM startup.
+STARTUP_TIMEOUT_SECONDS = 180.0
 
 
 class RuntimeCommandError(Exception):
@@ -229,13 +230,9 @@ def vm_service_result(
     return payload["result"]
 
 
-def validate_vm(base: str) -> bool:
-    try:
-        result = vm_service_result(base, "getVM")
-    except RuntimeCommandError:
-        return False
-    return isinstance(result, dict) and (
-        result.get("type") == "VM" or isinstance(result.get("isolates"), list)
+def is_vm_response(value: Any) -> bool:
+    return isinstance(value, dict) and (
+        value.get("type") == "VM" or isinstance(value.get("isolates"), list)
     )
 
 
@@ -248,25 +245,53 @@ def managed_vm_base() -> str | None:
         return None
 
 
-def live_vm() -> tuple[str, dict[str, Any]] | None:
+def managed_vm_context(command: str) -> tuple[str, dict[str, Any]]:
     base = managed_vm_base()
     if base is None:
-        return None
+        raise RuntimeCommandError("Flutter VM Service is not ready")
     try:
-        result = vm_service_result(base, "getVM")
+        vm = vm_service_result(base, "getVM")
+    except RuntimeCommandError as error:
+        raise RuntimeCommandError(
+            "Flutter VM Service endpoint exists but is unreachable; "
+            f"rerun {command} with localhost network access"
+        ) from error
+    if not is_vm_response(vm):
+        raise RuntimeCommandError("getVM returned an invalid VM response")
+    update_state(status="running", vm_service_discovered_at=time.time())
+    return base, vm
+
+
+def live_vm() -> tuple[str, dict[str, Any]] | None:
+    try:
+        return managed_vm_context("status")
     except RuntimeCommandError:
         return None
-    if not isinstance(result, dict) or not (
-        result.get("type") == "VM" or isinstance(result.get("isolates"), list)
-    ):
-        return None
-    update_state(status="running", vm_service_discovered_at=time.time())
-    return base, result
 
 
 def live_endpoint() -> str | None:
     live = live_vm()
     return live[0] if live else None
+
+
+def wait_for_managed_vm(command: str) -> tuple[str, dict[str, Any]]:
+    deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
+    last_error = RuntimeCommandError("Flutter VM Service is not ready")
+    while time.monotonic() < deadline:
+        if managed_pid() is None:
+            raise RuntimeCommandError(
+                "managed Flutter instance stopped before the VM Service was ready"
+            )
+        try:
+            return managed_vm_context(command)
+        except RuntimeCommandError as error:
+            last_error = error
+            if "localhost network access" in str(error):
+                raise
+        time.sleep(0.05)
+    raise RuntimeCommandError(
+        f"timed out waiting for Flutter VM Service: {last_error}"
+    )
 
 
 def open_devtools() -> None:
@@ -296,25 +321,10 @@ def status() -> str:
     update_state(status="starting")
     return "starting"
 
-def start(flutter_args: list[str]) -> int:
-    forbidden = [arg for arg in flutter_args if arg.split("=", 1)[0] in MANAGED_FLAGS]
-    if flutter_args[:1] == ["run"] or forbidden:
-        value = "flutter run" if flutter_args[:1] == ["run"] else forbidden[0]
-        print(f"helper manages this Flutter option: {value}", file=sys.stderr)
-        return 2
-    if managed_pid() is not None:
-        try:
-            wait_for_network_recording("start", clear_profile=False)
-        except RuntimeCommandError as error:
-            print(redact(str(error)), file=sys.stderr)
-            return 1
-        print("running")
-        return 0
-
+def launch_managed_flutter(flutter_args: list[str]) -> None:
     flutter = shutil.which("flutter")
     if flutter is None:
-        print("could not find flutter on PATH", file=sys.stderr)
-        return 1
+        raise RuntimeCommandError("could not find flutter on PATH")
     os.umask(0o077)
     ensure_run_dir()
     if LOG.exists():
@@ -332,30 +342,35 @@ def start(flutter_args: list[str]) -> int:
                 stderr=subprocess.STDOUT, start_new_session=True, close_fds=True,
             )
     except OSError as error:
-        print(f"could not start flutter: {error}", file=sys.stderr)
-        return 1
+        raise RuntimeCommandError(f"could not start flutter: {error}") from error
     marker = process_start_marker(process.pid)
     if marker is None:
         process.terminate()
-        print("could not verify the Flutter process identity", file=sys.stderr)
-        return 1
+        raise RuntimeCommandError("could not verify the Flutter process identity")
     atomic_write(PID, f"{process.pid}\n")
     update_state(
         pid=process.pid, process_start=marker,
         flutter_executable=flutter,
         status="starting", started_at=time.time(),
     )
+
+
+def start(flutter_args: list[str]) -> int:
+    forbidden = [arg for arg in flutter_args if arg.split("=", 1)[0] in MANAGED_FLAGS]
+    if flutter_args[:1] == ["run"] or forbidden:
+        value = "flutter run" if flutter_args[:1] == ["run"] else forbidden[0]
+        print(f"helper manages this Flutter option: {value}", file=sys.stderr)
+        return 2
+
+    launched = managed_pid() is None
     try:
-        wait_for_network_recording("start", clear_profile=True)
+        if launched:
+            launch_managed_flutter(flutter_args)
+        base, vm = wait_for_managed_vm("start")
     except RuntimeCommandError as error:
-        print(
-            redact(
-                "Flutter started, but automatic network recording could not be enabled: "
-                f"{error}"
-            ),
-            file=sys.stderr,
-        )
+        print(redact(str(error)), file=sys.stderr)
         return 1
+    enable_network_recording_or_warn(base, vm, clear_profile=launched)
     print("running")
     return 0
 
@@ -433,16 +448,11 @@ def hot_restart() -> int:
         output = log_text_after(log_offset)
         if "Restarted application in" in output:
             try:
-                wait_for_network_recording("restart", clear_profile=True)
+                base, vm = managed_vm_context("restart")
             except RuntimeCommandError as error:
-                print(
-                    redact(
-                        "Flutter restarted, but automatic network recording could not be enabled: "
-                        f"{error}"
-                    ),
-                    file=sys.stderr,
-                )
-                return 1
+                print_network_recording_warning(error)
+            else:
+                enable_network_recording_or_warn(base, vm, clear_profile=True)
             print("restarted")
             return 0
         if "hot restart failed" in output.lower() or "hot restart is not supported" in output.lower():
@@ -547,25 +557,6 @@ def inspector_isolate(base: str, vm: dict[str, Any]) -> str:
     return extension_isolate(base, vm, INSPECTOR_EXTENSIONS, "Inspector")
 
 
-def managed_vm_context(command: str) -> tuple[str, dict[str, Any]]:
-    base = managed_vm_base()
-    if base is None:
-        raise RuntimeCommandError("Flutter VM Service is not ready")
-    try:
-        vm = vm_service_result(base, "getVM")
-    except RuntimeCommandError as error:
-        raise RuntimeCommandError(
-            "Flutter VM Service endpoint exists but is unreachable; "
-            f"rerun {command} with localhost network access"
-        ) from error
-    if not isinstance(vm, dict) or not (
-        vm.get("type") == "VM" or isinstance(vm.get("isolates"), list)
-    ):
-        raise RuntimeCommandError("getVM returned an invalid VM response")
-    update_state(status="running", vm_service_discovered_at=time.time())
-    return base, vm
-
-
 def add_network_derived_fields(request: Any) -> dict[str, Any]:
     if not isinstance(request, dict):
         raise RuntimeCommandError("DevTools Network request response has an invalid format")
@@ -612,25 +603,24 @@ def enable_network_recording(
             raise RuntimeCommandError("DevTools Network recording could not be enabled")
 
 
-def wait_for_network_recording(command: str, *, clear_profile: bool) -> None:
-    deadline = time.monotonic() + NETWORK_START_TIMEOUT_SECONDS
-    last_error: RuntimeCommandError | None = None
-    while time.monotonic() < deadline:
-        if managed_pid() is None:
-            raise RuntimeCommandError(
-                "managed Flutter instance stopped before DevTools Network was ready"
-            )
-        try:
-            base, vm = managed_vm_context(command)
-            enable_network_recording(base, vm, clear_profile=clear_profile)
-            return
-        except RuntimeCommandError as error:
-            last_error = error
-            if "localhost network access" in str(error):
-                raise
-        time.sleep(0.05)
-    detail = f": {last_error}" if last_error is not None else ""
-    raise RuntimeCommandError(f"timed out waiting for DevTools Network{detail}")
+def print_network_recording_warning(error: RuntimeCommandError) -> None:
+    message = (
+        "warning: Flutter is running, but automatic DevTools Network recording "
+        f"is unavailable: {error}; run network-start after the app is ready"
+    )
+    print(redact(message), file=sys.stderr)
+
+
+def enable_network_recording_or_warn(
+    base: str,
+    vm: dict[str, Any],
+    *,
+    clear_profile: bool,
+) -> None:
+    try:
+        enable_network_recording(base, vm, clear_profile=clear_profile)
+    except RuntimeCommandError as error:
+        print_network_recording_warning(error)
 
 
 def network_start() -> None:
