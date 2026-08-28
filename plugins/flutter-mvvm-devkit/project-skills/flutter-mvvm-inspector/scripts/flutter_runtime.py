@@ -65,6 +65,7 @@ HTTP_PROFILE_EXTENSIONS = {
     HTTP_CLEAR_PROFILE,
 }
 HOT_RESTART_TIMEOUT_SECONDS = 15.0
+HOT_RELOAD_TIMEOUT_SECONDS = 15.0
 NETWORK_START_TIMEOUT_SECONDS = 30.0
 
 
@@ -366,10 +367,56 @@ def log_text_after(offset: int) -> str:
     except OSError:
         return ""
 
-def hot_restart() -> int:
+def verified_hot_process(command: str) -> int:
+    if managed_pid() is None:
+        raise RuntimeCommandError("managed Flutter instance is not running")
+    managed_vm_context(command)
     pid = verified_flutter_pid()
     if pid is None:
-        print("managed Flutter instance is not running", file=sys.stderr)
+        raise RuntimeCommandError(
+            "managed Flutter instance exists, but its process identity could not be "
+            f"verified; rerun {command} with local process access"
+        )
+    return pid
+
+def hot_reload() -> int:
+    try:
+        pid = verified_hot_process("reload")
+    except RuntimeCommandError as error:
+        print(redact(str(error)), file=sys.stderr)
+        return 1
+    try:
+        log_offset = LOG.stat().st_size
+    except OSError:
+        log_offset = 0
+    try:
+        os.kill(pid, signal.SIGUSR1)
+    except (ProcessLookupError, PermissionError, OSError) as error:
+        print(f"could not signal the managed Flutter instance: {error}", file=sys.stderr)
+        return 1
+
+    deadline = time.monotonic() + HOT_RELOAD_TIMEOUT_SECONDS
+    while time.monotonic() < deadline:
+        output = log_text_after(log_offset)
+        if re.search(r"(?m)^Reloaded \d+(?: of \d+)? libraries\b", output):
+            print("reloaded")
+            return 0
+        lowered = output.lower()
+        if "hot reload failed" in lowered or "hot reload was rejected" in lowered:
+            print("Flutter hot reload failed; inspect logs for details", file=sys.stderr)
+            return 1
+        if not pid_alive(pid):
+            print("managed Flutter instance stopped during hot reload", file=sys.stderr)
+            return 1
+        time.sleep(0.05)
+    print("timed out waiting for Flutter hot reload", file=sys.stderr)
+    return 1
+
+def hot_restart() -> int:
+    try:
+        pid = verified_hot_process("restart")
+    except RuntimeCommandError as error:
+        print(redact(str(error)), file=sys.stderr)
         return 1
     try:
         log_offset = LOG.stat().st_size
@@ -723,6 +770,7 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="command", required=True)
     start_parser = commands.add_parser("start")
     start_parser.add_argument("flutter_args", nargs=argparse.REMAINDER)
+    commands.add_parser("reload")
     commands.add_parser("restart")
     commands.add_parser("status")
     for name, default in (("logs", 200), ("errors", 400)):
@@ -742,6 +790,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "start":
         values = args.flutter_args[1:] if args.flutter_args[:1] == ["--"] else args.flutter_args
         return start(values)
+    if args.command == "reload":
+        return hot_reload()
     if args.command == "restart":
         return hot_restart()
     if args.command == "status":

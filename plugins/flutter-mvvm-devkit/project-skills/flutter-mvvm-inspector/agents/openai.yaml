@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM Inspector"
-  short_description: "读取 Flutter 网络日志并用 Inspector 定位源码"
-  default_prompt: "使用 $flutter-mvvm-inspector 管理 Flutter debug 应用，启动后自动开启网络记录，读取包含 headers、cookies 与 body 的完整 HTTP 请求日志，并通过受管 VM Service 定位当前选中 Widget 的本地源码。"
+  short_description: "管理 Flutter 调试实例并按需诊断网络或 Widget"
+  default_prompt: "使用 $flutter-mvvm-inspector 管理当前 Flutter debug 实例，并完成所需的重载、日志或 Inspector 操作。"

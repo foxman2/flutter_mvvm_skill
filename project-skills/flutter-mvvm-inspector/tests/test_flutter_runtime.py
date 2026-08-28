@@ -40,8 +40,12 @@ def stop(*_):
 def restart(*_):
     print("Performing hot restart...", flush=True)
     print("Restarted application in 1ms.", flush=True)
+def reload(*_):
+    print("Performing hot reload...", flush=True)
+    print("Reloaded 1 of 1 libraries in 1ms.", flush=True)
 signal.signal(signal.SIGTERM, stop)
 signal.signal(signal.SIGINT, stop)
+signal.signal(signal.SIGUSR1, reload)
 signal.signal(signal.SIGUSR2, restart)
 if hasattr(signal, "SIGHUP"):
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -371,6 +375,38 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertIn("Restarted application in 1ms.", self.cli("logs").stdout)
         self.assertTrue(VMHandler.http_logging_enabled["isolates/flutter"])
         self.assertEqual([], VMHandler.http_profiles["isolates/flutter"]["requests"])
+
+    def test_hot_reload_only_signals_the_verified_managed_process(self):
+        not_running = self.cli("reload", check=False)
+        self.assertEqual(1, not_running.returncode)
+        self.assertIn("managed Flutter instance is not running", not_running.stderr)
+
+        self.start()
+        self.wait_running()
+        pid = self.records()[0]["pid"]
+
+        self.assertEqual("reloaded", self.cli("reload").stdout.strip())
+        self.assertEqual(pid, self.records()[0]["pid"])
+        self.assertEqual(1, len(self.records()))
+        self.assertIn("Reloaded 1 of 1 libraries in 1ms.", self.cli("logs").stdout)
+
+    def test_hot_restart_reports_an_unreachable_vm_without_signalling(self):
+        self.start()
+        self.wait_running()
+        pid = self.records()[0]["pid"]
+        (self.runtime / "vmservice.ws").write_text(
+            f"ws://127.0.0.1:0/{SECRET}=/ws\n"
+        )
+
+        result = self.cli("restart", check=False)
+
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("", result.stdout)
+        self.assertIn("localhost network access", result.stderr)
+        self.assertNotIn("is not running", result.stderr)
+        self.assertNotIn("Restarted application", self.cli("logs").stdout)
+        self.assertTrue(self.runtime.joinpath("flutter.pid").exists())
+        self.assertEqual(pid, self.records()[0]["pid"])
 
     def test_recent_flutter_and_dart_error_blocks(self):
         self.runtime.mkdir(parents=True)
