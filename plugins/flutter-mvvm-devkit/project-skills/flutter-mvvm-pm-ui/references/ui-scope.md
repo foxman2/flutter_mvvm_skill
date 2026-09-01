@@ -7,7 +7,7 @@
 - `lib/widgets/`、theme 和页面局部纯展示组件
 - `lib/product_preview/` 下的入口、隔离页面、同目录 ViewModel 与 registry
 - 与新增预览页面对应的 AppPage case
-- `lib/product_preview/` 范围内的局部 fixture 和样例展示状态
+- `lib/product_preview/` 范围内的步骤、tab、选中、展开、筛选和输入等纯 UI 状态
 
 ## 不可以修改
 
@@ -17,4 +17,4 @@
 - Dart define、环境解析、默认环境、启动配置、构建脚本或 CI 参数
 - Widget 中的 API 调用、JSON 解析、缓存、登录态判断或业务路由
 
-Widget 可以绑定已有 ViewModel 事件；隔离页面可以通过同目录 ViewModel 表达展示状态、局部样例数据和临时交互。正式 UI 需要新业务动作时，在 `docs/pm-changes/<change-id>.md` 的 `PM 改动` 和 `接口对接` 中记录已确认的行为与数据需求，但不在本工作流中实现。
+Widget 可以绑定已有 ViewModel 事件；隔离页面可以通过同目录 ViewModel 表达展示状态和临时交互。隔离页面需要演示业务数据时，先由适用的数据层工作流通过 domain contract 的 Mock 实现提供；正式 UI 需要新业务动作时，在 `docs/pm-changes/<change-id>.md` 的 `PM 改动` 和 `接口对接` 中记录已确认的行为与数据需求，但不在本工作流中实现。

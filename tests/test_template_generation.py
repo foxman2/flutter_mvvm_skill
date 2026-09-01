@@ -246,7 +246,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                 "不通过测试固化未确认的真实 URL",
             ),
             PM_UI_SKILL_PATH: (
-                "纯展示、静态 fixture 和静态文案改动不新增或修改测试",
+                "纯展示和静态文案改动不新增或修改测试",
                 "混合改动只覆盖行为部分",
             ),
             INSPECTOR_SKILL_PATH: (

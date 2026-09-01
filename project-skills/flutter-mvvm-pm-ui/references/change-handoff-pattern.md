@@ -30,15 +30,15 @@
 ## 查看改动
 
 - Preview：`/product-preview/profile/edit`
-- 局部 fixture：`lib/product_preview/pages/profile/edit_profile_view_model.dart`
+- Mock API：`lib/services/mock_api/mock_profile_api_service.dart`
 - 关键代码：`lib/product_preview/pages/profile/edit_profile_page.dart`
 ```
 
 ## 记录规则
 
 - `PM 改动` 只写本次需求产生的最终产品变化，不记录布局实现、重构、格式化或已经被替换的方案。
-- `接口对接` 只写新增或修改的接口差异；已确认协议使用正式 method、path 和字段名，未确认协议只写需要提供的业务数据及用途，不把预览 fixture 字段当成正式字段。
+- `接口对接` 只写新增或修改的接口差异；已确认协议使用正式 method、path 和字段名，未确认协议只写需要提供的业务数据及用途，不把 mock-only model 当成正式字段依据。
 - 多个接口有先后依赖时，用一条 `调用顺序` 说明；没有顺序依赖时不增加该项。
 - 页面不需要后台改动时，在 `接口对接` 下写 `- 无。`。
-- `查看改动` 只列实际可打开的 Preview、局部 fixture 和理解改动所需的关键相对路径，不穷举分支文件。
+- `查看改动` 只列实际可打开的 Preview、Mock API 和理解改动所需的关键相对路径，不穷举分支文件。
 - 只有错误处理、分页、上传约束或其他规则确实改变接口对接时才补充，不预设空章节。
