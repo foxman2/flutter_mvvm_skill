@@ -26,6 +26,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 
 生成项目里会有：
 
+- `AGENTS.md`（开发期重构约定，上线前删除该条约定）
 - `.codex/skills/`（项目内技能）
 - `.codex/flutter-mvvm-skills.json`（受管清单）
 - `scripts/update-codex-skills.py`（升级脚本）
@@ -58,7 +59,7 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 python3 scripts/sync_marketplace_plugin.py
 python3 -m unittest discover -s tests -v
 python3 -m unittest discover -s project-skills/flutter-mvvm-inspector/tests -v
-git tag v0.4.7 && git push origin main v0.4.7
+git tag v0.4.8 && git push origin main v0.4.8
 ```
 
 完整模板契约验收需要本机安装 Flutter；没有 Flutter 时 Python 测试会明确跳过该集成用例。发布前必须在有 Flutter 的环境运行并通过。
