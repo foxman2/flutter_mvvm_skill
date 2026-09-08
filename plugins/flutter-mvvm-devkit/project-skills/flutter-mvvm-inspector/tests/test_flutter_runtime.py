@@ -634,6 +634,30 @@ class FlutterRuntimeTest(unittest.TestCase):
         self.assertNotEqual(0, negative.returncode)
         self.assertIn("--limit must be non-negative", negative.stderr)
 
+    def test_network_logs_enables_late_isolate_without_clearing_existing_requests(self):
+        self.start()
+        self.configure_http_isolates("isolates/flutter", "isolates/late-worker")
+        VMHandler.http_logging_enabled["isolates/late-worker"] = False
+        VMHandler.http_profiles["isolates/flutter"] = {
+            "type": "HttpProfile", "timestamp": 1,
+            "requests": [{"id": "existing-request", "startTime": 1}],
+        }
+        VMHandler.http_profile_requests["isolates/flutter"] = {
+            "existing-request": {"id": "existing-request", "startTime": 1},
+        }
+        VMHandler.requests.clear()
+
+        result = self.cli("network-logs", "--limit", "1")
+
+        self.assertIn("existing-request", result.stdout)
+        self.assertIn("earlier requests may be missing", result.stderr)
+        self.assertTrue(VMHandler.http_logging_enabled["isolates/late-worker"])
+        self.assertFalse(any(
+            request["method"] == "ext.dart.io.clearHttpProfile"
+            for request in VMHandler.requests
+        ))
+        self.assertEqual("", self.cli("network-logs", "--limit", "1").stderr)
+
     def test_selected_summary_runs_the_complete_inspector_flow(self):
         self.start()
         self.wait_running()

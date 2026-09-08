@@ -636,7 +636,20 @@ def network_profile(limit: int) -> dict[str, Any]:
         state = vm_service_result(base, HTTP_TIMELINE_LOGGING, {"isolateId": isolate_id})
         enabled = state.get("enabled") if isinstance(state, dict) else None
         if enabled not in (True, "true"):
-            raise RuntimeCommandError("DevTools Network is not recording; run network-start first")
+            # Background isolates may appear after startup enabled recording.
+            # Repair only their switch; clearing profiles would lose existing evidence.
+            state = vm_service_result(
+                base, HTTP_TIMELINE_LOGGING,
+                {"isolateId": isolate_id, "enabled": "true"},
+            )
+            enabled = state.get("enabled") if isinstance(state, dict) else None
+            if enabled not in (True, "true"):
+                raise RuntimeCommandError("DevTools Network recording could not be enabled")
+            print(
+                "warning: enabled recording for an unrecorded isolate; "
+                "its earlier requests may be missing; existing profiles were preserved",
+                file=sys.stderr,
+            )
         profile = vm_service_result(base, HTTP_PROFILE, {"isolateId": isolate_id})
         if not isinstance(profile, dict) or not isinstance(profile.get("requests"), list):
             raise RuntimeCommandError("DevTools Network profile response has an invalid format")
