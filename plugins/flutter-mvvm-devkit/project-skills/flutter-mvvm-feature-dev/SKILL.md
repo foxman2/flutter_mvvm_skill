@@ -17,6 +17,8 @@ description: >-
 
 ## 关键边界
 
+- 行为测试优先覆盖 ViewModel，默认不新增 Page/Widget 测试；仅重要 UI 交互无法由逻辑层覆盖时例外。
+- 纯展示通过实际界面验收，不编写仅检查控件存在的测试。
 - 新页面 ViewModel 使用 `<Feature>ViewModelInput`、`Output`、`Type` 和实现类；Page 接收返回非空 ViewModel 的 provider。
 - 用户可见文案走 l10n；固定 Widget 文案直接读取 `AppLocalizations`，跨页面、弹层和 toast 的 `DisplayText` 参数用 `.localized` 延迟到展示时解析，服务端原文用 `.raw`。
 - 仅依赖 l10n、Theme 或 BuildContext 的固定展示值由 Page/Widget 直接读取；不得为纯 l10n 透传新增 ViewModel Output。只有值依赖业务状态、异步结果、页面参数或用户操作时，才由 ViewModel 输出。
