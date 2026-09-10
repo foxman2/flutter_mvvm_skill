@@ -20,6 +20,8 @@ description: >-
 - 行为测试优先覆盖 ViewModel，默认不新增 Page/Widget 测试；仅重要 UI 交互无法由逻辑层覆盖时例外。
 - 纯展示通过实际界面验收，不编写仅检查控件存在的测试。
 - 新页面 ViewModel 使用 `<Feature>ViewModelInput`、`Output`、`Type` 和实现类；Page 接收返回非空 ViewModel 的 provider。
+- 遵循 `View → Input → VM → Output → View` 单向数据流：Input 仅接收事件，默认返回 `void`；异步处理及串行等待由 VM 内部私有方法负责，状态、业务结果、完成通知和错误通过 Output 或项目已有输出通道传递。View 不通过等待 Input 返回值决定后续 UI 行为。
+- 仅框架明确要求异步回调的 Input 可以例外，例如 `RefreshIndicator.onRefresh`；在接口处注明原因，不将例外扩展到普通点击或生命周期事件，也不为方便测试而返回 Future。
 - 用户可见文案走 l10n；固定 Widget 文案直接读取 `AppLocalizations`，跨页面、弹层和 toast 的 `DisplayText` 参数用 `.localized` 延迟到展示时解析，服务端原文用 `.raw`。
 - 仅依赖 l10n、Theme 或 BuildContext 的固定展示值由 Page/Widget 直接读取；不得为纯 l10n 透传新增 ViewModel Output。只有值依赖业务状态、异步结果、页面参数或用户操作时，才由 ViewModel 输出。
 - 只有颜色、字体、间距、布局、圆角、阴影、图标或静态文案发生变化，且状态、callback、校验、交互、导航、弹层结果和异步行为全部不变时，才视为纯展示改动。
@@ -30,6 +32,6 @@ description: >-
 
 ## 读取参考
 
-- 创建页面或 ViewModel：读 `references/page-pattern.md`；新增导航时同时读 `references/navigation-pattern.md`。
+- 创建页面或创建、修改 ViewModel：读 `references/page-pattern.md`；新增导航时同时读 `references/navigation-pattern.md`。
 - 修改 UI、弹窗、ActionSheet 或 BottomSheet：读 `references/ui-change-pattern.md`。
 - 抽取共用组件或整理 `widgets/`：读 `references/common-components.md`。
