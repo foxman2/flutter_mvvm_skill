@@ -24,12 +24,16 @@
 - 内部状态保持私有；异步 loading/error 使用项目现有 tracker。
 - 导航、弹窗和业务动作由 ViewModel 发起，Widget 只绑定事件。
 
-## 异步错误处理
+## Loading 与错误处理
 
+按操作需要选择项目已有封装，实现见 `lib/mvvm/` 下的 `base_view_model.dart`、`loading_tracker.dart` 和 `error_tracker.dart`：
+
+- 需要 loading 和错误提示：用 `trackLoadingAndConsumeError(this)`，不再手动维护同一操作的 loading 状态。
 - 只需要报错，不需要额外处理：用 `consumeError(errorTracker)`，不用自己写 `try/catch`。
 - 报错后还要把异常往外抛：用 `trackError(errorTracker)`，外层不要重复报错。
 - 出错后还要重试、回滚或按错误类型分别处理：自己写 `try/catch`。
-- `consumeError` 会吞掉异常，执行完不代表操作成功。
+
+`consumeError` 和 `trackLoadingAndConsumeError` 消费异常后返回 `null`。成功结果保证非空时，可通过返回值是否为 `null` 判断成功；`void` 或成功结果允许为 `null` 的操作不适用。失败后仍须执行的步骤可接在其 `await` 后；包装整个流程不会恢复其内部已被异常跳过的步骤。
 
 ## Input 契约校验
 

@@ -17,6 +17,7 @@ description: >-
 
 ## 关键边界
 
+- `App` 配置应用，`AppContainer` 装配共享依赖，两者不承接页面业务流程；`AppPage` 描述路由及页面构造，Page 持有 Context，页面 ViewModel 处理业务并发出导航意图。
 - 行为测试优先覆盖 ViewModel，默认不新增 Page/Widget 测试；仅重要 UI 交互无法由逻辑层覆盖时例外。
 - 纯展示通过实际界面验收，不编写仅检查控件存在的测试。
 - 新页面 ViewModel 使用 `<Feature>ViewModelInput`、`Output`、`Type` 和实现类；Page 接收返回非空 ViewModel 的 provider。
@@ -32,6 +33,6 @@ description: >-
 
 ## 读取参考
 
-- 创建页面或创建、修改 ViewModel：读 `references/page-pattern.md`；新增导航时同时读 `references/navigation-pattern.md`。
+- 创建页面或创建、修改 ViewModel：读 `references/page-pattern.md`；新增、修改或重构导航调用与绑定时，同时读 `references/navigation-pattern.md`。
 - 修改 UI、弹窗、ActionSheet 或 BottomSheet：读 `references/ui-change-pattern.md`。
 - 抽取共用组件或整理 `widgets/`：读 `references/common-components.md`。
