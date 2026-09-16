@@ -24,6 +24,13 @@
 - 内部状态保持私有；异步 loading/error 使用项目现有 tracker。
 - 导航、弹窗和业务动作由 ViewModel 发起，Widget 只绑定事件。
 
+## 异步错误处理
+
+- 只需要报错，不需要额外处理：用 `consumeError(errorTracker)`，不用自己写 `try/catch`。
+- 报错后还要把异常往外抛：用 `trackError(errorTracker)`，外层不要重复报错。
+- 出错后还要重试、回滚或按错误类型分别处理：自己写 `try/catch`。
+- `consumeError` 会吞掉异常，执行完不代表操作成功。
+
 ## Input 契约校验
 
 - 同时检查 Input 声明、实现类和调用方；不能只把接口改为 `void`，却在具体实现中继续向调用方暴露 Future 或业务返回值。
