@@ -1,33 +1,32 @@
-# Model 解析模式
+# Model 与 JSON 解析
 
-## 先读项目实现
+## 先读什么
 
-优先读取同一 domain 的现有 model；模板示例存在时可参考 `lib/models/user/user_profile.dart`。沿用项目已有序列化方案，不并行引入第二套机制。
+先读同一业务的已有 model。模板的 `lib/models/user/user_profile.dart` 还在时可以参考。沿用现有解析方案，不同时引入另一套。
 
-## 命名与职责
+## 命名和分工
 
-- 响应类型使用业务名，如 `UserProfile`、`OrderSummary`。
-- 请求类型使用动作后缀，如 `UpdateProfileRequest`。
-- 文件使用 snake_case，类使用 PascalCase。
-- JSON 字段映射只放在 model 内，不散落到 API service、ViewModel 或 Widget。
-- 先区分协议 DTO 与领域 Model：DTO 忠实表达后台字段；领域 Model 维护自身约束及领域方法，不能发请求或访问全局依赖。协议与业务语义一致时可以复用类型，不强制复制一套 Entity。
-- 需要转换时在数据边界显式完成，通常由 Repository 或纯映射函数负责；不要为一次字段改名引入额外映射框架。完整边界见[职责规范](../../shared-references/architecture-responsibilities.md)。
+- 响应类型用业务名，例如 `UserProfile`、`OrderSummary`。
+- 请求类型用动作名，例如 `UpdateProfileRequest`。
+- 文件名用 snake_case，类名用 PascalCase。
+- JSON 字段映射只放在 model，不散落到 API、VM 或 Widget。
+- DTO 表达后台字段；领域 Model 管理自身业务规则，不发请求、不查全局依赖。两者含义一致时可以共用类型，不必另建 Entity。
+- 确实需要转换时，由 Repository 或纯映射函数完成。不要为一次字段改名引入映射框架。分工见[文件职责](../../shared-references/architecture-responsibilities.md)。
 
 ## json_serializable
 
-正式 request/response model 推荐使用 `json_serializable`：
+正式请求和响应 model 推荐用 `json_serializable`：
 
-- 添加 `@JsonSerializable()`、对应 `part`，并让 `fromJson/toJson` 委托给生成函数。
-- 运行时依赖使用 `json_annotation`，开发依赖使用 `json_serializable` 和 `build_runner`。
-- 新增或修改 model 后运行：
+- 添加 `@JsonSerializable()` 和 `part`，`fromJson/toJson` 调用生成函数。
+- 运行依赖用 `json_annotation`，开发依赖用 `json_serializable` 和 `build_runner`。
+- 字段改名、默认值和自定义转换用 `JsonKey` 或 `JsonConverter`。
+- 嵌套 model 需要序列化时，用 `explicitToJson: true`。
+- 改 model 后运行下面的命令。保留生成的 `.g.dart`，不要手改。
 
 ```bash
 dart run build_runner build
 ```
 
-- 保留生成的 `.g.dart`，不要手动修改。
-- 字段改名、默认值和自定义转换使用 `JsonKey` 或 `JsonConverter`；嵌套 model 需要序列化时使用 `explicitToJson: true`。
+项目已有稳定手写解析时可以继续用，但解析仍放在 model 内。
 
-项目已有稳定手写解析方案时可继续使用，但同样把解析限制在 model 内。
-
-后台未确认的临时结构放入 `lib/services/mock_api/models/`，不要提前进入 `lib/models/`。
+协议没确认的临时结构放在 `lib/services/mock_api/models/`，不要提前放进 `lib/models/`。

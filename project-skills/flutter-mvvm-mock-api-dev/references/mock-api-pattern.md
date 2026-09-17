@@ -1,76 +1,70 @@
-# Mock API 与 AppContainer 模式
+# Mock API 实现与数据迁移
 
-## 数据归类
+## 哪些是演示业务数据
 
-业务演示数据是用于模拟服务端或业务领域返回、会影响用户对产品能力理解的数据，例如：
+模拟后台或业务结果、会影响用户理解产品能力的数据，都属于演示业务数据，例如：
 
-- 用户、账号、订阅和使用额度
-- 聊天任务、消息、请求状态和 AI 结果
-- 机构、匹配度、地址、电话、录音元数据和 transcript
+- 用户、账号、订阅和额度
+- 任务、消息、请求状态和 AI 结果
+- 机构、匹配度、地址、电话、录音信息和转写
 - 套餐、价格、权益、续订日期和可购买项
-- 后台可配置的目录、列表、详情和业务状态
+- 后台配置的目录、列表、详情和业务状态
 
-以下内容不是业务演示数据，可以保留在展示层：
+l10n、主题、图标、静态资源路径，以及 tab、步骤、展开、输入、筛选、选中、loading 和纯展示枚举，可以留在展示层。
 
-- l10n 文案、theme token、图标和静态资源路径
-- 当前 tab、步骤、展开、输入、筛选、选中和 loading 状态
-- 不代表服务端返回的固定展示枚举
+一个值既参与业务展示又可能由后台配置时，按业务演示数据处理。不要只看变量名是否带 mock、fixture 或 demo。
 
-当一个值既参与业务展示又可能由后台配置时，按业务演示数据处理。不要仅根据变量名是否包含 `mock`、`fixture` 或 `demo` 判断。
+## 先读什么
 
-## 先读项目实现
-
-优先读取：
-
-- `lib/services/api/api_service.dart`
-- 最接近的 domain contract；模板示例存在时可参考 `user_api_service.dart`
-- `lib/services/mock_api/` 下的对应实现；模板示例存在时可参考 `mock_user_api_service.dart`
+- `lib/services/api/api_service.dart` 和相关业务接口
+- `lib/services/mock_api/` 的对应实现
 - `lib/services/mock_api/models/`、调用方和测试
-- 涉及 Product Preview 时读取对应 Page、ViewModel、AppPage 和 registry
+- 涉及预览时，再读 Page、VM、AppPage 和 registry
 
-迁移存量数据时，搜索 Page、ViewModel、Screen、`product_preview`、model 和测试中的业务对象、集合、价格、账号、消息、结果和记录。用[职责规范](../../shared-references/architecture-responsibilities.md)区分业务 fixture、请求结果与编辑草稿，不因调用方持有数据就判定其越界。示例 domain 只用于理解模式，不要因为参考文件而创建无关业务代码。
+模板的 `user_api_service.dart` 和 `mock_user_api_service.dart` 还在时可以参考，不要因此创建无关业务。
 
-## Contract 与占位实现
+迁移旧数据时，搜索 Page、VM、Screen、预览、model 和测试里的业务对象、价格、账号、消息、结果和记录。按[文件职责](../../shared-references/architecture-responsibilities.md)区分编造的数据、请求结果和草稿。调用方保存请求结果本身没有问题。
 
-- 在 `lib/services/api/<domain>_api_service.dart` 定义调用方可依赖的 `<Domain>ApiService`。
-- 按稳定业务动作设计 contract，不按页面拆分，也不暴露未确认的 HTTP 路径、字段或 response envelope。
-- 协议未确认的非 mock 分支使用 `Unimplemented<Domain>ApiService` fail-fast。
-- Unimplemented 实现不持有 Dio，也不使用 `Dio<Domain>ApiService` 名称。
-- contract 的未确认部分标记待审核；不要编造 URL、字段或响应解析。
+## 接口和未实现分支
 
-## Mock 实现与 model
+- 在 `lib/services/api/<domain>_api_service.dart` 定义 `<Domain>ApiService`。
+- 方法表达业务动作，不按页面各建一套接口，不暴露未确认的 HTTP 路径、字段或响应外层格式。
+- 未确认部分标记为待审核。
+- 非 mock 分支用 `Unimplemented<Domain>ApiService` 明确报未实现。它不持有 Dio，也不叫 `Dio<Domain>ApiService`。
 
-- Mock 类命名为 `Mock<Domain>ApiService`，文件为 `lib/services/mock_api/mock_<domain>_api_service.dart`。
-- 已确认 response shape 时复用 `lib/models/`；未确认结构放入 `lib/services/mock_api/models/`。
-- fixture、seed 和演示实体只保存在 Mock 实现或 mock-only model 中，不放在 Widget、ViewModel、`product_preview` 或正式 model 的顶层常量里。
-- Mock 实现接口语义，可按需求模拟延迟、空结果、错误或状态分支，也可保存模拟服务端的内存记录，使创建/更新后的查询一致；不执行客户端业务流程或 UI 行为。
+## Mock 和 model
 
-## ApiService 组装与注入
+- 类名用 `Mock<Domain>ApiService`，文件为 `lib/services/mock_api/mock_<domain>_api_service.dart`。
+- 响应结构已确认就复用 `lib/models/`；没确认就放在 `lib/services/mock_api/models/`。
+- fixture、seed 和演示实体只放在 Mock 实现或临时 model，不放在 Widget、VM、预览或正式 model 顶层常量中。
+- 按需求模拟延迟、空数据、错误和状态变化。可以用内存记录保持创建、更新和查询一致，不处理客户端业务流程或 UI。
 
-- 在 ApiService 默认 factory 中集中选择 mock 或非 mock 实现，所有 domain 字段保持 final。
-- mock 和真实阶段共享同一个 domain contract 与 `ApiService.<domain>` 入口。
-- 非 mock 分支对未确认 domain 使用 Unimplemented；已确认 domain 继续使用现有 Dio 实现。
-- 简单页面通过 AppPage provider 从 `AppContainer.shared.apiService.<domain>` 注入 contract；已有 Repository 管理相关数据时，将 contract 注入 Repository，再向 ViewModel 注入该 Repository，避免绕过统一数据入口。
-- 生产调用代码不直接 import `services/mock_api/`；测试可以直接构造 Mock 验证 contract 行为。
-- 不在 Widget 或 ViewModel 中判断 mock/real，也不为预览改变默认环境。
+## 组装和注入
+
+- ApiService 默认 factory 按环境选择实现，业务模块字段保持 final。
+- Mock 和真实实现使用同一业务接口和 `ApiService.<domain>` 入口。
+- 非 mock 环境：未确认接口用 Unimplemented；已确认接口保留已有 Dio 实现。
+- AppPage provider 从 `AppContainer.shared.apiService.<domain>` 取得接口并注入 VM。
+- 数据已有 Repository 管理时，把接口注入 Repository，再把 Repository 注入 VM，不绕过数据入口。
+- 正式调用方不 import 具体 Mock。测试可以直接构造 Mock 来验证接口行为。
+- Widget、VM 不判断 mock/real，不为预览修改默认环境。
 
 ## Product Preview
 
-- Product Preview 与正式页面遵守同一数据来源规则，业务演示数据从 Mock API 获取。
-- 预览 ViewModel 可以保存请求得到的展示结果，以及步骤、tab、筛选、输入和草稿等交互状态；不得生成 fixture 或另建共享业务缓存。
-- 套餐、价格、额度、机构、消息、记录等由注入的 domain contract 提供；不要为了预览复制一份局部 fixture。
-- AppPage provider 与正式页面遵循同一构造注入规则，按需注入 contract 或现有 Repository；registry 不创建 service 或判断环境。
+- 预览的套餐、价格、额度、机构、消息和记录也从 Mock API 获取，不保存另一份局部演示数据。
+- 预览 VM 可以保存请求结果、步骤、tab、筛选、输入和草稿，不编造业务数据，不另建共享缓存。
+- AppPage provider 注入业务接口或已有 Repository。registry 不创建 service，不判断环境。
 
-## 存量迁移检查
+## 迁移检查
 
-- 为每组业务 fixture 找到所属 domain，优先扩展已有 contract，避免创建页面专用 service。
-- 将演示数据移入 Mock 实现或 mock-only model 后，删除原位置的数据副本，避免两套来源漂移。
-- 保留 UI 状态和展示资源，不为满足目录规则把所有常量机械迁入 API。
-- 验证 Mock 环境的正常、空数据、错误或延迟场景中实际需要的部分，并验证非 mock 的未实现分支明确失败。
-- 检查正式和预览调用方使用注入的 contract 或 Repository，不依赖具体 Mock；环境选择只存在于 ApiService 组装层。
+- 每组演示数据归到对应业务接口，优先扩展已有接口，不建页面专用 service。
+- 数据移到 Mock 或临时 model 后，删除原来的副本。
+- 保留 UI 状态和展示资源，不把所有常量都搬进 API。
+- 验证当前需要的正常、空数据、错误或延迟场景；确认非 mock 的未实现分支明确失败。
+- 正式和预览调用方只用注入的接口或 Repository，环境选择只在 ApiService 组装层。
 
-## 协议确认后的边界
+## 协议确认后
 
-- 后台确认后停止扩展临时 contract 和 mock-only model，列出路径、字段、解析和错误处理的对齐需求。
-- 正式协议以确认结果为准；临时 contract 不匹配时同步更新调用方，不为维持临时结构增加兼容层。
-- 不在本工作流中迁移正式 model、创建 Dio 实现或替换非 mock 分支的 Unimplemented。
+- 停止扩展临时接口和 model，列出路径、字段、解析和错误处理需要对齐的地方。
+- 按正式协议更新接口和调用方，不为保留临时结构加兼容层。
+- 正式 model 迁移、Dio 实现和替换 Unimplemented，交给正式 API 开发 skill。

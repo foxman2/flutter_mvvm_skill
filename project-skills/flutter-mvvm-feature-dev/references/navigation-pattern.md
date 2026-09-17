@@ -1,31 +1,33 @@
-# Sealed AppPage 导航模式
+# AppPage 导航
 
-## 核心结构
+## 路由怎么定义
 
-先读取 `lib/navigation/app_page.dart` 和最接近的页面 case。每个可导航页面使用具体 `AppPage` 子类，而不是 `enum + dynamic param`，并按需要提供：
+先读 `lib/navigation/app_page.dart` 和相似页面的 AppPage 子类。每个可导航页面使用具体子类，不用 `enum + dynamic param`。
+
+按需要提供：
 
 - 稳定的 `routeName`
 - `defaultTransition`
 - 强类型构造参数
-- `queryParameters`，仅用于路由字符串、深链或恢复
 - `generateWidgetBuilder()`
+- `queryParameters`，仅在路由字符串、深链或恢复需要时提供
 
-## ViewModel 组装
+## ViewModel 怎么创建
 
-- 普通页面无论是否包含运行参数，都在 `generateWidgetBuilder()` 返回的 provider 中延迟创建 ViewModel。
-- ViewModel 通过构造函数接收依赖；AppPage provider 从 `AppContainer.shared` 取得具体 Service 或 Repository。
-- 不在 `generateWidgetBuilder()` 外预先创建普通页面 ViewModel。
-- Alert、ActionSheet 或 child ViewModel 需要先配置动作、回调或父子关系时，可以保留已创建实例；先确认生命周期，不能把例外推广到普通页面。
+- 普通页面在 `generateWidgetBuilder()` 返回的 provider 中延迟创建 VM。有运行参数也一样，不提前创建实例。
+- AppPage provider 从 `AppContainer.shared` 取得 Service 或 Repository，通过构造函数传给 VM。
+- Alert、ActionSheet 和子 VM 需要预先配置动作或父子关系时，可以传已有实例。先确认由谁初始化和释放，不把这个例外用于普通页面。
 
-## Transition
+## 转场怎么选
 
-- 普通页面通常使用 `push`。
-- Alert 使用 `alert`，操作面板使用 `actionSheet`。
-- BottomSheet 使用 `bottomSheet` 或 `bottomSheetWithNavigator`，高度和拖拽配置跟随现有 `BottomSheetConfigProvider`。
-- 清空导航栈调用 `replaceRoot(...)`，不要把它建成 transition。
+- 普通页面通常用 `push`。
+- 提示框用 `alert`，操作面板用 `actionSheet`。
+- 底部弹层用 `bottomSheet`，内部需要导航时用 `bottomSheetWithNavigator`。
+- 弹层高度和拖拽沿用 `BottomSheetConfigProvider`。
+- 清空导航栈用 `replaceRoot(...)`，不要新增一种 transition。
 
-## Route parser
+## 路由解析和调用
 
-只有页面需要深链、浏览器地址或路由恢复时才更新 parser。解析失败返回项目约定的失败结果，不为形式统一给所有页面添加 parser 分支。
-
-保持既有 routeName 稳定；页面改名时不要无必要改变外部路由。业务页面从 ViewModel 使用项目的 `show()`、replacement、root replacement 和 `pop()` 封装，不直接绕到 `Navigator`。
+- 页面需要深链、浏览器地址或路由恢复时，才改 parser。解析失败使用项目已有的失败结果，不给所有页面强加 parser 分支。
+- 页面改名不必顺带改外部 routeName；没有需求就保持路由稳定。
+- 业务导航由 VM 调用已有 `show()`、replacement、root replacement 和 `pop()` 封装，不直接调用 Navigator。

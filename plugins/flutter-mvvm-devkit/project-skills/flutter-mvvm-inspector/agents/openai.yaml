@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM Inspector"
-  short_description: "管理 Flutter 调试实例并按需诊断网络或 Widget"
-  default_prompt: "使用 $flutter-mvvm-inspector 管理当前 Flutter debug 实例，并完成所需的重载、日志或 Inspector 操作。"
+  short_description: "管理当前项目的 Flutter 调试实例，查看日志、网络和选中 Widget"
+  default_prompt: "使用 $flutter-mvvm-inspector 完成当前项目需要的调试、重载或 Widget 定位。"

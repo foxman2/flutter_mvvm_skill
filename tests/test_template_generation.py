@@ -126,11 +126,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
     ) -> None:
         skill_text = searchable_text(API_DEV_SKILL_PATH)
 
-        self.assertIn("推荐使用 `json_serializable`", skill_text)
-        self.assertIn(
-            "dart run build_runner build`，再格式化",
-            skill_text,
-        )
+        self.assertIn("dart run build_runner build", skill_text)
         self.assertNotIn("JSON model 必须使用", skill_text)
         self.assertNotIn("所有正式 request/response model 都使用", skill_text)
         self.assertNotIn("先用普通 Dart model 和手写", skill_text)
@@ -149,7 +145,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(dart_define_arguments, set())
-        self.assertIn("不得新增或修改任何 Dart define", markdown)
 
     def test_pm_ui_defines_compact_change_handoff(self) -> None:
         skill = (PM_UI_SKILL_PATH / "SKILL.md").read_text(encoding="utf-8")
@@ -168,7 +163,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             "- 调用顺序：上传头像成功后更新用户资料。",
         ):
             self.assertIn(interface_delta, handoff)
-        self.assertIn("method、path 和字段已有正式协议依据", handoff)
         self.assertIn("`- 无。`", handoff)
         self.assertNotIn("\n## 待确认事项\n", handoff)
         self.assertNotIn("\n## 明确不包含\n", handoff)
@@ -184,7 +178,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
 
         self.assertIn("docs/FEATURE_CODE_MAP.md", skill)
         self.assertIn("| 功能/别名 | 代码入口 | 检索锚点 |", skill)
-        self.assertIn("不使用绝对路径、Markdown 文件链接或行号", skill)
         self.assertEqual(
             directory_snapshot(CODE_MAP_SKILL_PATH),
             directory_snapshot(MARKETPLACE_CODE_MAP_SKILL_PATH),
@@ -195,11 +188,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
     ) -> None:
         skill = (CODE_QUALITY_SKILL_PATH / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertIn("任意编程语言", skill)
-        self.assertIn("可读性作为有效方案之间的首要选择标准", skill)
-        self.assertIn("适配当前项目", skill)
         self.assertIn("避免过度设计", skill)
-        self.assertIn("不强制跨语言的函数行数", skill)
         self.assertNotIn("Flutter", skill)
         self.assertEqual(
             directory_snapshot(CODE_QUALITY_SKILL_PATH),
@@ -219,49 +208,7 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                 searchable_text(ROOT / "project-skills" / skill_name),
             )
 
-    def test_development_skills_own_testing_completion_gates(self) -> None:
-        direct_coverage_gate = (
-            "先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract",
-            "仅执行到相关代码不算直接覆盖",
-            "覆盖充分时复跑并记录依据",
-            "覆盖不足时才新增或更新最小测试",
-        )
-        for skill_path in (
-            FEATURE_DEV_SKILL_PATH,
-            API_DEV_SKILL_PATH,
-            MOCK_API_DEV_SKILL_PATH,
-            PM_UI_SKILL_PATH,
-        ):
-            skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
-            for guidance in direct_coverage_gate:
-                self.assertIn(guidance, skill)
-
-        development_gates = {
-            FEATURE_DEV_SKILL_PATH: (
-                "纯展示改动不新增或修改测试",
-                "混合改动只覆盖行为部分",
-            ),
-            API_DEV_SKILL_PATH: (
-                "API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 全部属于非视觉改动",
-            ),
-            MOCK_API_DEV_SKILL_PATH: (
-                "domain contract、mock 返回、非 mock fail-fast、wiring 和调用方全部属于非视觉改动",
-                "不通过测试固化未确认的真实 URL",
-            ),
-            PM_UI_SKILL_PATH: (
-                "纯展示和静态文案改动不新增或修改测试",
-                "混合改动只覆盖行为部分",
-            ),
-            INSPECTOR_SKILL_PATH: (
-                "纯展示修改不新增或修改测试",
-                "涉及状态、callback、校验、交互、数据、API、导航、弹层结果或异步行为，停止本工作流并报告超出当前范围",
-            ),
-        }
-        for skill_path, expected_guidance in development_gates.items():
-            skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
-            for guidance in expected_guidance:
-                self.assertIn(guidance, skill)
-
+    def test_skills_keep_testing_guidance_concise(self) -> None:
         detailed_test_guidance = (
             "`addTearDown`",
             "`pumpAndSettle()`",
@@ -287,9 +234,6 @@ class TemplateGenerationUnitTests(unittest.TestCase):
             skill = (skill_path / "SKILL.md").read_text(encoding="utf-8")
             self.assertNotIn("或新增和修改测试", skill)
             self.assertNotIn("不在本工作流中新增或修改测试", skill)
-
-        code_quality = searchable_text(CODE_QUALITY_SKILL_PATH)
-        self.assertIn("遵循项目已有验证要求", code_quality)
 
     def test_skills_do_not_reference_other_skills(self) -> None:
         skill_paths = {

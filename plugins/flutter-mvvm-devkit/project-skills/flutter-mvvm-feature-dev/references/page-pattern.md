@@ -1,60 +1,62 @@
-# 页面和 ViewModel 模式
+# 页面和 ViewModel
 
-## 先读相邻实现
+## 先读什么
 
-新增或修改页面前，读取 1～2 个相似页面及其：
+读 1～2 个相似页面、VM、AppPage、相关 Widget、l10n key 和测试。按[文件职责](../../shared-references/architecture-responsibilities.md)检查后，再复用基类、命名、import 和状态管理写法。
 
-- `<feature>_page.dart` 与 `<feature>_view_model.dart`
-- 对应 AppPage case
-- 相关 Widget、l10n key 和已有测试
+没有相似页面时，先查 MVVM 基类、AppPage 和依赖入口的真实接口。不要猜方法，不补不需要的层。
 
-按[职责规范](../../shared-references/architecture-responsibilities.md)检查相邻实现后，沿用符合约束的基类、命名、import 和状态管理方式，不复制职责越界或违反 Input/Output 契约的写法。没有相似业务页面时，先核对现有 MVVM 基类、AppPage 和依赖入口的真实接口，再实现当前需求，不猜测框架能力或补齐不需要的层。
+## 命名和基类
 
-## 文件与类型
+- 目录和文件用 snake_case，例如 `lib/pages/profile/profile_page.dart`。
+- 类型用 `<Feature>Page`、`<Feature>ViewModelInput`、`Output`、`Type` 和 `<Feature>ViewModel`。
+- 有 VM 的 Page 用项目的 `AppBaseStatefulPage<T>` 和对应 State，即使没有本地 controller 或动画。
 
-- 页面目录和文件使用 snake_case，例如 `lib/pages/profile/profile_page.dart`。
-- 类型命名为 `<Feature>Page`、`<Feature>ViewModelInput`、`Output`、`Type` 和 `<Feature>ViewModel`。
-- ViewModel Page 使用项目的 `AppBaseStatefulPage<T>` 与对应 State，即使页面没有本地 controller 或 animation。
+## Input 和 Output
 
-## ViewModel 职责
+- Input 接收用户或生命周期事件，沿用 `onClickXxx`、`onInputXxx` 等命名。
+- Input 默认返回 `void`，异步流程放在 VM 私有方法里。只有框架明确要求异步返回时才例外，并说明原因。
+- Input 声明、实现和调用方一起检查。不要接口写 `void`，实现却继续向调用方暴露 Future 或业务结果。
+- Output 提供与业务状态、异步结果、页面参数或操作有关的展示值。默认用 getter 配合 `makeRebuild()`。
+- 输入联动、进度、倒计时、刷新或一次性 UI 事件等确有需要的局部状态，才用 `ValueStream<T>` 或 `Stream<T>`。
+- 内部状态保持私有。导航、弹窗和页面操作由 VM 发起，Widget 只绑定事件。
+- VM 可以保存本页结果和草稿；共享数据更新经过 Repository，独立规则交给 Model 或业务 Service。
 
-- input 表达用户或生命周期事件，并跟随项目已有 `onClickXxx`、`onInputXxx` 等命名。
-- output 暴露依赖业务状态、异步结果、页面参数或用户操作的展示状态；默认使用 getter 配合 `makeRebuild()`。
-- 仅为输入联动、进度、倒计时、刷新或一次性 UI 事件等局部高频状态使用 `ValueStream<T>`/`Stream<T>`。
-- 内部状态保持私有；异步 loading/error 使用项目现有 tracker。
-- 导航、弹窗和页面操作由 ViewModel 发起，Widget 只绑定事件；共享数据更新调用 Repository，独立领域规则调用 Model 或业务 Service。ViewModel 可以持有本页加载结果与编辑草稿，不能重复维护跨页面权威数据。
+## Loading 和错误
 
-## Loading 与错误处理
+实现位于 `lib/mvvm/base_view_model.dart`、`loading_tracker.dart` 和 `error_tracker.dart`。
 
-按操作需要选择项目已有封装，实现见 `lib/mvvm/` 下的 `base_view_model.dart`、`loading_tracker.dart` 和 `error_tracker.dart`：
+| 需要什么 | 使用什么 |
+|---|---|
+| loading 和错误提示 | `trackLoadingAndConsumeError(this)`，不再手动维护同一操作的 loading |
+| 只提示错误 | `consumeError(errorTracker)`，不用再写 try/catch |
+| 提示错误后继续抛出 | `trackError(errorTracker)`，外层不要重复提示 |
+| 按错误类型处理、重试或回滚 | 自己写 try/catch |
 
-- 需要 loading 和错误提示：用 `trackLoadingAndConsumeError(this)`，不再手动维护同一操作的 loading 状态。
-- 只需要报错，不需要额外处理：用 `consumeError(errorTracker)`，不用自己写 `try/catch`。
-- 报错后还要把异常往外抛：用 `trackError(errorTracker)`，外层不要重复报错。
-- 出错后还要重试、回滚或按错误类型分别处理：自己写 `try/catch`。
+`consumeError` 和 `trackLoadingAndConsumeError` 捕获错误后返回 `null`：
 
-`consumeError` 和 `trackLoadingAndConsumeError` 消费异常后返回 `null`。成功结果保证非空时，可通过返回值是否为 `null` 判断成功；`void` 或成功结果允许为 `null` 的操作不适用。失败后仍须执行的步骤可接在其 `await` 后；包装整个流程不会恢复其内部已被异常跳过的步骤。
+- 成功结果保证非空时，可以用 `null` 判断失败。
+- 返回 `void`，或成功也可能返回 `null` 时，不能这样判断。
+- 失败后仍要执行的步骤，可以写在这次 `await` 后。
+- 如果包装整个流程，流程内部因异常跳过的步骤不会补执行。
 
-## Input 契约校验
+## 页面如何接收结果
 
-- 同时检查 Input 声明、实现类和调用方；不能只把接口改为 `void`，却在具体实现中继续向调用方暴露 Future 或业务返回值。
-- 页面原先依赖 Input 返回结果时，将对应反馈接入 Output。例如发送成功后清空输入框，应由 View 订阅发送成功事件；失败时保留输入内容，错误走已有 tracker。
-- 测试通过 Output 状态、事件、导航或错误通道判断完成；需要控制异步时序时，在依赖替身中控制完成时机，不为测试增加可等待的 Input 或公开内部异步方法。
+- 页面不要等待 Input 返回值来决定下一步。需要的反馈改走 Output 或已有输出通道。
+- 例如发送成功后清空输入框：View 接收发送成功事件；失败保留输入，错误走 tracker。
+- 测试通过 Output、事件、导航或错误通道判断结果。要控制异步时序，就控制测试替身的完成时机，不为测试公开内部异步方法。
 
-## 展示值归属
+## 固定展示值
 
-- 新增 ViewModel Output 前先识别值的依赖，不因相邻页面已有同名 Output 就直接照搬。
-- 仅依赖 l10n、Theme 或 BuildContext 的固定文案和样式由 Page/Widget 直接读取。
-- 不得为单纯返回固定 l10n 文案的值新增 ViewModel Output、接口 getter 或实现 getter。
-- 仅当值依赖业务状态、异步结果、页面参数或用户操作时，才作为 ViewModel Output。
+只依赖 l10n、Theme 或 Context 的固定值，由 Page/Widget 直接读取。不要为了转发固定文案增加 VM Output，也不要照搬相邻页面的多余 getter。
 
-固定页面标题直接留在 Page：
+固定标题直接写：
 
 ```dart
 title: Text(strings.dragDropEditTitle),
 ```
 
-不要为它新增纯透传：
+不要为它增加：
 
 ```dart
 DisplayText get title => .localized((strings) => strings.dragDropEditTitle);
@@ -62,21 +64,21 @@ DisplayText get title => .localized((strings) => strings.dragDropEditTitle);
 
 ## Page 与依赖
 
-- Page 只依赖 `<Feature>ViewModelType>`，并显式接收返回非空 ViewModel 的 `viewModelProvider`。
-- 独立路由页面由对应 AppPage provider 延迟创建 ViewModel；Page 不自行创建 ViewModel，也不接收预先创建的页面实例。
-- ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖。
-- Alert 和 ActionSheet 等特殊场景可能需要预配置实例；修改前确认创建、绑定和释放责任，不套用独立路由页面的所有权。
+- Page 依赖 `<Feature>ViewModelType`，接收返回非空 VM 的 `viewModelProvider`。
+- 普通路由页面由 AppPage provider 延迟创建 VM。Page 不自行创建，也不直接接收预先创建的 VM 实例。
+- AppPage provider 从 `AppContainer.shared` 取得依赖，经构造函数传给 VM。
+- Alert 和 ActionSheet 可能需要预先配置实例。先确认谁创建、绑定和释放，不套用普通路由页面的规则。
 
 ## 父页面组合子 Page
 
-- 页面是否被嵌套不改变其 Page 类型。由父页面组合的子 Page 仍优先使用普通 `AppBaseStatefulPage<T>` 与对应 State。
-- ViewModel 的创建者、持有者和生命周期所有者可以不同，但责任必须明确，且只能有一个生命周期所有者。
-- 父级可以创建并持有稳定的子 ViewModel，再通过 `viewModelProvider` 交给子 Page。
-- 当子 Page 是生命周期所有者时，由子 Page 负责 ViewModel 的初始化、绑定和释放；父级不得重复调用 ViewModel 的 `initState()` 或 `dispose()`。
-- 父子页面通过明确的状态、回调或合同协调；不因嵌套关系新增另一套 Page 基类、专用绑定组件，或修改通用 MVVM Base。
-- 同一次子 Page 生命周期内，provider 返回稳定且有效的实例。子 Page 重新挂载时，provider 不得返回已被释放的实例。
+- 子 Page 仍优先使用普通 `AppBaseStatefulPage<T>` 和对应 State，不因嵌套另建基类或绑定组件。
+- 父级可以创建并保存子 VM，通过 provider 交给子 Page。
+- 创建和保存实例的人，可以与负责生命周期的人不同；但初始化和释放只能由一方负责。
+- 子 Page 负责生命周期时，父级不能再调用 VM 的 `initState()` 或 `dispose()`。
+- 同一次子 Page 生命周期内，provider 返回稳定有效的实例。重新挂载时不能返回已释放的实例。
+- 父子通过明确的状态、回调或接口协作，不为嵌套修改通用 MVVM Base。
 
-父级创建和持有实例、子 Page 拥有其生命周期时，最小 provider 写法如下：
+父级保存实例、子 Page 管理生命周期的例子：
 
 ```dart
 late final ChildViewModelType _childViewModel;
@@ -95,15 +97,15 @@ Widget build(BuildContext context) {
 }
 ```
 
-容器形式、是否保留 State、是否条件挂载，以及实例在重新挂载时如何更新，均由具体功能需求决定；本 skill 只规定职责和生命周期边界，不规定 Widget 结构或状态保留策略。
+是否保留 State、是否条件挂载、重新挂载时如何换实例，由具体需求决定。这里不规定 Widget 结构或状态保留方式。
 
 ## 本地化
 
-- 用户可见文案写入项目现有 ARB，并遵循当前 key 命名。
-- Page 或纯 Widget 用 `AppLocalizations.of(context)!` 读取展示文案。
-- ViewModel 传递给 toast、Alert、InputAlert 或 ActionSheet 的 `DisplayText` 参数使用 `.localized((strings) => strings.xxx)`，由展示端按当前语言解析。
-- API 和服务端返回的原始展示字符串使用 `.raw(value)`；raw 分支不会读取 `AppLocalizations` 或建立本地化依赖。
-- ViewModel 不持有 `BuildContext`，也不直接读取 `AppLocalizations`；需要结合业务状态或参数的展示文案同样通过 `.localized(...)` 闭包延迟计算。
+- 用户文案写入现有 ARB，沿用 key 命名。
+- Page/Widget 用 `AppLocalizations.of(context)!` 读取文案。
+- VM 不持有 Context，也不直接读取 AppLocalizations。
+- VM 向 toast、Alert、InputAlert 或 ActionSheet 传递 `DisplayText` 时，用 `.localized((strings) => strings.xxx)`，展示时按当前语言解析。依赖业务状态或参数的文案也这样处理。
+- API 和服务端原文用 `.raw(value)`，不走本地化。
 
 ```dart
 final alert = AlertViewModel(

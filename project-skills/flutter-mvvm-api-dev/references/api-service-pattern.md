@@ -1,41 +1,38 @@
-# API Service 与 AppContainer 模式
+# API 实现与依赖组装
 
-## 先读项目实现
-
-把当前项目代码作为事实来源，优先读取：
+## 先读什么
 
 - `lib/services/api/api_service.dart`
 - 最接近的 `lib/services/api/<domain>_api_service.dart`
 - `lib/app_container.dart`
 - 相关 Repository、ViewModel、AppPage 和测试
 
-模板示例存在时可参考 `user_api_service.dart`；示例已被业务代码替换时，检查最近 domain 模块是否符合[职责规范](../../shared-references/architecture-responsibilities.md)后再沿用。没有相似业务模块时，以 API 组装入口和解析工具的真实接口为依据，不推测后台协议。
+模板的 `user_api_service.dart` 还在时可以参考。没有相似模块，就查 API 组装和解析工具的真实接口。旧代码也要先符合[文件职责](../../shared-references/architecture-responsibilities.md)，不要照搬错误分工。
 
-## Domain 模块
+## 业务 API 模块
 
-- 文件命名为 `<domain>_api_service.dart`。
-- contract 命名为 `<Domain>ApiService`，真实实现命名为 `Dio<Domain>ApiService`。
-- contract 和 Dio 实现可放在同一业务文件；方法名表达业务动作，如 `fetchProfile()`、`updateProfile()`。
-- 通过构造函数传入 Dio；GET 参数使用 `queryParameters`，POST/PUT body 优先使用 model 的 `toJson()`。
-- 使用 `.parseData(...)` 解析 `response.data` 并统一转换 `DioException`。
-- 不在 API service 中处理 loading、toast、弹窗、导航或其他 UI 行为。
-- API service 只适配一次后台操作的协议，不加入客户端业务决策、跨接口业务编排或领域缓存；服务端聚合接口可以直接适配，不在客户端伪造其协议。
+- 文件名用 `<domain>_api_service.dart`。
+- 接口名用 `<Domain>ApiService`，真实实现用 `Dio<Domain>ApiService`，两者可以同文件。
+- 方法名说明操作，例如 `fetchProfile()`、`updateProfile()`。
+- Dio 通过构造函数传入。GET 参数用 `queryParameters`，POST/PUT body 优先用 model 的 `toJson()`。
+- 用 `.parseData(...)` 解析 `response.data` 并转换 `DioException`。
+- 每个方法对接一个后台操作。不处理 loading、toast、弹窗、导航、客户端业务决策、多接口流程或缓存。
+- 后台有聚合接口就按协议接入，不在客户端编造聚合接口协议。
 
 ## ApiService 组装
 
-- 为新 domain 增加 final 字段，并同步更新默认 factory 与 `ApiService.withModules(...)`。
-- 默认 factory 为真实模块复用同一个配置好的 Dio，保留现有 baseUrl、headers、timeout 和错误处理。
-- `withModules(...)` 只做显式对象组装，不读取环境或维护可变 setup 状态。
-- 跟随项目已有环境解析，不为单个业务接口另建 client、全局实例或环境开关。
+- 新业务模块增加 final 字段，同步更新默认 factory 和 `ApiService.withModules(...)`。
+- 默认 factory 共用已有 Dio，保留 baseUrl、headers、timeout 和错误处理。
+- `withModules(...)` 只组装传入的对象，不读环境，不维护可变 setup 状态。
+- 复用现有环境解析，不为单个接口另建 client、全局实例或环境开关。
 
-## Repository 与页面注入
+## 页面怎么接入
 
-- 简单调用可让 ViewModel 依赖具体 domain contract。需要共享数据、缓存或领域数据聚合时使用 Repository；独立业务流程使用业务 Service。具体判断遵循[职责规范](../../shared-references/architecture-responsibilities.md)，不按页面或接口数量机械增加层级。
-- 已有 Repository 管理的数据，更新必须经过该入口；Repository 和业务 Service 的依赖也经构造注入，不自行访问全局容器或具体 mock 实现。
-- App 生命周期 Repository 在 AppContainer composition root 中创建并注册。
-- ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖并创建 ViewModel。
-- ApiService、Repository 和其他 Service 不声明 `shared`。
+- 为简单页面的 ViewModel 直接注入业务 API 接口。
+- 需要共享数据、缓存或数据聚合时用 Repository；独立业务流程用业务 Service。不按页面数或接口数决定层数。
+- 数据已有 Repository 管理时，更新经过它。
+- 应用级 Repository 在 AppContainer 创建。VM、Repository 和业务 Service 都通过构造函数接收依赖，不查全局容器，不依赖具体 Mock。
+- AppPage provider 从 `AppContainer.shared` 取得依赖并创建 VM。
+- ApiService、Repository 和其他 Service 不加 `shared`。
 
-## 协议边界
-
-后台协议未确认时停止正式实现并报告缺失的路径、字段或响应结构，不创建真实 Dio 模块。
+协议没确认时，停止正式实现并说明缺少的路径、字段或响应结构，不创建真实 Dio 模块。

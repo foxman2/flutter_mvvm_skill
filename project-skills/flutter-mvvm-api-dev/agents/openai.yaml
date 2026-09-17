@@ -1,4 +1,4 @@
 interface:
   display_name: "Flutter MVVM 接口开发"
-  short_description: "接入协议已确认的正式 ApiService、模型与业务调用"
-  default_prompt: "使用 $flutter-mvvm-api-dev 在已有 Flutter MVVM 项目中接入协议已确认的正式接口、模型和业务调用。"
+  short_description: "接入协议已确认的正式 API，完成模型解析、依赖组装和调用方接入"
+  default_prompt: "使用 $flutter-mvvm-api-dev 接入已确认的后台接口，更新模型和调用方。"
