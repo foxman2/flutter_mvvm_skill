@@ -68,6 +68,8 @@ def write_skill(root: Path, name: str, marker: str) -> None:
                 "",
                 marker,
                 "",
+                "[Responsibilities](../shared-references/architecture-responsibilities.md)",
+                "",
             ]
         ),
         encoding="utf-8",
@@ -86,6 +88,10 @@ def write_source_state(
         shutil.rmtree(skills_dir)
     for name, marker in skills.items():
         write_skill(root, name, marker)
+
+    shared = skills_dir / "shared-references" / "architecture-responsibilities.md"
+    shared.parent.mkdir()
+    shared.write_text(f"Shared contract {version}\n", encoding="utf-8")
 
     plugin_dir = root / ".codex-plugin"
     plugin_dir.mkdir(parents=True, exist_ok=True)
@@ -259,6 +265,9 @@ class UpdateCodexSkillsTests(unittest.TestCase):
         legacy_updater = target / updater.LEGACY_UPDATER_PATH
         legacy_updater.parent.mkdir(parents=True, exist_ok=True)
         legacy_updater.write_text("legacy\n", encoding="utf-8")
+        stale_reference = skills_dir / "shared-references" / "retired.md"
+        stale_reference.parent.mkdir()
+        stale_reference.write_text("obsolete shared reference\n", encoding="utf-8")
 
         package = updater.update_project(target, "main", self.repository_url)
 
@@ -268,6 +277,10 @@ class UpdateCodexSkillsTests(unittest.TestCase):
         self.assertTrue((skills_dir / "main-only-skill/SKILL.md").is_file())
         self.assertEqual((skills_dir / "local-skill/SKILL.md").read_text(), "user local\n")
         self.assertFalse(legacy_updater.exists())
+        self.assertFalse(stale_reference.exists())
+        shared = skills_dir / "shared-references" / "architecture-responsibilities.md"
+        self.assertEqual(shared.read_text(), "Shared contract 0.2.0\n")
+        self.assertEqual(list(skills_dir.rglob(shared.name)), [shared])
 
         installed_updater = target / updater.TARGET_UPDATER_PATH
         self.assertIn("main updater", installed_updater.read_text())
@@ -279,6 +292,18 @@ class UpdateCodexSkillsTests(unittest.TestCase):
         self.assertEqual(manifest["version"], "0.2.0")
         self.assertEqual(manifest["managedSkills"], ["main-only-skill", "shared-skill"])
         self.assertRegex(manifest["installedAt"], r"^\d{4}-\d{2}-\d{2}T.*Z$")
+
+    def test_invalid_shared_reference_does_not_modify_target(self) -> None:
+        shared = self.repository / "project-skills/shared-references/architecture-responsibilities.md"
+        shared.unlink()
+        shared.symlink_to("../../README.md")
+        self.commit("invalidate shared reference")
+        target = self.target_with_sentinel()
+        before = snapshot(target)
+
+        with self.assertRaisesRegex(updater.UpdateError, "invalid source structure"):
+            updater.update_project(target, "main", self.repository_url)
+        self.assertEqual(snapshot(target), before)
 
     def test_tag_update_records_tag_and_declared_source_version(self) -> None:
         target = self.target_with_sentinel()

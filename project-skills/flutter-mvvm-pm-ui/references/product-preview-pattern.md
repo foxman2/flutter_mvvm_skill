@@ -2,7 +2,7 @@
 
 ## 先读现有预览
 
-项目代码是事实来源。新增页面前读取：
+项目代码用于确认真实框架接口；只沿用符合[职责规范](../../shared-references/architecture-responsibilities.md)的实现。新增页面前读取：
 
 - `lib/product_preview/pages/` 中最接近的页面；模板示例存在时参考 `sample_product/`
 - `lib/product_preview/product_preview_registry.dart`
@@ -18,7 +18,7 @@
 
 ## 展示状态与数据
 
-- 同目录 ViewModel 管理展示状态和临时交互。
+- 同目录 ViewModel 管理展示状态、请求结果和临时交互，不管理共享业务缓存；没有相似业务预览时先核对 MVVM 基类、AppPage 和依赖入口，不照搬静态示例来决定复杂业务归属。
 - 纯布局占位、tab、选中态和筛选项等小型 UI 状态可以本地保存。
 - 列表、卡片、详情、价格、额度或业务状态等演示业务数据通过 domain contract 的 Mock 实现提供，不在预览目录保存局部 fixture。
 - 需要新增、修改或迁移演示业务数据时，先由适用的数据层工作流负责 domain contract、ApiService wiring、mock service 和 mock-only model。
@@ -27,7 +27,7 @@
 ## AppPage 与注册
 
 - 为预览页面新增普通 AppPage，routeName 使用 `/product-preview/...` 语义。
-- AppPage 的 provider 创建 ViewModel，并从 `AppContainer.shared.apiService.<domain>` 注入 contract；registry 只保存标题、描述和 appPage，不创建 ViewModel、service 或处理权限与环境。
+- AppPage 的 provider 创建 ViewModel，并从 AppContainer 注入 contract 或管理相关数据的现有 Repository；registry 只保存标题、描述和 appPage，不创建 ViewModel、service 或处理权限与环境。
 - 通过 Product Preview 入口和 AppNavigator 打开页面，不把预览注册成正式业务入口。
 
 ## 审核迁移

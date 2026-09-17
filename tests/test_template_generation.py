@@ -101,7 +101,10 @@ def directory_snapshot(root: Path) -> dict[str, bytes]:
     return {
         path.relative_to(root).as_posix(): path.read_bytes()
         for path in sorted(root.rglob("*"))
-        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+        if path.is_file()
+        and path.name != ".DS_Store"
+        and "__pycache__" not in path.parts
+        and path.suffix != ".pyc"
     }
 
 
@@ -318,12 +321,12 @@ class TemplateGenerationUnitTests(unittest.TestCase):
         canonical_skill_names = tuple(
             path.name
             for path in sorted((ROOT / "project-skills").iterdir())
-            if path.is_dir()
+            if (path / "SKILL.md").is_file()
         )
         marketplace_skill_names = tuple(
             path.name
             for path in sorted(MARKETPLACE_PROJECT_SKILLS_PATH.iterdir())
-            if path.is_dir()
+            if (path / "SKILL.md").is_file()
         )
         self.assertEqual(canonical_skill_names, PROJECT_SKILLS)
         self.assertEqual(marketplace_skill_names, PROJECT_SKILLS)
@@ -351,6 +354,18 @@ class TemplateGenerationUnitTests(unittest.TestCase):
                     directory_snapshot(ROOT / "project-skills" / skill_name),
                     directory_snapshot(target / ".codex/skills" / skill_name),
                 )
+            installed_skills = target / ".codex/skills"
+            shared = Path("shared-references/architecture-responsibilities.md")
+            self.assertEqual(
+                (installed_skills / shared).read_bytes(),
+                (ROOT / "project-skills" / shared).read_bytes(),
+            )
+            self.assertEqual(
+                list(installed_skills.rglob(shared.name)), [installed_skills / shared]
+            )
+            for document in installed_skills.rglob("*.md"):
+                for link in re.findall(r"\]\(([^)]+architecture-responsibilities\.md)\)", document.read_text()):
+                    self.assertEqual((document.parent / link).resolve(), (installed_skills / shared).resolve())
 
     def test_overlay_uses_app_container_architecture(self) -> None:
         lib = OVERLAY_PATH / "lib"

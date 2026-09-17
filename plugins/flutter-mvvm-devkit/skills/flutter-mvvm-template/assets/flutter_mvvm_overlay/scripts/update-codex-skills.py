@@ -31,6 +31,7 @@ TARGET_UPDATER_PATH = Path("scripts") / "update-codex-skills.py"
 LEGACY_UPDATER_PATH = Path("scripts") / "update-codex-skills.sh"
 
 SOURCE_SKILLS_PATH = Path("project-skills")
+SHARED_REFERENCES_DIR = "shared-references"
 SOURCE_PLUGIN_MANIFEST_PATH = Path(".codex-plugin") / "plugin.json"
 SOURCE_UPDATER_DIR = (
     Path("skills")
@@ -175,13 +176,17 @@ def require_regular_file(path: Path, label: str) -> None:
         raise UpdateError(f"invalid source structure: {label} is missing or is not a regular file: {path}")
 
 
-def validate_skill(skill_dir: Path) -> None:
-    if skill_dir.is_symlink() or not skill_dir.is_dir():
-        raise UpdateError(f"invalid source structure: invalid skill directory: {skill_dir}")
-    for child in skill_dir.rglob("*"):
+def validate_source_directory(directory: Path) -> None:
+    """Skills and shared references must contain only local source files."""
+    if directory.is_symlink() or not directory.is_dir():
+        raise UpdateError(f"invalid source structure: invalid directory: {directory}")
+    for child in directory.rglob("*"):
         if child.is_symlink():
-            raise UpdateError(f"invalid source structure: skill contains a symlink: {child}")
+            raise UpdateError(f"invalid source structure: directory contains a symlink: {child}")
 
+
+def validate_skill(skill_dir: Path) -> None:
+    validate_source_directory(skill_dir)
     skill_file = skill_dir / "SKILL.md"
     require_regular_file(skill_file, f"{skill_dir.name}/SKILL.md")
     try:
@@ -213,6 +218,12 @@ def inspect_source(root: Path) -> SourcePackage:
     for entry in entries:
         if not entry.is_dir() or entry.is_symlink():
             raise UpdateError(f"invalid source structure: unexpected entry in project-skills: {entry.name}")
+        if entry.name == SHARED_REFERENCES_DIR:
+            validate_source_directory(entry)
+            require_regular_file(
+                entry / "architecture-responsibilities.md", "shared architecture reference"
+            )
+            continue
         validate_skill(entry)
         skill_names.append(entry.name)
     if not skill_names:
@@ -284,6 +295,13 @@ def install_source(root: Path, package: SourcePackage, ref: str) -> None:
         destination = target_skills / name
         remove_path(destination)
         shutil.copytree(source_skills / name, destination)
+
+    # Replace bundled references too, without treating them as managed skills.
+    shared_destination = target_skills / SHARED_REFERENCES_DIR
+    remove_path(shared_destination)
+    shared_source = source_skills / SHARED_REFERENCES_DIR
+    if shared_source.is_dir():
+        shutil.copytree(shared_source, shared_destination)
 
     install_updater(package, root)
     # 最后写 manifest，避免前面的复制失败却记录为已完成。

@@ -8,7 +8,7 @@
 - 对应 AppPage case
 - 相关 Widget、l10n key 和已有测试
 
-在满足 `SKILL.md` 关键边界的前提下，优先沿用项目代码。保持相邻页面的基类、命名、import 和状态管理方式，不复制违反 Input/Output 契约的已有写法。
+按[职责规范](../../shared-references/architecture-responsibilities.md)检查相邻实现后，沿用符合约束的基类、命名、import 和状态管理方式，不复制职责越界或违反 Input/Output 契约的写法。没有相似业务页面时，先核对现有 MVVM 基类、AppPage 和依赖入口的真实接口，再实现当前需求，不猜测框架能力或补齐不需要的层。
 
 ## 文件与类型
 
@@ -22,7 +22,7 @@
 - output 暴露依赖业务状态、异步结果、页面参数或用户操作的展示状态；默认使用 getter 配合 `makeRebuild()`。
 - 仅为输入联动、进度、倒计时、刷新或一次性 UI 事件等局部高频状态使用 `ValueStream<T>`/`Stream<T>`。
 - 内部状态保持私有；异步 loading/error 使用项目现有 tracker。
-- 导航、弹窗和业务动作由 ViewModel 发起，Widget 只绑定事件。
+- 导航、弹窗和页面操作由 ViewModel 发起，Widget 只绑定事件；共享数据更新调用 Repository，独立领域规则调用 Model 或业务 Service。ViewModel 可以持有本页加载结果与编辑草稿，不能重复维护跨页面权威数据。
 
 ## Loading 与错误处理
 

@@ -6,18 +6,21 @@ description: >-
 
 # Flutter MVVM Feature Dev
 
+## 职责先行
+
+新增页面、修改状态/行为、调整依赖或迁移原型前，读取 [文件职责与依赖边界](../shared-references/architecture-responsibilities.md)。先确定页面状态、共享业务数据和业务规则的所有者，再实现本 skill 范围内的展示层；纯样式或固定文案修改无需重复读取。相邻代码须通过职责检查后才能沿用；没有相似实现时按规范读取框架入口并选择最少的层。
+
 ## 工作流程
 
 1. 确认当前项目包含 `lib/app_container.dart`、`lib/mvvm/`、`lib/navigation/` 和 `lib/pages/`，并读取最相似的页面、ViewModel、AppPage 和 l10n 写法；当前目录不满足时停止并要求真实项目路径，不猜测或虚构目录。
 2. 迁移预览原型时先读 `lib/product_preview/`，再按正式业务边界实现，不直接提升临时 mock 或 demo 逻辑。
-3. 让 Widget 负责固定展示内容和事件绑定，让 ViewModel 负责状态、异步、导航、弹窗和业务动作。
+3. 让 Widget 负责展示、事件绑定和 UI 对象生命周期，让 ViewModel 负责页面状态、异步操作和导航反馈；共享数据管理与独立业务规则使用注入的领域能力，不堆入页面 ViewModel。
 4. 为可导航页面新增强类型 AppPage case；由 AppPage provider 延迟创建 ViewModel，并从 `AppContainer.shared` 取得 Service 或 Repository 后构造注入。
 5. 复用项目已有组件、主题、间距、导航、loading/error 和弹层封装。
-6. 格式化改动文件并运行 `flutter analyze`；纯展示改动不新增或修改测试；其余改动先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试；混合改动只覆盖行为部分。
+6. 按职责规范检查本次文件、状态所有权和依赖方向，修复越界；格式化改动文件并运行 `flutter analyze`；纯展示改动不新增或修改测试；其余改动先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试；混合改动只覆盖行为部分。
 
 ## 关键边界
 
-- `App` 配置应用，`AppContainer` 装配共享依赖，两者不承接页面业务流程；`AppPage` 描述路由及页面构造，Page 持有 Context，页面 ViewModel 处理业务并发出导航意图。
 - 行为测试优先覆盖 ViewModel，默认不新增 Page/Widget 测试；仅重要 UI 交互无法由逻辑层覆盖时例外。
 - 纯展示通过实际界面验收，不编写仅检查控件存在的测试。
 - 新页面 ViewModel 使用 `<Feature>ViewModelInput`、`Output`、`Type` 和实现类；Page 接收返回非空 ViewModel 的 provider。

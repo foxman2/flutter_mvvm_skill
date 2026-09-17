@@ -2,7 +2,7 @@
 
 ## 修改前
 
-读取当前页面和相邻页面，确认使用的布局、按钮、theme、间距、弹层容器，以及已有 ViewModel input/output。优先沿用项目现状。
+读取当前页面和相邻页面，确认使用的布局、按钮、theme、间距、弹层容器，以及已有 ViewModel input/output。只沿用符合职责约束和项目风格的模式；行为改动先按[职责规范](../../shared-references/architecture-responsibilities.md)确定状态与数据所有者。
 
 ## 职责边界
 
@@ -14,7 +14,7 @@ Widget 负责：
 
 ViewModel 负责：
 
-- 点击后的业务动作和异步加载
+- 点击后的页面操作与异步加载，调用已注入的领域能力
 - loading/error
 - 导航、Alert、ActionSheet 和 BottomSheet
 

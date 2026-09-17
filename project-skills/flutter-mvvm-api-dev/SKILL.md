@@ -6,13 +6,17 @@ description: >-
 
 # Flutter MVVM API Dev
 
+## 职责先行
+
+实现前读取 [文件职责与依赖边界](../shared-references/architecture-responsibilities.md)，区分接口适配、领域数据管理和业务流程，明确本次 model 的协议或领域职责。API Service 只对接后台；不能因涉及多个接口就把流程放进 API，或一律增加 Repository。相邻实现须符合职责约束后才能沿用。
+
 ## 工作流程
 
 1. 确认项目包含 `lib/app_container.dart` 和 `lib/services/api/api_service.dart`，并读取最接近的 API 模块、model、调用方和测试。
 2. 扩展已有 domain contract；只有没有合适模块时才新增 `<domain>_api_service.dart`。
 3. 沿用项目序列化方案；默认使用 `json_serializable`，并把字段解析限制在 model 内。
 4. 让 Dio 实现复用 `ApiService` 配置的 client，通过 `.parseData(...)` 统一解析数据和转换 `DioException`。
-5. 通过构造函数把 domain service 或 repository 注入 ViewModel；对应 AppPage provider 从 `AppContainer.shared` 取得依赖并完成组装。
+5. 按数据管理需要决定直接使用 domain contract 或接入 Repository；独立业务流程由业务 Service 承担。依赖经构造函数注入，应用级依赖由 AppContainer 组装，对应 AppPage provider 取得依赖并创建 ViewModel。
 6. 采用 `json_serializable` 时运行 `dart run build_runner build`，再格式化并运行 `flutter analyze`；API contract、model 解析、错误映射、Repository、ViewModel 和 wiring 全部属于非视觉改动，先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试。
 
 ## 关键边界
@@ -20,7 +24,7 @@ description: >-
 - 只实现路径、字段和响应结构已经确认的接口；不猜测 URL、字段或统一 response envelope。
 - `AppContainer` 是唯一全局依赖入口；ApiService、Repository 和其他 Service 不声明 `shared`。
 - 新 domain 由 `ApiService` 默认 factory 使用同一个配置好的 Dio 组装，并同步加入 `ApiService.withModules(...)`。
-- Widget 和 ViewModel 不解析 JSON；复杂业务可通过普通 Repository 封装。
+- Widget 和 ViewModel 不解析 JSON；Repository 管理领域数据，不作为复杂逻辑的通用收纳处。交付前按职责规范检查接口适配、数据所有权与调用方向，修复本次改动中的越界。
 - 协议、字段或响应结构未确认时停止实现并报告缺失信息，不固化猜测出的 contract。
 
 ## 读取参考

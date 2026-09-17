@@ -9,7 +9,7 @@
 - `lib/app_container.dart`
 - 相关 Repository、ViewModel、AppPage 和测试
 
-模板示例存在时可参考 `user_api_service.dart`；示例已被业务代码替换时，跟随最近的有效 domain 模块。
+模板示例存在时可参考 `user_api_service.dart`；示例已被业务代码替换时，检查最近 domain 模块是否符合[职责规范](../../shared-references/architecture-responsibilities.md)后再沿用。没有相似业务模块时，以 API 组装入口和解析工具的真实接口为依据，不推测后台协议。
 
 ## Domain 模块
 
@@ -19,6 +19,7 @@
 - 通过构造函数传入 Dio；GET 参数使用 `queryParameters`，POST/PUT body 优先使用 model 的 `toJson()`。
 - 使用 `.parseData(...)` 解析 `response.data` 并统一转换 `DioException`。
 - 不在 API service 中处理 loading、toast、弹窗、导航或其他 UI 行为。
+- API service 只适配一次后台操作的协议，不加入客户端业务决策、跨接口业务编排或领域缓存；服务端聚合接口可以直接适配，不在客户端伪造其协议。
 
 ## ApiService 组装
 
@@ -29,7 +30,8 @@
 
 ## Repository 与页面注入
 
-- 简单调用可让 ViewModel 依赖具体 domain contract；需要缓存、聚合或业务编排时使用普通 Repository。
+- 简单调用可让 ViewModel 依赖具体 domain contract。需要共享数据、缓存或领域数据聚合时使用 Repository；独立业务流程使用业务 Service。具体判断遵循[职责规范](../../shared-references/architecture-responsibilities.md)，不按页面或接口数量机械增加层级。
+- 已有 Repository 管理的数据，更新必须经过该入口；Repository 和业务 Service 的依赖也经构造注入，不自行访问全局容器或具体 mock 实现。
 - App 生命周期 Repository 在 AppContainer composition root 中创建并注册。
 - ViewModel 通过构造函数接收 Service 或 Repository；AppPage provider 从 `AppContainer.shared` 取得依赖并创建 ViewModel。
 - ApiService、Repository 和其他 Service 不声明 `shared`。

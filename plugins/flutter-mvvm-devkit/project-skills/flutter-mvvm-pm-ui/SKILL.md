@@ -6,20 +6,24 @@ description: >-
 
 # Flutter MVVM PM UI
 
+## 职责先行
+
+新增预览页面、调整预览交互或数据接入前，读取 [文件职责与依赖边界](../shared-references/architecture-responsibilities.md)，先区分展示状态、请求结果和演示数据来源；纯样式或固定文案修改无需重复读取。职责规范不扩大本 skill 的允许范围。
+
 ## 允许范围
 
 - 调整正式页面、共用 Widget 或 theme 的纯展示层，不改变已有 ViewModel 行为。
 - 在 `lib/product_preview/pages/<feature>/` 新增按正式 MVVM 命名和结构实现的隔离页面，为其创建 AppPage 并注册到 Product Preview。
-- 预览 ViewModel 只保存步骤、tab、选中、展开、筛选和输入等纯 UI 状态；列表、详情、价格、额度或业务状态等演示业务数据通过 domain contract 的 Mock 实现提供，由适用的数据层工作流完成。
+- 预览 ViewModel 可以保存步骤、tab、选中、筛选、输入与草稿，以及请求得到的展示结果；列表、详情、价格、额度等演示数据由 domain contract 的 Mock 实现提供，经 contract 或现有 Repository 注入，不在预览层生成 fixture 或管理共享业务缓存。
 - 在 `docs/pm-changes/` 维护当前 PM 需求的精简改动与接口对接记录；同一需求多次调整时更新原记录，不为每轮修改追加新文件或版本历史。
 
 ## 工作流程
 
 1. 读取相关 `_page.dart`、现有组件、`lib/product_preview/` 示例与 registry，并查找当前 PM 需求已有的 `docs/pm-changes/` 记录；同时识别现有局部 fixture 与新增演示业务数据需求。
 2. 现有 UI 微调只改展示层；新页面或流程原型只放入 `lib/product_preview/`，并使用同目录 ViewModel 管理纯 UI 状态和临时交互。
-3. 需要新增、修改或迁移演示业务数据时，先由适用的数据层工作流建立或复用 domain contract、Mock 实现和 ApiService wiring；预览页面只通过注入的 contract 读取数据。
+3. 需要新增、修改或迁移演示业务数据时，先由适用的数据层工作流建立或复用 domain contract、Mock 实现和 ApiService wiring；预览 ViewModel 通过注入的 contract 或现有 Repository 读取数据。
 4. 复用项目已有组件、theme、间距、按钮和弹层风格。
-5. 格式化、运行 `flutter analyze` 并通过实际 Product Preview 验收；纯展示和静态文案改动不新增或修改测试；预览 ViewModel 状态、callback、临时交互或 Mock API 数据改动先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试；混合改动只覆盖行为部分。
+5. 按职责规范检查本次状态所有权和调用方向，修复越界；格式化、运行 `flutter analyze` 并通过实际 Product Preview 验收；纯展示和静态文案改动不新增或修改测试；预览 ViewModel 状态、callback、临时交互或 Mock API 数据改动先检查已有测试是否直接断言受影响的输入、动作、状态、输出或 contract，仅执行到相关代码不算直接覆盖；覆盖充分时复跑并记录依据，覆盖不足时才新增或更新最小测试；混合改动只覆盖行为部分。
 6. 根据本次实际改动更新一份 `docs/pm-changes/<change-id>.md`：只记录最终 PM 改动、接口新增或修改的差异、必要的调用顺序，以及 Preview、Mock API 和关键代码入口；无接口影响时明确记录“无”。
 7. 交付时给出记录文件、Preview 验收和验证结果，不在回复中重复记录正文。
 

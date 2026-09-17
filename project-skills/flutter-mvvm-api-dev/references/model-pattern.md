@@ -10,6 +10,8 @@
 - 请求类型使用动作后缀，如 `UpdateProfileRequest`。
 - 文件使用 snake_case，类使用 PascalCase。
 - JSON 字段映射只放在 model 内，不散落到 API service、ViewModel 或 Widget。
+- 先区分协议 DTO 与领域 Model：DTO 忠实表达后台字段；领域 Model 维护自身约束及领域方法，不能发请求或访问全局依赖。协议与业务语义一致时可以复用类型，不强制复制一套 Entity。
+- 需要转换时在数据边界显式完成，通常由 Repository 或纯映射函数负责；不要为一次字段改名引入额外映射框架。完整边界见[职责规范](../../shared-references/architecture-responsibilities.md)。
 
 ## json_serializable
 

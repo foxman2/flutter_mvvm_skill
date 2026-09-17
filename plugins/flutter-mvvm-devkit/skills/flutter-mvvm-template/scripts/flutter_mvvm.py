@@ -166,6 +166,14 @@ def copy_project_skills(target_dir: Path) -> list[str]:
 
     if not managed_skills:
         raise CliError(f"No project skills were found in: {source_dir}")
+
+    # Shared references ship with the skills but are not discoverable skills themselves.
+    shared_source = source_dir / "shared-references"
+    shared_destination = skills_dir / "shared-references"
+    if shared_destination.exists():
+        shutil.rmtree(shared_destination)
+    if shared_source.is_dir():
+        shutil.copytree(shared_source, shared_destination, ignore=ignored_project_asset_names)
     return managed_skills
 
 

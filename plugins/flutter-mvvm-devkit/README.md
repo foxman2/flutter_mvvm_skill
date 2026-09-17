@@ -53,7 +53,15 @@ python3 skills/flutter-mvvm-template/scripts/flutter_mvvm.py create --app-name "
 
 更新脚本需要本机同时有 `python3` 和 `git`。仓库访问由本机 Git 凭据配置负责。
 
+旧项目首次升级到公共参考目录结构时，先用本仓库的
+`skills/flutter-mvvm-template/assets/flutter_mvvm_overlay/scripts/update-codex-skills.py`
+替换项目的 `scripts/update-codex-skills.py`，再执行更新。旧脚本不识别 `shared-references/`，会在写入项目前停止。
+
 ## 维护者
+
+开发 skills 共用的文件职责与依赖规范维护在 `project-skills/shared-references/architecture-responsibilities.md`。
+四个开发 skill 通过相对路径引用这一份文档；同步脚本更新插件镜像，生成器和更新器将公共目录安装到项目的 `.codex/skills/shared-references/`。
+公共目录不是 skill，不计入 `managedSkills`；分发项目 skills 时需一并包含它。
 
 ```bash
 python3 scripts/sync_marketplace_plugin.py
